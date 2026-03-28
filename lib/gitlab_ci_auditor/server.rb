@@ -55,23 +55,28 @@ module GitlabCiAuditor
     private
 
     def analyze_request(req)
-      snapshot_file = req.query["snapshot_file_path"].to_s.strip
-      snapshot_file = @snapshot_file if snapshot_file.empty?
+      snapshot_file = resolved_snapshot_file(req.query["snapshot_file_path"])
 
       if req.query["pipeline_path"] && !req.query["pipeline_path"].to_s.strip.empty?
         pipeline_path = File.expand_path(req.query["pipeline_path"].to_s.strip)
-        pipeline = PipelineLoader.new(snapshot_file: snapshot_file.empty? ? nil : snapshot_file).load(pipeline_path)
+        pipeline = PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
       elsif req.query["pipeline_file"]
         file = req.query["pipeline_file"]
         temp_path = File.join(Dir.tmpdir, ".gitlab-ci-upload-#{Process.pid}-#{Time.now.to_i}.yml")
         File.write(temp_path, file.to_s)
-        pipeline = PipelineLoader.new(snapshot_file: snapshot_file.empty? ? nil : snapshot_file).load(temp_path)
+        pipeline = PipelineLoader.new(snapshot_file: snapshot_file).load(temp_path)
       else
         raise ArgumentError, "Provide a pipeline path or upload a `.gitlab-ci.yml` file"
       end
 
       policy = load_policy(req.query["policy_pack"])
       Analyzer.new(pipeline, policy).analyze
+    end
+
+    def resolved_snapshot_file(request_value)
+      candidate = request_value.to_s.strip
+      candidate = @snapshot_file.to_s.strip if candidate.empty?
+      candidate.empty? ? nil : candidate
     end
 
     def load_policy(requested_pack)
