@@ -1,0 +1,28 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+  - security
+
+unit_tests:
+  stage: test
+  script:
+    - bundle exec rspec
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dependency_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

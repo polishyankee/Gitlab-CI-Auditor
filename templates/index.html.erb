@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GitLab CI SSDLC Auditor</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --bg-accent: #010409;
+        --panel: #161b22;
+        --panel-soft: #0f1720;
+        --border: #30363d;
+        --border-strong: #3d444d;
+        --ink: #c9d1d9;
+        --muted: #8b949e;
+        --green: #2ea043;
+        --blue: #58a6ff;
+        --red: #f85149;
+        --yellow: #d29922;
+        --shadow: 0 28px 80px rgba(1, 4, 9, 0.55);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(88, 166, 255, 0.14), transparent 26%),
+          radial-gradient(circle at top right, rgba(248, 81, 73, 0.12), transparent 24%),
+          linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(13, 17, 23, 1)),
+          var(--bg);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(18px);
+        background: rgba(13, 17, 23, 0.84);
+        border-bottom: 1px solid rgba(48, 54, 61, 0.8);
+      }
+
+      .topbar-inner,
+      main {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .topbar-inner {
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .repo-mark {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+      }
+
+      .repo-mark code {
+        color: var(--blue);
+        font-size: 0.95rem;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(110, 118, 129, 0.08);
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      main {
+        padding-top: 38px;
+        padding-bottom: 72px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.9fr);
+        align-items: stretch;
+      }
+
+      .panel {
+        background:
+          linear-gradient(180deg, rgba(22, 27, 34, 0.94), rgba(13, 17, 23, 0.98));
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero-copy {
+        padding: 28px;
+      }
+
+      .hero-copy h1 {
+        margin: 0 0 14px;
+        font-size: clamp(2.8rem, 5vw, 4.8rem);
+        line-height: 0.92;
+        letter-spacing: -0.04em;
+      }
+
+      .hero-copy p {
+        margin: 0;
+        max-width: 62ch;
+        color: var(--muted);
+        font-size: 1.02rem;
+        line-height: 1.7;
+      }
+
+      .hero-grid {
+        margin-top: 22px;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-card,
+      .meta-card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(110, 118, 129, 0.07);
+      }
+
+      .hero-card {
+        padding: 16px;
+      }
+
+      .hero-card strong,
+      .meta-card strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #f0f6fc;
+        font-size: 0.92rem;
+      }
+
+      .hero-card span,
+      .meta-card span {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 0.94rem;
+      }
+
+      .workspace {
+        padding: 24px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .workspace-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .workspace-head h2 {
+        margin: 0 0 8px;
+        font-size: 1.28rem;
+      }
+
+      .workspace-head p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .brand-stack {
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+
+      .brand-card {
+        min-width: 132px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+        display: grid;
+        gap: 10px;
+        justify-items: start;
+      }
+
+      .brand-card span {
+        color: var(--muted);
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .brand-logo {
+        width: 34px;
+        height: 34px;
+        display: block;
+      }
+
+      form {
+        display: grid;
+        gap: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: #f0f6fc;
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      input[type="file"],
+      select {
+        width: 100%;
+        border: 1px solid var(--border-strong);
+        border-radius: 12px;
+        padding: 13px 14px;
+        background: #0d1117;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      .field-note {
+        color: var(--muted);
+        font-weight: 400;
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+
+      input::file-selector-button {
+        margin-right: 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: #21262d;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 1px solid rgba(63, 185, 80, 0.4);
+        border-radius: 12px;
+        padding: 12px 18px;
+        background: linear-gradient(180deg, #2ea043, #238636);
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .ghost {
+        border-color: var(--border-strong);
+        background: #21262d;
+        color: var(--ink);
+      }
+
+      .meta {
+        margin-top: 24px;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .meta-card {
+        padding: 18px;
+      }
+
+      .meta-card code {
+        display: block;
+        margin-top: 10px;
+        color: var(--blue);
+        word-break: break-all;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+
+      @media (max-width: 1040px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .hero-grid,
+        .meta {
+          grid-template-columns: 1fr;
+        }
+
+        .workspace-head {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="repo-mark">
+          <span class="pill">Security · CI/CD · Audit</span>
+          <code>gitlab-ci-ssdlc-auditor</code>
+        </div>
+        <div class="pill">GitHub-dark inspired UI</div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <article class="panel hero-copy">
+          <div class="pill" style="width: fit-content; margin-bottom: 18px;">GitLab CI • SSDLC • Policy Engine</div>
+          <h1>Audit the full pipeline, not just one file.</h1>
+          <p>
+            The application analyzes <code>.gitlab-ci.yml</code>, local <code>include</code> entries, child and downstream
+            pipelines started by <code>trigger</code>, and breaks the result down into concrete SSDLC gaps:
+            unit tests, SAST, artifact or image scanning, automated test deployment, and security policy compliance.
+          </p>
+
+          <div class="hero-grid">
+            <div class="hero-card">
+              <strong>GitLab Graph</strong>
+              <span>Recursively collected local <code>include</code> files and child pipelines give you a whole-flow assessment.</span>
+            </div>
+            <div class="hero-card">
+              <strong>Dependabot Thinking</strong>
+              <span>The report shows the issue, the recommendation, and a concrete remediation path.</span>
+            </div>
+          </div>
+        </article>
+
+        <aside class="panel workspace">
+          <div class="workspace-head">
+            <div>
+              <h2>Open Audit Session</h2>
+              <p>Provide a file path or upload a file. The HTML report and GUI use the same analysis engine.</p>
+            </div>
+
+            <div class="brand-stack">
+              <div class="brand-card">
+                <svg class="brand-logo" viewBox="0 0 128 128" aria-label="GitLab logo" role="img">
+                  <polygon fill="#e24329" points="64,110 88,36 40,36"/>
+                  <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
+                  <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
+                  <polygon fill="#fca326" points="24,36 12,68 40,36"/>
+                  <polygon fill="#fca326" points="104,36 116,68 88,36"/>
+                  <polygon fill="#e24329" points="12,68 64,110 24,36"/>
+                  <polygon fill="#e24329" points="116,68 64,110 104,36"/>
+                  <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
+                </svg>
+                <span>GitLab</span>
+              </div>
+              <div class="brand-card">
+                <svg class="brand-logo" viewBox="0 0 128 128" aria-label="Dependabot style mark" role="img">
+                  <rect x="22" y="26" width="84" height="64" rx="18" fill="#58a6ff"/>
+                  <rect x="34" y="38" width="60" height="40" rx="12" fill="#0d1117"/>
+                  <circle cx="52" cy="58" r="7" fill="#58a6ff"/>
+                  <circle cx="76" cy="58" r="7" fill="#58a6ff"/>
+                  <rect x="52" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
+                  <rect x="68" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
+                  <rect x="48" y="82" width="32" height="10" rx="5" fill="#2ea043"/>
+                  <rect x="28" y="96" width="72" height="12" rx="6" fill="#1f6feb"/>
+                </svg>
+                <span>Dependabot</span>
+              </div>
+            </div>
+          </div>
+
+          <form action="/analyze" method="post" enctype="multipart/form-data">
+            <label>
+              Pipeline file path
+              <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
+            </label>
+
+            <label>
+              Or upload a file
+              <input type="file" name="pipeline_file" accept=".yml,.yaml">
+            </label>
+
+            <label>
+              Policy pack
+              <select name="policy_pack" <%= custom_policy_locked ? "disabled" : "" %>>
+                <% available_policy_packs.each do |pack| %>
+                  <option value="<%= pack[:name] %>" <%= pack[:name] == selected_policy_pack ? "selected" : "" %>><%= pack[:label] %> (<%= pack[:name] %>)</option>
+                <% end %>
+              </select>
+              <% if custom_policy_locked %>
+                <span class="field-note">This server instance was started with an explicit custom policy file, so bundled policy pack selection is locked.</span>
+              <% else %>
+                <% selected_pack = available_policy_packs.find { |pack| pack[:name] == selected_policy_pack } %>
+                <span class="field-note"><%= selected_pack ? selected_pack[:description] : "Choose a bundled policy pack for this audit run." %></span>
+              <% end %>
+            </label>
+
+            <div class="cta-row">
+              <button type="submit">Analyze Pipeline</button>
+              <button type="button" class="ghost" onclick="window.location.reload()">Reset Form</button>
+            </div>
+          </form>
+        </aside>
+      </section>
+
+      <section class="meta">
+        <article class="meta-card">
+          <strong>CLI</strong>
+          <span>Command-line entrypoint that generates text, JSON, or HTML output.</span>
+          <code>./bin/gitlab-ci-auditor scan .gitlab-ci.yml</code>
+        </article>
+        <article class="meta-card">
+          <strong>HTML Report</strong>
+          <span>Report with scoring categories, SSDLC gaps, security findings, and remediation guidance.</span>
+          <code>./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format html --output report.html</code>
+        </article>
+        <article class="meta-card">
+          <strong>GUI</strong>
+          <span>Web UI for fast audits and easier presentation of results to engineering teams.</span>
+          <code>./bin/gitlab-ci-auditor serve --host 127.0.0.1 --port 4567</code>
+        </article>
+        <article class="meta-card">
+          <strong>Rule Packs</strong>
+          <span>Bundled policy packs let you switch between balanced, strict, and library-oriented SSDLC baselines.</span>
+          <code>./bin/gitlab-ci-auditor list-packs</code>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dependency_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

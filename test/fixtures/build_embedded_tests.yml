@@ -1,0 +1,39 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+
+maven_build:
+  stage: build
+  script:
+    - mvn -B clean package
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+gradle_build:
+  stage: build
+  script:
+    - ./gradlew build
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+skipped_tests_build:
+  stage: build
+  script:
+    - mvn -B clean package -DskipTests
+    - ./gradlew build -x test
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+jacoco_artifacts_build:
+  stage: build
+  script:
+    - mvn -B package -DskipTests
+  artifacts:
+    paths:
+      - target/jacoco.exec
+      - target/site/jacoco/jacoco.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

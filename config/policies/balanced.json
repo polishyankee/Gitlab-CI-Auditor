@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "name": "balanced",
+    "label": "Balanced Baseline",
+    "description": "Full SSDLC baseline for most application repositories."
+  },
+  "required_controls": {
+    "unit_tests": true,
+    "sast": true,
+    "scan": true,
+    "deploy_test": true
+  },
+  "test_environments": ["test", "qa", "stage", "staging", "dev", "sandbox", "review", "uat"],
+  "production_environments": ["prod", "production"],
+  "security_policies": {
+    "forbid_latest_images": true,
+    "forbid_unpinned_images": false,
+    "forbid_allow_failure_on_security": true,
+    "forbid_manual_test_deploy": true,
+    "forbid_strict_host_key_bypass": true,
+    "forbid_inline_secrets": true,
+    "forbid_remote_script_piping": true
+  }
+}

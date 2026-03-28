@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "name": "library",
+    "label": "Library / Package",
+    "description": "For repositories that build components or packages and do not own a test deployment environment."
+  },
+  "required_controls": {
+    "unit_tests": true,
+    "sast": true,
+    "scan": true,
+    "deploy_test": false
+  },
+  "test_environments": ["test", "qa", "stage", "staging", "dev", "sandbox", "review", "uat"],
+  "production_environments": ["prod", "production"],
+  "security_policies": {
+    "forbid_latest_images": true,
+    "forbid_unpinned_images": false,
+    "forbid_allow_failure_on_security": true,
+    "forbid_manual_test_deploy": false,
+    "forbid_strict_host_key_bypass": true,
+    "forbid_inline_secrets": true,
+    "forbid_remote_script_piping": true
+  }
+}
