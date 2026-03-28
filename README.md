@@ -79,6 +79,68 @@ GUI:
 ./bin/gitlab-ci-auditor serve --host 127.0.0.1 --port 4567
 ```
 
+## Docker
+
+Build the image:
+
+```bash
+docker build --pull -t gitlab-ci-ssdlc-auditor .
+```
+
+Run a scan against a pipeline from your current repository:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/workspace:ro" \
+  gitlab-ci-ssdlc-auditor \
+  scan /workspace/.gitlab-ci.yml
+```
+
+Write an HTML report back to the host:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/workspace" \
+  gitlab-ci-ssdlc-auditor \
+  scan /workspace/.gitlab-ci.yml --format html --output /workspace/report.html
+```
+
+Run the GUI in Docker:
+
+```bash
+docker run --rm \
+  -p 4567:4567 \
+  -v "$PWD:/workspace:ro" \
+  gitlab-ci-ssdlc-auditor \
+  serve --host 0.0.0.0 --port 4567
+```
+
+Scan one of the built-in example pipelines without mounting anything:
+
+```bash
+docker run --rm gitlab-ci-ssdlc-auditor scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
+```
+
+Use a bundled policy pack and downstream snapshots from a mounted repository:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/workspace" \
+  gitlab-ci-ssdlc-auditor \
+  scan /workspace/.gitlab-ci.yml --policy-pack strict --snapshot-file /workspace/.gitlab-ci-downstream-snapshots.json
+```
+
+Pull the published release image from GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/polishyankee/gitlab-ci-auditor:latest
+```
+
+The image runs as a non-root user by default and exposes the GUI on port `4567`.
+
 ## Policies
 
 Bundled policy packs live in [`config/policies`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/config/policies). The current packs are:
@@ -131,6 +193,33 @@ Regenerate the example reports with:
 ```bash
 ./scripts/generate_example_reports.sh
 ```
+
+## GitHub Actions and Releases
+
+The repository includes GitHub Actions workflows for:
+
+- running the Ruby test suite on pushes and pull requests
+- building the Docker image on every push, pull request, and manual CI run
+- smoke-testing both the CLI and GUI container flows in CI
+- publishing a GitHub release and a multi-arch GHCR container image on version tags such as `v0.3.0`
+- attaching generated example reports to each GitHub release
+
+The repository also includes a [`Dependabot`](.github/dependabot.yml) configuration for GitHub Actions and Docker base image updates.
+
+The published image target is:
+
+```bash
+ghcr.io/polishyankee/gitlab-ci-auditor
+```
+
+To cut a release manually after pushing the workflow changes, create and push a version tag:
+
+```bash
+git tag v0.3.0
+git push origin v0.3.0
+```
+
+Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.
 
 ## Designed For Growth
 

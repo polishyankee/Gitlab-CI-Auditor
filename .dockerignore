@@ -1,0 +1,13 @@
+.git
+.github
+.DS_Store
+.gitignore
+coverage
+tmp
+.bundle
+test
+examples/reports
+*.html
+*.pdf
+*.csv
+*.log

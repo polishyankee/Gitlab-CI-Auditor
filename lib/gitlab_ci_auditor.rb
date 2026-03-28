@@ -10,7 +10,7 @@ require "tmpdir"
 require "csv"
 
 module GitlabCiAuditor
-  VERSION = "0.2.0".freeze
+  VERSION = "0.3.0".freeze
 
   RESERVED_KEYS = %w[
     after_script
