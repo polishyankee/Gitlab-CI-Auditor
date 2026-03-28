@@ -296,7 +296,7 @@ module GitlabCiAuditor
       end
 
       if rule.key?("changes")
-        matches << (scenario[:changes_match] == true)
+        matches << changes_match?(rule["changes"], scenario)
       end
 
       if rule.key?("exists")
@@ -310,6 +310,33 @@ module GitlabCiAuditor
       GitlabCiAuditor.normalize_array(entries).any? do |pattern|
         Dir.glob(File.join(@pipeline.base_dir, pattern), File::FNM_EXTGLOB).any?
       end
+    end
+
+    def changes_match?(changes_value, scenario)
+      changed_files = Array(scenario[:changed_files]).map(&:to_s)
+      return false if changed_files.empty?
+
+      patterns = extract_change_patterns(changes_value)
+      return changed_files.any? if patterns.empty?
+
+      changed_files.any? do |changed_file|
+        patterns.any? { |pattern| change_pattern_match?(pattern, changed_file) }
+      end
+    end
+
+    def extract_change_patterns(changes_value)
+      case changes_value
+      when Hash
+        GitlabCiAuditor.normalize_array(changes_value["paths"] || changes_value[:paths] || changes_value["changes"])
+      else
+        GitlabCiAuditor.normalize_array(changes_value)
+      end
+    end
+
+    def change_pattern_match?(pattern, changed_file)
+      normalized_pattern = pattern.to_s.sub(%r{\A\./}, "")
+      normalized_file = changed_file.to_s.sub(%r{\A\./}, "")
+      File.fnmatch?(normalized_pattern, normalized_file, File::FNM_PATHNAME | File::FNM_EXTGLOB | File::FNM_DOTMATCH)
     end
 
     def only_except_match?(job, scenario)

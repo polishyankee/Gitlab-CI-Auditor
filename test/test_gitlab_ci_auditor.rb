@@ -22,6 +22,7 @@ class GitlabCiAuditorTest < Minitest::Test
 
     assert report[:summary][:overall_score] >= 75
     assert report[:categories].find { |category| category[:key] == "unit_tests" }[:score] >= 10
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "coverage_report" }[:status]
     assert report[:scenarios].any? { |scenario| scenario[:status] == "pass" }
   end
 
@@ -30,11 +31,13 @@ class GitlabCiAuditorTest < Minitest::Test
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
 
     unit_tests = report[:categories].find { |category| category[:key] == "unit_tests" }
+    coverage_report = report[:categories].find { |category| category[:key] == "coverage_report" }
     sast = report[:categories].find { |category| category[:key] == "sast" }
     scan = report[:categories].find { |category| category[:key] == "scan" }
     deploy_test = report[:categories].find { |category| category[:key] == "deploy_test" }
 
     assert_equal "fail", unit_tests[:status]
+    assert_equal "fail", coverage_report[:status]
     assert_equal "fail", sast[:status]
     assert_equal "fail", scan[:status]
     assert_equal "fail", deploy_test[:status]
@@ -46,13 +49,17 @@ class GitlabCiAuditorTest < Minitest::Test
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
 
     unit_tests = report[:categories].find { |category| category[:key] == "unit_tests" }
+    coverage_report = report[:categories].find { |category| category[:key] == "coverage_report" }
     scenario = report[:scenarios].find { |item| item[:status] != "skipped" }
     classified_jobs = scenario[:jobs].select { |job| job[:classifications].include?("unit_tests") }.map { |job| job[:name] }
+    coverage_jobs = scenario[:jobs].select { |job| job[:classifications].include?("coverage_report") }.map { |job| job[:name] }
 
     assert_equal "pass", unit_tests[:status]
+    assert_equal "pass", coverage_report[:status]
     assert_includes classified_jobs, "maven_build"
     assert_includes classified_jobs, "gradle_build"
     assert_includes classified_jobs, "jacoco_artifacts_build"
+    assert_equal ["jacoco_artifacts_build"], coverage_jobs
     refute_includes classified_jobs, "skipped_tests_build"
   end
 
@@ -64,6 +71,7 @@ class GitlabCiAuditorTest < Minitest::Test
     assert_equal 1, report[:summary][:resolved_downstream_pipelines]
     assert_equal "complete", report[:summary][:analysis_scope]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "unit_tests" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "coverage_report" }[:status]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "sast" }[:status]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "scan" }[:status]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "deploy_test" }[:status]
@@ -75,6 +83,30 @@ class GitlabCiAuditorTest < Minitest::Test
     assert_includes packs, "balanced"
     assert_includes packs, "strict"
     assert_includes packs, "library"
+  end
+
+  def test_changes_rules_are_evaluated_against_changed_files
+    pipeline = @loader.load(fixture("changes_rules.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    app_scenario = report[:scenarios].find { |scenario| scenario[:changed_files].include?("src/app.rb") }
+    docs_scenario = report[:scenarios].find { |scenario| scenario[:changed_files].include?("docs/readme.md") }
+
+    assert_includes app_scenario[:jobs].map { |job| job[:name] }, "app_quality"
+    refute_includes app_scenario[:jobs].map { |job| job[:name] }, "docs_lint"
+    assert_includes docs_scenario[:jobs].map { |job| job[:name] }, "docs_lint"
+    refute_includes docs_scenario[:jobs].map { |job| job[:name] }, "app_quality"
+  end
+
+  def test_external_downstream_can_be_resolved_via_snapshot_manifest
+    loader = GitlabCiAuditor::PipelineLoader.new(snapshot_file: fixture("external_project_snapshots.json"))
+    pipeline = loader.load(fixture("external_project_root.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    assert_equal 2, report[:summary][:total_pipeline_files]
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "unit_tests" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "coverage_report" }[:status]
   end
 
   def test_library_policy_pack_can_disable_test_deploy_requirement
@@ -105,6 +137,20 @@ class GitlabCiAuditorTest < Minitest::Test
     assert_includes html, "Policy Pack:"
     refute_includes html, "Przegląd"
     refute_includes html, "Raport SSDLC"
+  end
+
+  def test_renderer_supports_csv_pdf_and_json_bundle_exports
+    pipeline = @loader.load(fixture("good_pipeline.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    renderer = GitlabCiAuditor::ReportRenderer.new(report)
+
+    csv_output = renderer.render_csv
+    pdf_output = renderer.render_pdf
+    bundle_output = renderer.render_json_bundle
+
+    assert_includes csv_output, "row_type,section,key,label,status,severity,score,max_score,summary,issue,recommendation,how_to_fix,evidence"
+    assert pdf_output.start_with?("%PDF-1.4")
+    assert_includes bundle_output, "\"format\": \"json_bundle\""
   end
 
   private

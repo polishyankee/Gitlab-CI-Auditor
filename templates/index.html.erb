@@ -401,6 +401,12 @@
             </label>
 
             <label>
+              Downstream snapshot manifest
+              <input type="text" name="snapshot_file_path" placeholder="/Users/.../.gitlab-ci-downstream-snapshots.json" value="<%= ERB::Util.html_escape(default_snapshot_file) %>">
+              <span class="field-note">Optional JSON manifest that maps external or artifact-based child pipelines to imported local YAML snapshots.</span>
+            </label>
+
+            <label>
               Policy pack
               <select name="policy_pack" <%= custom_policy_locked ? "disabled" : "" %>>
                 <% available_policy_packs.each do |pack| %>
@@ -433,6 +439,11 @@
           <strong>HTML Report</strong>
           <span>Report with scoring categories, SSDLC gaps, security findings, and remediation guidance.</span>
           <code>./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format html --output report.html</code>
+        </article>
+        <article class="meta-card">
+          <strong>Exports</strong>
+          <span>Alternative export formats for integrations and audit handoff.</span>
+          <code>./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format csv|pdf|json-bundle</code>
         </article>
         <article class="meta-card">
           <strong>GUI</strong>

@@ -1,0 +1,11 @@
+{
+  "snapshots": [
+    {
+      "kind": "external_project",
+      "project": "group/platform-child",
+      "file": "child.yml",
+      "ref": "main",
+      "snapshot": "external_snapshot_child.yml"
+    }
+  ]
+}

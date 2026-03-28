@@ -1,10 +1,11 @@
 module GitlabCiAuditor
   class Server
-    def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK)
+    def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil)
       @host = host
       @port = port
       @policy_path = policy_path
       @policy_pack = policy_pack
+      @snapshot_file = snapshot_file
     end
 
     def start
@@ -19,6 +20,7 @@ module GitlabCiAuditor
         available_policy_packs = PolicyLoader.available_packs
         selected_policy_pack = @policy_pack
         custom_policy_locked = !@policy_path.nil?
+        default_snapshot_file = @snapshot_file.to_s
         res["Content-Type"] = "text/html; charset=utf-8"
         res.body = ERB.new(File.read(File.join(GitlabCiAuditor.root_dir, "templates", "index.html.erb"))).result(binding)
       end
@@ -53,14 +55,17 @@ module GitlabCiAuditor
     private
 
     def analyze_request(req)
+      snapshot_file = req.query["snapshot_file_path"].to_s.strip
+      snapshot_file = @snapshot_file if snapshot_file.empty?
+
       if req.query["pipeline_path"] && !req.query["pipeline_path"].to_s.strip.empty?
         pipeline_path = File.expand_path(req.query["pipeline_path"].to_s.strip)
-        pipeline = PipelineLoader.new.load(pipeline_path)
+        pipeline = PipelineLoader.new(snapshot_file: snapshot_file.empty? ? nil : snapshot_file).load(pipeline_path)
       elsif req.query["pipeline_file"]
         file = req.query["pipeline_file"]
         temp_path = File.join(Dir.tmpdir, ".gitlab-ci-upload-#{Process.pid}-#{Time.now.to_i}.yml")
         File.write(temp_path, file.to_s)
-        pipeline = PipelineLoader.new.load(temp_path)
+        pipeline = PipelineLoader.new(snapshot_file: snapshot_file.empty? ? nil : snapshot_file).load(temp_path)
       else
         raise ArgumentError, "Provide a pipeline path or upload a `.gitlab-ci.yml` file"
       end

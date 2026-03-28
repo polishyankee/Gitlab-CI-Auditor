@@ -1,0 +1,15 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - orchestrate
+
+external_child:
+  stage: orchestrate
+  trigger:
+    project: group/platform-child
+    file: child.yml
+    branch: main
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

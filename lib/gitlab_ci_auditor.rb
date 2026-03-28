@@ -7,6 +7,7 @@ require "strscan"
 require "optparse"
 require "webrick"
 require "tmpdir"
+require "csv"
 
 module GitlabCiAuditor
   VERSION = "0.2.0".freeze

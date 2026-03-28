@@ -779,6 +779,12 @@
               <% if scenario[:status] == "skipped" %>
                 <p class="muted" style="margin: 12px 0 0;"><%= scenario[:reason] %></p>
               <% else %>
+                <% if scenario[:changed_files].any? %>
+                  <p class="muted" style="margin: 12px 0 0;"><strong>Changed files:</strong> <%= scenario[:changed_files].join(", ") %></p>
+                <% end %>
+                <% if scenario[:changes_context].is_a?(Hash) && scenario[:changes_context][:patterns].any? %>
+                  <p class="muted" style="margin: 8px 0 0;"><strong>Matched change patterns:</strong> <%= scenario[:changes_context][:patterns].join(", ") %></p>
+                <% end %>
                 <div class="controls">
                   <% scenario[:controls].each do |key, state| %>
                     <div class="control">

@@ -1,0 +1,26 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+
+app_quality:
+  stage: test
+  script:
+    - bundle exec rspec
+  artifacts:
+    paths:
+      - coverage/jacoco.xml
+  rules:
+    - changes:
+        paths:
+          - src/app.rb
+
+docs_lint:
+  stage: test
+  script:
+    - markdownlint docs/readme.md
+  rules:
+    - changes:
+        - docs/readme.md

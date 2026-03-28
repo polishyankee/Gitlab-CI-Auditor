@@ -1,9 +1,5 @@
-include:
-  - local: good_security.yml
-
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
 
 stages:
@@ -11,19 +7,27 @@ stages:
   - security
   - deploy
 
-default:
-  image: ruby:3.3.0
-
-.unit_template:
+unit_tests:
   stage: test
   script:
     - bundle exec rspec
   artifacts:
     paths:
       - coverage/jacoco.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
 
-unit_tests:
-  extends: .unit_template
+sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+artifact_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
   rules:
     - if: '$CI_COMMIT_BRANCH'
 

@@ -26,31 +26,40 @@ module GitlabCiAuditor
         format: "text",
         output: nil,
         policy: nil,
-        policy_pack: PolicyLoader::DEFAULT_PACK
+        policy_pack: PolicyLoader::DEFAULT_PACK,
+        snapshot_file: nil
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|html] [--output FILE] [--policy FILE] [--policy-pack NAME]"
-        opts.on("--format FORMAT", "text, json, html") { |value| options[:format] = value }
+        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]"
+        opts.on("--format FORMAT", "text, json, json-bundle, html, csv, pdf") { |value| options[:format] = value }
         opts.on("--output FILE", "Write report to file") { |value| options[:output] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
         opts.on("--policy-pack NAME", "Use a bundled policy pack (default: #{PolicyLoader::DEFAULT_PACK})") { |value| options[:policy_pack] = value }
+        opts.on("--snapshot-file FILE", "Load downstream snapshot mappings from JSON") { |value| options[:snapshot_file] = value }
       end
       parser.parse!(argv)
 
       path = argv.shift
       raise ArgumentError, "Pipeline path is required" unless path
+      raise ArgumentError, "PDF output requires --output FILE" if options[:format] == "pdf" && options[:output].nil?
 
       policy = load_policy(options)
-      pipeline = PipelineLoader.new.load(path)
+      pipeline = PipelineLoader.new(snapshot_file: options[:snapshot_file]).load(path)
       report = Analyzer.new(pipeline, policy).analyze
       renderer = ReportRenderer.new(report)
       output =
         case options[:format]
         when "json"
           JSON.pretty_generate(report)
+        when "json-bundle", "json_bundle", "bundle"
+          renderer.render_json_bundle
         when "html"
           renderer.render_html
+        when "csv"
+          renderer.render_csv
+        when "pdf"
+          renderer.render_pdf
         else
           renderer.render_text
         end
@@ -68,20 +77,28 @@ module GitlabCiAuditor
         host: "127.0.0.1",
         port: 4567,
         policy: nil,
-        policy_pack: PolicyLoader::DEFAULT_PACK
+        policy_pack: PolicyLoader::DEFAULT_PACK,
+        snapshot_file: nil
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME]"
+        opts.banner = "Usage: gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]"
         opts.on("--host HOST", "Bind host") { |value| options[:host] = value }
         opts.on("--port PORT", Integer, "Bind port") { |value| options[:port] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
         opts.on("--policy-pack NAME", "Default bundled policy pack (default: #{PolicyLoader::DEFAULT_PACK})") { |value| options[:policy_pack] = value }
+        opts.on("--snapshot-file FILE", "Default downstream snapshot manifest for GUI analysis") { |value| options[:snapshot_file] = value }
       end
       parser.parse!(argv)
 
       puts "Serving GitLab CI auditor on http://#{options[:host]}:#{options[:port]}"
-      Server.new(host: options[:host], port: options[:port], policy_path: options[:policy], policy_pack: options[:policy_pack]).start
+      Server.new(
+        host: options[:host],
+        port: options[:port],
+        policy_path: options[:policy],
+        policy_pack: options[:policy_pack],
+        snapshot_file: options[:snapshot_file]
+      ).start
     end
 
     def list_packs
@@ -99,8 +116,8 @@ module GitlabCiAuditor
     def usage
       <<~TEXT
         Usage:
-          gitlab-ci-auditor scan PATH [--format text|json|html] [--output FILE] [--policy FILE] [--policy-pack NAME]
-          gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME]
+          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]
+          gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]
           gitlab-ci-auditor list-packs
       TEXT
     end

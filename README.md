@@ -5,12 +5,13 @@ Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expect
 ## What It Checks
 
 - unit test execution
+- coverage reporting
 - SAST coverage
 - artifact scanning or image scanning
 - automated deployment to a test environment
 - baseline security policy compliance
 - pipeline complexity and maintainability
-- active execution paths derived from `workflow`, `rules`, `only/except`, branches, and tags
+- active execution paths derived from `workflow`, `rules`, `rules:changes`, `only/except`, branches, and tags
 
 ## Scan Scope
 
@@ -19,6 +20,7 @@ The auditor evaluates the full local pipeline graph, not just the root file:
 - recursively expands local `include`
 - scans child/downstream pipelines started by `trigger: include: - local: ...`
 - follows nested local child pipelines as long as the referenced files are available locally
+- can import external or artifact-based downstream pipelines through local YAML snapshot manifests
 
 If a downstream pipeline depends on `project`, `artifact`, `template`, or another external mechanism, the report marks the analysis as partial and explains the gap with remediation guidance.
 
@@ -29,6 +31,8 @@ The unit-test control is considered satisfied not only by a dedicated test job, 
 - a Maven job runs `mvn test|verify|package|install|deploy` or `./mvnw ...` without `-DskipTests` and without `-Dmaven.test.skip`
 - a Gradle job runs `gradle` or `./gradlew` with `test|build|check` without `-x test` and without `--exclude-task test`
 - `artifacts` contains JaCoCo evidence such as `jacoco.exec` or `jacoco.xml`
+
+Coverage reporting is tracked separately from plain test execution. The auditor recognizes common artifacts such as JaCoCo, Cobertura, and LCOV outputs.
 
 ## Run
 
@@ -51,6 +55,24 @@ HTML report:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format html --output report.html
 ```
 
+CSV export:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format csv --output report.csv
+```
+
+PDF export:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format pdf --output report.pdf
+```
+
+JSON bundle export:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format json-bundle --output report.bundle.json
+```
+
 GUI:
 
 ```bash
@@ -69,6 +91,12 @@ Use a bundled pack:
 
 ```bash
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --policy-pack strict
+```
+
+Use imported downstream snapshots:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --snapshot-file .gitlab-ci-downstream-snapshots.json
 ```
 
 Or provide a custom JSON policy file:

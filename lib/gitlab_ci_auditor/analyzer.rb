@@ -1,7 +1,7 @@
 module GitlabCiAuditor
   class Analyzer
     DEFAULT_POLICY = GitlabCiAuditor::PolicyLoader.load
-    CONTROL_KEYS = %i[unit_tests sast scan deploy_test].freeze
+    CONTROL_KEYS = %i[unit_tests coverage_report sast scan deploy_test].freeze
 
     class ScenarioBuilder
       BASE_BRANCHES = [
@@ -20,6 +20,7 @@ module GitlabCiAuditor
 
       def build
         expressions = collect_rule_expressions
+        change_groups = collect_change_groups
         default_branch = infer_default_branch(expressions)
         branches = (BASE_BRANCHES + discovered_branches(expressions) + [default_branch]).compact.uniq
         sources = discovered_sources(expressions)
@@ -40,12 +41,9 @@ module GitlabCiAuditor
         scenarios << build_branch_scenario("api", default_branch, default_branch) if sources.include?("api")
         scenarios << build_tag_scenario(default_branch)
 
-        if uses_changes_rules?
+        if change_groups.any?
           scenarios = scenarios.flat_map do |scenario|
-            [
-              scenario.merge(id: "#{scenario[:id]}-changes", label: "#{scenario[:label]} + changes", changes_match: true),
-              scenario.merge(id: "#{scenario[:id]}-nochanges", label: "#{scenario[:label]} without changes", changes_match: false)
-            ]
+            build_change_variants(scenario, change_groups)
           end
         end
 
@@ -73,13 +71,105 @@ module GitlabCiAuditor
         expressions
       end
 
-      def uses_changes_rules?
-        pipeline_list(@pipeline).any? do |pipeline|
-          Array(pipeline.workflow["rules"]).any? { |rule| rule.is_a?(Hash) && rule.key?("changes") } ||
-            pipeline.jobs.values.any? do |job|
-              Array(job["rules"]).any? { |rule| rule.is_a?(Hash) && rule.key?("changes") }
+      def collect_change_groups
+        groups = []
+
+        pipeline_list(@pipeline).each do |pipeline|
+          Array(pipeline.workflow["rules"]).each_with_index do |rule, index|
+            next unless rule.is_a?(Hash) && rule.key?("changes")
+
+            append_change_group(groups, rule["changes"], "workflow", index, pipeline.base_dir)
+          end
+
+          pipeline.jobs.each do |job_name, job|
+            Array(job["rules"]).each_with_index do |rule, index|
+              next unless rule.is_a?(Hash) && rule.key?("changes")
+
+              append_change_group(groups, rule["changes"], "job #{job_name}", index, pipeline.base_dir)
             end
+          end
         end
+
+        groups.uniq { |group| group[:fingerprint] }
+      end
+
+      def append_change_group(groups, changes_value, origin, index, base_dir)
+        patterns = extract_change_patterns(changes_value)
+        return if patterns.empty?
+
+        compare_to = changes_value.is_a?(Hash) ? changes_value["compare_to"].to_s : nil
+        groups << {
+          origin: origin,
+          index: index,
+          patterns: patterns,
+          compare_to: compare_to,
+          sample_files: sample_changed_files(patterns, base_dir),
+          fingerprint: "#{origin}|#{compare_to}|#{patterns.join('|')}"
+        }
+      end
+
+      def extract_change_patterns(changes_value)
+        case changes_value
+        when Hash
+          GitlabCiAuditor.normalize_array(changes_value["paths"] || changes_value[:paths] || changes_value["changes"])
+        else
+          GitlabCiAuditor.normalize_array(changes_value)
+        end
+      end
+
+      def build_change_variants(scenario, change_groups)
+        matching_variants = change_groups.map.with_index do |group, index|
+          sample_files = group[:sample_files]
+          label_suffix = sample_files.any? ? sample_files.join(", ") : group[:patterns].first
+          compare_suffix = group[:compare_to].to_s.empty? ? "" : " vs #{group[:compare_to]}"
+          scenario.merge(
+            id: "#{scenario[:id]}-changes-#{index}",
+            label: "#{scenario[:label]} + changes #{label_suffix}#{compare_suffix}",
+            changed_files: sample_files,
+            changes_context: {
+              origin: group[:origin],
+              patterns: group[:patterns],
+              compare_to: group[:compare_to]
+            }
+          )
+        end
+
+        matching_variants + [
+          scenario.merge(
+            id: "#{scenario[:id]}-nochanges",
+            label: "#{scenario[:label]} + no matching changes",
+            changed_files: [],
+            changes_context: {
+              origin: "none",
+              patterns: [],
+              compare_to: nil
+            }
+          )
+        ]
+      end
+
+      def sample_changed_files(patterns, base_dir)
+        patterns.map { |pattern| sample_file_for_pattern(pattern, base_dir) }.compact.uniq.first(3)
+      end
+
+      def sample_file_for_pattern(pattern, base_dir)
+        normalized = pattern.to_s.strip.sub(%r{\A\./}, "")
+        return if normalized.empty?
+
+        matches = Dir.glob(File.join(base_dir, normalized), File::FNM_EXTGLOB | File::FNM_DOTMATCH).reject { |path| File.directory?(path) }
+        return matches.first.sub(%r{\A#{Regexp.escape(base_dir)}/?}, "") if matches.any?
+
+        synthetic = normalized.dup
+        synthetic = synthetic.sub(/\{([^}]+)\}/) { Regexp.last_match(1).split(",").first.to_s }
+        synthetic = synthetic.gsub("**/", "src/")
+        synthetic = synthetic.gsub("*", "sample")
+        synthetic = synthetic.gsub("?", "x")
+        synthetic = synthetic.gsub(/\[[^\]]+\]/, "a")
+        synthetic = synthetic.gsub(/[{}]/, "")
+        synthetic = synthetic.sub(%r{\A/+}, "")
+        synthetic = "src/sample.txt" if synthetic.empty?
+        synthetic += "/sample.txt" if synthetic.end_with?("/")
+        synthetic
       end
 
       def pipeline_list(pipeline, seen = {})
@@ -163,7 +253,8 @@ module GitlabCiAuditor
           branch: branch,
           tag: nil,
           default_branch: default_branch,
-          changes_match: true,
+          changed_files: [],
+          changes_context: nil,
           variables: build_variables(source: source, branch: branch, tag: nil, default_branch: default_branch, mr_target: nil)
         }
       end
@@ -177,7 +268,8 @@ module GitlabCiAuditor
           branch: branch,
           tag: nil,
           default_branch: default_branch,
-          changes_match: true,
+          changed_files: [],
+          changes_context: nil,
           variables: build_variables(
             source: "merge_request_event",
             branch: branch,
@@ -197,7 +289,8 @@ module GitlabCiAuditor
           branch: nil,
           tag: tag,
           default_branch: default_branch,
-          changes_match: true,
+          changed_files: [],
+          changes_context: nil,
           variables: build_variables(source: "push", branch: nil, tag: tag, default_branch: default_branch, mr_target: nil)
         }
       end
@@ -234,7 +327,9 @@ module GitlabCiAuditor
             id: scenario[:id],
             label: scenario[:label],
             status: "skipped",
-            reason: "workflow rules prevented pipeline creation"
+            reason: "workflow rules prevented pipeline creation",
+            changed_files: Array(scenario[:changed_files]),
+            changes_context: scenario[:changes_context]
           }
         end
       end
@@ -311,6 +406,8 @@ module GitlabCiAuditor
         source: scenario[:source],
         branch: scenario[:branch],
         tag: scenario[:tag],
+        changed_files: Array(scenario[:changed_files]),
+        changes_context: scenario[:changes_context],
         status: scenario_status(controls),
         jobs: active_jobs,
         downstream_warnings: active_jobs.flat_map { |job| Array(job[:downstream_warnings]) }.uniq,
@@ -423,6 +520,7 @@ module GitlabCiAuditor
 
       classifications = []
       classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
+      classifications << "coverage_report" if coverage_report_job?(artifact_strings)
       classifications << "sast" if sast_job?(text)
       classifications << "artifact_scan" if artifact_scan_job?(text)
       classifications << "image_scan" if image_scan_job?(text)
@@ -432,12 +530,18 @@ module GitlabCiAuditor
     end
 
     def unit_test_job?(script_lines, artifact_strings, text)
-      return true if jacoco_artifacts?(artifact_strings)
+      return true if coverage_report_job?(artifact_strings)
       return true if explicit_unit_test_command?(text)
 
       normalized_lines = script_lines.map(&:downcase)
       normalized_lines.any? do |line|
         maven_command_runs_tests?(line) || gradle_command_runs_tests?(line)
+      end
+    end
+
+    def coverage_report_job?(artifact_strings)
+      artifact_strings.any? do |entry|
+        entry.to_s.downcase.match?(/jacoco(?:\.exec|\.xml)?|site\/jacoco|jacoco\/.*\.xml|cobertura(?:-coverage)?\.xml|lcov\.info|coverage\/.*\.(xml|exec|info)/)
       end
     end
 
@@ -466,6 +570,7 @@ module GitlabCiAuditor
     def scenario_controls(active_jobs)
       controls = {
         unit_tests: control_required?(:unit_tests) ? control_state_for(active_jobs, "unit_tests") : disabled_control("Disabled by the selected policy pack"),
+        coverage_report: control_required?(:coverage_report) ? control_state_for(active_jobs, "coverage_report") : disabled_control("Disabled by the selected policy pack"),
         sast: control_required?(:sast) ? control_state_for(active_jobs, "sast") : disabled_control("Disabled by the selected policy pack"),
         scan: control_required?(:scan) ? scan_control_state(active_jobs) : disabled_control("Disabled by the selected policy pack"),
         deploy_test: control_required?(:deploy_test) ? control_state_for(active_jobs, "deploy_test") : disabled_control("Disabled by the selected policy pack")
@@ -537,6 +642,7 @@ module GitlabCiAuditor
       summary = {
         fully_compliant: 0,
         unit_tests: { pass: 0, warn: 0, missing: 0, disabled: 0 },
+        coverage_report: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         sast: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         scan: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         deploy_test: { pass: 0, warn: 0, missing: 0, disabled: 0 }
@@ -556,6 +662,7 @@ module GitlabCiAuditor
       total = [active_scenarios.size, 1].max.to_f
       fully_compliant = coverage[:fully_compliant] / total
       unit_tests_ratio = ratio_for(coverage[:unit_tests])
+      coverage_report_ratio = ratio_for(coverage[:coverage_report])
       sast_ratio = ratio_for(coverage[:sast])
       scan_ratio = ratio_for(coverage[:scan])
       deploy_ratio = ratio_for(coverage[:deploy_test])
@@ -564,7 +671,8 @@ module GitlabCiAuditor
 
       [
         category("execution_path_coverage", "Execution Path Coverage", 20, fully_compliant, "#{coverage[:fully_compliant]}/#{active_scenarios.size} active scenarios satisfy the selected SSDLC policy pack"),
-        category("unit_tests", "Unit Tests", 15, unit_tests_ratio, status_summary(coverage[:unit_tests]), required: control_required?(:unit_tests)),
+        category("unit_tests", "Unit Test Execution", 10, unit_tests_ratio, status_summary(coverage[:unit_tests]), required: control_required?(:unit_tests)),
+        category("coverage_report", "Coverage Reporting", 5, coverage_report_ratio, status_summary(coverage[:coverage_report]), required: control_required?(:coverage_report)),
         category("sast", "SAST", 15, sast_ratio, status_summary(coverage[:sast]), required: control_required?(:sast)),
         category("scan", "Artifact/Image Scanning", 15, scan_ratio, status_summary(coverage[:scan]), required: control_required?(:scan)),
         category("deploy_test", "Automated Test Deployment", 15, deploy_ratio, status_summary(coverage[:deploy_test]), required: control_required?(:deploy_test)),
@@ -639,7 +747,10 @@ module GitlabCiAuditor
     end
 
     def control_required?(key)
-      @policy.fetch("required_controls", {}).fetch(key.to_s, true)
+      defaults = {
+        "coverage_report" => false
+      }
+      @policy.fetch("required_controls", {}).fetch(key.to_s, defaults.fetch(key.to_s, true))
     end
 
     def required_control_keys
@@ -894,9 +1005,7 @@ module GitlabCiAuditor
     end
 
     def jacoco_artifacts?(artifact_strings)
-      artifact_strings.any? do |entry|
-        entry.to_s.downcase.match?(/jacoco(?:\.exec|\.xml)?|site\/jacoco|jacoco\/.*\.xml/)
-      end
+      coverage_report_job?(artifact_strings)
     end
 
     def explicit_unit_test_command?(text)
@@ -932,6 +1041,7 @@ module GitlabCiAuditor
       items << "No inline secrets were detected in the variables section" if security_findings.none? { |finding| finding[:title].include?("Sensitive variable") }
       items << "Images are pinned instead of relying on latest" if security_findings.none? { |finding| finding[:title].include?("latest") }
       items << "At least some execution scenarios achieve full SSDLC coverage" if active_scenarios.any? { |scenario| scenario[:status] == "pass" }
+      items << "Coverage artifacts are published for supported scenarios" if control_required?(:coverage_report) && active_scenarios.any? { |scenario| scenario[:controls][:coverage_report][:status] == "pass" }
       items << "Local child/downstream pipelines are included in the analysis scope" if resolved_downstream_references.any?
       items << "Pipeline complexity remains under control" if maintainability[:score] >= 7
       items.uniq
@@ -941,6 +1051,7 @@ module GitlabCiAuditor
       items = []
 
       items << "Add a dedicated unit-test job or run tests inside the build job without skip flags and publish JaCoCo evidence" if control_required?(:unit_tests) && coverage[:unit_tests][:missing].positive?
+      items << "Publish explicit coverage artifacts such as JaCoCo, Cobertura, or LCOV so coverage reporting is visible per scenario" if control_required?(:coverage_report) && (coverage[:coverage_report][:missing].positive? || coverage[:coverage_report][:warn].positive?)
       items << "Add enforced SAST without allow_failure, ideally through a GitLab template or a dedicated scanner job" if control_required?(:sast) && (coverage[:sast][:missing].positive? || coverage[:sast][:warn].positive?)
       items << "Add artifact scanning or image scanning based on the build type and treat the result as a gate" if control_required?(:scan) && (coverage[:scan][:missing].positive? || coverage[:scan][:warn].positive?)
       items << "Automate deployment to a test environment and declare it explicitly in the environment section" if control_required?(:deploy_test) && (coverage[:deploy_test][:missing].positive? || coverage[:deploy_test][:warn].positive?)
@@ -963,6 +1074,7 @@ module GitlabCiAuditor
     def build_ssdlc_findings(active_scenarios, coverage, inactive_scenarios)
       findings = []
       findings.concat(control_findings(:unit_tests, active_scenarios, coverage[:unit_tests])) if control_required?(:unit_tests)
+      findings.concat(control_findings(:coverage_report, active_scenarios, coverage[:coverage_report])) if control_required?(:coverage_report)
       findings.concat(control_findings(:sast, active_scenarios, coverage[:sast])) if control_required?(:sast)
       findings.concat(control_findings(:scan, active_scenarios, coverage[:scan])) if control_required?(:scan)
       findings.concat(control_findings(:deploy_test, active_scenarios, coverage[:deploy_test])) if control_required?(:deploy_test)
@@ -1034,10 +1146,18 @@ module GitlabCiAuditor
         unit_tests: {
           title: "Unit test gate is not complete",
           issue: lambda { |counts, total|
-            "#{counts[:missing]}/#{total} scenarios do not show unit test execution, and #{counts[:warn]} scenarios only have non-enforcing test coverage."
+            "#{counts[:missing]}/#{total} scenarios do not show unit test execution, and #{counts[:warn]} scenarios only run tests in a non-enforcing context."
           },
           recommendation: "Enforce unit test execution across every supported pipeline path.",
-          how_to_fix: "Add a `unit_tests` job or run tests through `mvn verify|package|install` or `./gradlew build|check` without skip flags. Publish `jacoco.exec` or `jacoco.xml` in `artifacts` to prove coverage execution."
+          how_to_fix: "Add a `unit_tests` job or run tests through `mvn verify|package|install` or `./gradlew build|check` without skip flags. Keep `allow_failure` disabled so the result acts as a gate."
+        },
+        coverage_report: {
+          title: "Coverage reporting is not complete",
+          issue: lambda { |counts, total|
+            "#{counts[:missing]}/#{total} scenarios do not publish test coverage artifacts, and #{counts[:warn]} scenarios only publish them in a non-enforcing context."
+          },
+          recommendation: "Publish explicit coverage artifacts independently from test execution detection.",
+          how_to_fix: "Generate and publish coverage outputs such as `jacoco.exec`, `jacoco.xml`, `cobertura-coverage.xml`, or `lcov.info` in job artifacts so the auditor can distinguish coverage reporting from plain test execution."
         },
         sast: {
           title: "SAST gate is not complete",
@@ -1177,7 +1297,7 @@ module GitlabCiAuditor
     def graph_job_strengths(pipeline, job_name, job, script_lines, artifact_strings, environment_name, classifications, trigger_refs)
       items = []
       items << "Runs unit tests" if classifications.include?("unit_tests")
-      items << "Publishes JaCoCo coverage evidence" if jacoco_artifacts?(artifact_strings)
+      items << "Publishes coverage evidence" if classifications.include?("coverage_report")
       items << "Provides SAST coverage" if classifications.include?("sast")
       items << "Scans artifacts or dependencies" if classifications.include?("artifact_scan")
       items << "Scans container images" if classifications.include?("image_scan")

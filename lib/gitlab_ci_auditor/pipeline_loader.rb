@@ -27,7 +27,14 @@ module GitlabCiAuditor
       keyword_init: true
     )
 
+    def initialize(snapshot_file: nil)
+      @snapshot_file = snapshot_file
+      @snapshot_catalog = []
+      @snapshot_manifest_path = nil
+    end
+
     def load(path)
+      prepare_snapshot_catalog(path)
       load_internal(path, [])
     end
 
@@ -119,6 +126,9 @@ module GitlabCiAuditor
 
       case trigger
       when String
+        snapshot_reference = build_snapshot_downstream_reference(job_name, { "project" => trigger }, pipeline, graph_stack, warnings, "external_project")
+        return snapshot_reference if snapshot_reference
+
         warning = "Skipped external downstream trigger #{trigger.inspect} in #{pipeline.path} job #{job_name}"
         warnings << warning
         [DownstreamReference.new(
@@ -131,6 +141,9 @@ module GitlabCiAuditor
         if trigger["include"]
           extract_trigger_include_references(job_name, trigger["include"], pipeline, graph_stack, warnings)
         elsif trigger["project"]
+          snapshot_reference = build_snapshot_downstream_reference(job_name, trigger, pipeline, graph_stack, warnings, "external_project")
+          return snapshot_reference if snapshot_reference
+
           warning = "Skipped multi-project downstream trigger #{trigger.inspect} in #{pipeline.path} job #{job_name}"
           warnings << warning
           [DownstreamReference.new(
@@ -165,6 +178,9 @@ module GitlabCiAuditor
           elsif entry["file"] && !entry["project"]
             build_local_downstream_reference(job_name, entry["file"], pipeline, graph_stack, warnings, "local_child", entry)
           elsif entry["artifact"]
+            snapshot_reference = build_snapshot_downstream_reference(job_name, entry, pipeline, graph_stack, warnings, "artifact_child")
+            next snapshot_reference if snapshot_reference
+
             warning = "Skipped artifact-based downstream trigger #{entry.inspect} in #{pipeline.path} job #{job_name}"
             warnings << warning
             [DownstreamReference.new(
@@ -174,6 +190,9 @@ module GitlabCiAuditor
               warning: warning
             )]
           elsif entry["project"]
+            snapshot_reference = build_snapshot_downstream_reference(job_name, entry, pipeline, graph_stack, warnings, "external_project")
+            next snapshot_reference if snapshot_reference
+
             warning = "Skipped multi-project child pipeline #{entry.inspect} in #{pipeline.path} job #{job_name}"
             warnings << warning
             [DownstreamReference.new(
@@ -248,6 +267,129 @@ module GitlabCiAuditor
         pipeline_path: downstream_path,
         pipeline: child_pipeline
       )]
+    end
+
+    def prepare_snapshot_catalog(root_path)
+      manifest_path =
+        if @snapshot_file
+          File.expand_path(@snapshot_file)
+        else
+          detect_snapshot_manifest(root_path)
+        end
+
+      if @snapshot_file && !File.exist?(manifest_path)
+        raise ArgumentError, "Snapshot manifest not found: #{manifest_path}"
+      end
+
+      if manifest_path && File.exist?(manifest_path)
+        parsed = JSON.parse(File.read(manifest_path))
+        @snapshot_catalog = Array(parsed["snapshots"])
+        @snapshot_manifest_path = manifest_path
+      else
+        @snapshot_catalog = []
+        @snapshot_manifest_path = nil
+      end
+    rescue JSON::ParserError => error
+      raise ArgumentError, "Failed to parse snapshot manifest #{manifest_path}: #{error.message}"
+    end
+
+    def detect_snapshot_manifest(root_path)
+      base_dir = File.dirname(File.expand_path(root_path))
+      candidates = [
+        File.join(base_dir, ".gitlab-ci-downstream-snapshots.json"),
+        File.join(base_dir, "downstream_snapshots.json")
+      ]
+      candidates.find { |candidate| File.exist?(candidate) }
+    end
+
+    def build_snapshot_downstream_reference(job_name, trigger_source, pipeline, graph_stack, warnings, kind)
+      snapshot_entry = find_snapshot_entry(kind, job_name, trigger_source)
+      return nil unless snapshot_entry
+
+      snapshot_value = snapshot_entry["snapshot"].to_s
+      if snapshot_value.strip.empty?
+        warning = "Snapshot entry for #{kind} in job #{job_name} does not declare a snapshot path"
+        warnings << warning
+        return [DownstreamReference.new(
+          trigger_job_name: job_name,
+          kind: "#{kind}_snapshot_missing",
+          source: trigger_source,
+          warning: warning
+        )]
+      end
+
+      snapshot_path = File.expand_path(snapshot_value, File.dirname(@snapshot_manifest_path || pipeline.base_dir))
+      if graph_stack.include?(snapshot_path)
+        warning = "Detected downstream pipeline cycle #{(graph_stack + [snapshot_path]).join(' -> ')}"
+        warnings << warning
+        return [DownstreamReference.new(
+          trigger_job_name: job_name,
+          kind: "#{kind}_snapshot_cycle",
+          source: trigger_source,
+          pipeline_path: snapshot_path,
+          warning: warning
+        )]
+      end
+
+      unless File.exist?(snapshot_path)
+        warning = "Snapshot file #{snapshot_value} referenced for #{kind} in job #{job_name} does not exist"
+        warnings << warning
+        return [DownstreamReference.new(
+          trigger_job_name: job_name,
+          kind: "#{kind}_snapshot_missing",
+          source: trigger_source,
+          pipeline_path: snapshot_path,
+          warning: warning
+        )]
+      end
+
+      snapshot_pipeline = load_internal(snapshot_path, graph_stack)
+      [DownstreamReference.new(
+        trigger_job_name: job_name,
+        kind: "#{kind}_snapshot",
+        source: trigger_source,
+        pipeline_path: snapshot_path,
+        pipeline: snapshot_pipeline
+      )]
+    end
+
+    def find_snapshot_entry(kind, job_name, trigger_source)
+      @snapshot_catalog.find do |entry|
+        snapshot_kind_match?(entry, kind) &&
+          snapshot_job_match?(entry, job_name) &&
+          snapshot_trigger_match?(entry, kind, trigger_source)
+      end
+    end
+
+    def snapshot_kind_match?(entry, kind)
+      aliases = {
+        "external_project" => %w[external_project project],
+        "artifact_child" => %w[artifact_child artifact]
+      }
+      Array(aliases.fetch(kind, [kind])).include?(entry["kind"].to_s)
+    end
+
+    def snapshot_job_match?(entry, job_name)
+      expected = entry["trigger_job_name"].to_s
+      expected.empty? || expected == job_name
+    end
+
+    def snapshot_trigger_match?(entry, kind, trigger_source)
+      case kind
+      when "external_project"
+        project_matches = entry["project"].to_s.empty? || entry["project"].to_s == trigger_source["project"].to_s
+        file_value = trigger_source["file"] || trigger_source["local"]
+        file_matches = entry["file"].to_s.empty? || entry["file"].to_s == file_value.to_s
+        ref_value = trigger_source["branch"] || trigger_source["ref"]
+        ref_matches = entry["ref"].to_s.empty? || entry["ref"].to_s == ref_value.to_s
+        project_matches && file_matches && ref_matches
+      when "artifact_child"
+        artifact_matches = entry["artifact"].to_s.empty? || entry["artifact"].to_s == trigger_source["artifact"].to_s
+        job_matches = entry["job"].to_s.empty? || entry["job"].to_s == trigger_source["job"].to_s
+        artifact_matches && job_matches
+      else
+        false
+      end
     end
 
     def merge_local_include(relative_path, current_path, stack, merged_includes, include_metadata, warnings)
