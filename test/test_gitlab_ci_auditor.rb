@@ -1,8 +1,6 @@
-require "minitest/autorun"
-$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
-require "gitlab_ci_auditor"
+require_relative "test_helper"
 
-class GitlabCiAuditorTest < Minitest::Test
+class GitlabCiAuditorIntegrationTest < Minitest::Test
   def setup
     @loader = GitlabCiAuditor::PipelineLoader.new
   end
@@ -151,15 +149,5 @@ class GitlabCiAuditorTest < Minitest::Test
     assert_includes csv_output, "row_type,section,key,label,status,severity,score,max_score,summary,issue,recommendation,how_to_fix,evidence"
     assert pdf_output.start_with?("%PDF-1.4")
     assert_includes bundle_output, "\"format\": \"json_bundle\""
-  end
-
-  private
-
-  def fixture(name)
-    File.expand_path(File.join("fixtures", name), __dir__)
-  end
-
-  def repo_pipeline
-    File.expand_path(File.join("..", "..", "..", ".gitlab-ci.yml"), __dir__)
   end
 end

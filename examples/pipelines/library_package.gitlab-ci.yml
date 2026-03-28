@@ -1,0 +1,42 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - security
+  - publish
+
+default:
+  image: gradle:8.7.0-jdk17
+
+build_and_test:
+  stage: build
+  script:
+    - ./gradlew clean build jacocoTestReport
+  artifacts:
+    paths:
+      - build/reports/jacoco/test/jacocoTestReport.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dependency_scan:
+  stage: security
+  script:
+    - grype .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+publish_package:
+  stage: publish
+  script:
+    - ./gradlew publish
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

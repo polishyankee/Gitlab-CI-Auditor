@@ -455,6 +455,34 @@
           <span>Bundled policy packs let you switch between balanced, strict, and library-oriented SSDLC baselines.</span>
           <code>./bin/gitlab-ci-auditor list-packs</code>
         </article>
+        <article class="meta-card">
+          <strong>Examples</strong>
+          <span>Generate repository-backed sample reports for compliant, library, legacy, and downstream snapshot cases.</span>
+          <code>./scripts/generate_example_reports.sh</code>
+        </article>
+      </section>
+
+      <section class="meta">
+        <article class="meta-card">
+          <strong>Compliant Service</strong>
+          <span>Balanced baseline with unit tests, coverage, SAST, artifact scanning, and automated test deployment.</span>
+          <code>examples/pipelines/compliant_service.gitlab-ci.yml</code>
+        </article>
+        <article class="meta-card">
+          <strong>Library Package</strong>
+          <span>Library-pack example with tests, coverage, SAST, and scanning, but no test deployment step.</span>
+          <code>examples/pipelines/library_package.gitlab-ci.yml</code>
+        </article>
+        <article class="meta-card">
+          <strong>Legacy Monolith</strong>
+          <span>Intentional anti-pattern sample with skipped tests, latest image usage, and manual test deployment.</span>
+          <code>examples/pipelines/legacy_monolith.gitlab-ci.yml</code>
+        </article>
+        <article class="meta-card">
+          <strong>Snapshot Downstream</strong>
+          <span>External child pipeline resolved through a local snapshot manifest.</span>
+          <code>examples/pipelines/snapshot_root.gitlab-ci.yml</code>
+        </article>
       </section>
     </main>
   </body>

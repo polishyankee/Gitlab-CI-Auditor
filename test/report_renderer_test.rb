@@ -1,0 +1,26 @@
+require_relative "test_helper"
+
+class ReportRendererTest < Minitest::Test
+  def setup
+    loader = GitlabCiAuditor::PipelineLoader.new
+    pipeline = loader.load(fixture("good_pipeline.yml"))
+    @report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    @renderer = GitlabCiAuditor::ReportRenderer.new(@report)
+  end
+
+  def test_render_text_includes_policy_pack_and_scope
+    text = @renderer.render_text
+
+    assert_includes text, "Policy Pack:"
+    assert_includes text, "Scope:"
+    assert_includes text, "Categories:"
+  end
+
+  def test_render_json_bundle_contains_report_and_exporter_meta
+    payload = JSON.parse(@renderer.render_json_bundle)
+
+    assert_equal "json_bundle", payload.dig("meta", "format")
+    assert_equal @report[:summary][:overall_score], payload.dig("report", "summary", "overall_score")
+    assert_includes payload.dig("exports", "text"), "GitLab CI SSDLC Audit"
+  end
+end

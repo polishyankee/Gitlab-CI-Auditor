@@ -105,6 +105,33 @@ Or provide a custom JSON policy file:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --policy ./my-policy.json
 ```
 
+## Unit Tests
+
+Run the full application test suite with:
+
+```bash
+ruby -I lib:test test/run_all.rb
+```
+
+The suite includes direct tests for expression evaluation, policy loading, rule matching, pipeline loading, report rendering, integration scenarios, and example smoke coverage.
+
+## Examples
+
+Ready-made sample pipelines and reference reports live in [`examples/README.md`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/README.md).
+
+Included examples:
+
+- compliant service pipeline
+- library package pipeline for the `library` pack
+- intentionally weak legacy pipeline
+- snapshot-backed downstream pipeline
+
+Regenerate the example reports with:
+
+```bash
+./scripts/generate_example_reports.sh
+```
+
 ## Designed For Growth
 
 This repository is intended to keep evolving. The core extension points are:

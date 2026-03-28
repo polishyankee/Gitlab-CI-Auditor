@@ -1,0 +1,36 @@
+GitLab CI SSDLC Audit
+Pipeline: examples/pipelines/library_package.gitlab-ci.yml
+Score: 100/100 (A)
+Status: strong
+Policy Pack: Library / Package (policy_pack)
+Scope: complete (pipeline_files=1, downstream_resolved=0, downstream_unresolved=0)
+
+Categories:
+  - Execution Path Coverage: 20/20 [pass] 8/8 active scenarios satisfy the selected SSDLC policy pack
+  - Unit Test Execution: 10/10 [pass] 8 pass, 0 warn, 0 missing
+  - Coverage Reporting: 5/5 [pass] 8 pass, 0 warn, 0 missing
+  - SAST: 15/15 [pass] 8 pass, 0 warn, 0 missing
+  - Artifact/Image Scanning: 15/15 [pass] 8 pass, 0 warn, 0 missing
+  - Automated Test Deployment: 15/15 [disabled] Disabled by the selected policy pack
+  - Security Policies: 10/10 [pass] No material policy violations detected
+  - Maintainability and Complexity: 10/10 [pass] The pipeline is relatively easy to maintain
+
+Scenario Results:
+  - push -> main: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> master: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> develop: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> feature/audit-coverage: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> release/1.0.0: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> hotfix/urgent-fix: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - push -> test: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - merge_request_event feature/merge-request -> main: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=disabled]
+  - tag v1.0.0: skipped (workflow rules prevented pipeline creation)
+
+SSDLC Findings:
+  - [low] Some scenarios are blocked by workflow rules
+    issue: 1 scenarios do not create a pipeline because of `workflow:rules` or inherited control rules.
+    recommendation: Verify whether this behavior is intentional and whether it hides SSDLC blind spots.
+    how_to_fix: If a branch or source should be supported, add explicit `workflow:rules` and matching quality or security job rules.
+
+Recommendations:
+  - Review scenarios blocked by workflow rules if they should remain business-supported paths

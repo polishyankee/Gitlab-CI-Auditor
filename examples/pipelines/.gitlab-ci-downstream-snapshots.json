@@ -1,0 +1,11 @@
+{
+  "snapshots": [
+    {
+      "kind": "external_project",
+      "project": "platform/security-child",
+      "file": "child.gitlab-ci.yml",
+      "ref": "main",
+      "snapshot": "snapshot_external_child.yml"
+    }
+  ]
+}

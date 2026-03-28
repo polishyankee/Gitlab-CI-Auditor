@@ -79,7 +79,8 @@ module GitlabCiAuditor
     def parse_or
       left = parse_and
       while accept(:or)
-        left = truthy?(left) || truthy?(parse_and)
+        right = parse_and
+        left = truthy?(left) || truthy?(right)
       end
       left
     end
@@ -87,7 +88,8 @@ module GitlabCiAuditor
     def parse_and
       left = parse_comparison
       while accept(:and)
-        left = truthy?(left) && truthy?(parse_comparison)
+        right = parse_comparison
+        left = truthy?(left) && truthy?(right)
       end
       left
     end

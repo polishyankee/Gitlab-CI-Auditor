@@ -1,0 +1,30 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - security
+  - deploy
+
+sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+artifact_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+deploy_test:
+  stage: deploy
+  environment:
+    name: staging
+  script:
+    - kubectl apply -f k8s/staging.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

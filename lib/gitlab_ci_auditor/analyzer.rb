@@ -350,7 +350,7 @@ module GitlabCiAuditor
 
       {
         generated_at: Time.now.utc.iso8601,
-        pipeline_path: @pipeline.path,
+        pipeline_path: relative_pipeline_path(@pipeline.path),
         summary: {
           overall_score: overall_score,
           max_score: categories.sum { |category| category[:max_score] },

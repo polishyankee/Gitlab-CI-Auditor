@@ -1,0 +1,26 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - orchestrate
+
+build_and_test:
+  stage: build
+  script:
+    - mvn -B clean verify
+  artifacts:
+    paths:
+      - target/site/jacoco/jacoco.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+external_quality_flow:
+  stage: orchestrate
+  trigger:
+    project: platform/security-child
+    file: child.gitlab-ci.yml
+    branch: main
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

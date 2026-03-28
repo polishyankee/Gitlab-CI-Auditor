@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GitLab CI SSDLC Report</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --bg-accent: #010409;
+        --panel: #161b22;
+        --panel-soft: #0f1720;
+        --border: #30363d;
+        --border-strong: #3d444d;
+        --ink: #c9d1d9;
+        --muted: #8b949e;
+        --green: #2ea043;
+        --blue: #58a6ff;
+        --red: #f85149;
+        --yellow: #d29922;
+        --violet: #8957e5;
+        --shadow: 0 28px 80px rgba(1, 4, 9, 0.58);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(88, 166, 255, 0.16), transparent 22%),
+          radial-gradient(circle at top right, rgba(248, 81, 73, 0.14), transparent 18%),
+          linear-gradient(180deg, #0d1117, #010409);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(18px);
+        background: rgba(13, 17, 23, 0.84);
+        border-bottom: 1px solid rgba(48, 54, 61, 0.84);
+      }
+
+      .topbar-inner,
+      main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .topbar-inner {
+        min-height: 66px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .repo-strip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .pill,
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 7px 12px;
+        border: 1px solid var(--border);
+        background: rgba(110, 118, 129, 0.08);
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .badge {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .pass { color: #3fb950; background: rgba(63, 185, 80, 0.12); }
+      .warn { color: #d29922; background: rgba(210, 153, 34, 0.12); }
+      .fail { color: #f85149; background: rgba(248, 81, 73, 0.12); }
+      .skipped { color: #8b949e; background: rgba(139, 148, 158, 0.12); }
+      .disabled { color: #79c0ff; background: rgba(88, 166, 255, 0.12); }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand svg {
+        width: 24px;
+        height: 24px;
+        display: block;
+      }
+
+      main {
+        padding-top: 32px;
+        padding-bottom: 72px;
+      }
+
+      .hero,
+      .section {
+        background: linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(13, 17, 23, 0.98));
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 28px;
+        display: grid;
+        gap: 24px;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.8fr);
+        align-items: start;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      .hero h1 {
+        margin-top: 16px;
+        font-size: clamp(2.4rem, 4.6vw, 4.4rem);
+        line-height: 0.94;
+        letter-spacing: -0.04em;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .hero-copy p {
+        margin: 12px 0 0;
+        line-height: 1.7;
+        max-width: 72ch;
+      }
+
+      .brand-row {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .brand-card {
+        min-width: 152px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(110, 118, 129, 0.07);
+      }
+
+      .brand-card strong {
+        display: block;
+        margin-top: 10px;
+        color: #f0f6fc;
+      }
+
+      .brand-card span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .score {
+        padding: 22px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(31, 111, 235, 0.12), rgba(13, 17, 23, 0.92));
+      }
+
+      .score strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 4rem;
+        line-height: 0.95;
+        color: #f0f6fc;
+      }
+
+      .score .sub {
+        margin-top: 14px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .stat-grid,
+      .category-grid,
+      .controls {
+        display: grid;
+        gap: 16px;
+      }
+
+      .stat-grid {
+        margin-top: 22px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(110, 118, 129, 0.07);
+      }
+
+      .card strong {
+        display: block;
+        margin: 10px 0 6px;
+        color: #f0f6fc;
+        font-size: 1.45rem;
+      }
+
+      .section {
+        margin-top: 22px;
+        padding: 24px;
+      }
+
+      .tabbar {
+        margin-top: 22px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: rgba(110, 118, 129, 0.06);
+        color: var(--muted);
+        padding: 10px 14px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .tab-btn.active {
+        color: #f0f6fc;
+        background: rgba(31, 111, 235, 0.16);
+        border-color: rgba(88, 166, 255, 0.4);
+      }
+
+      .tab-panel[hidden] {
+        display: none;
+      }
+
+      .category-grid {
+        margin-top: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .meter {
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(110, 118, 129, 0.18);
+        overflow: hidden;
+        margin: 14px 0;
+      }
+
+      .meter span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #1f6feb, #2ea043);
+      }
+
+      .list {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .list-item,
+      details {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(110, 118, 129, 0.06);
+      }
+
+      .list-item {
+        padding: 16px;
+      }
+
+      .finding-head {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .finding-copy {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .finding-copy strong {
+        color: var(--ink);
+      }
+
+      details {
+        padding: 16px;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: #f0f6fc;
+      }
+
+      .controls {
+        margin-top: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .control {
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(1, 4, 9, 0.24);
+      }
+
+      .job-pills {
+        margin-top: 14px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .job-pill,
+      .mini-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 7px 10px;
+        border: 1px solid var(--border);
+        font-size: 0.82rem;
+      }
+
+      .job-pill {
+        background: rgba(31, 111, 235, 0.1);
+        color: #dbe9ff;
+      }
+
+      .mini-pill {
+        background: rgba(110, 118, 129, 0.08);
+        color: var(--muted);
+      }
+
+      .graph-shell {
+        position: relative;
+        margin-top: 18px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(15, 23, 32, 0.98), rgba(13, 17, 23, 0.98));
+        overflow: auto;
+      }
+
+      .graph-canvas {
+        position: relative;
+        min-width: 100%;
+        min-height: 420px;
+      }
+
+      .graph-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      .graph-board {
+        position: relative;
+        display: grid;
+        gap: 18px;
+        padding: 20px;
+        align-items: start;
+      }
+
+      .graph-column {
+        position: relative;
+        min-width: 240px;
+      }
+
+      .graph-stage {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(22, 27, 34, 0.94);
+        color: #f0f6fc;
+        font-weight: 700;
+      }
+
+      .graph-lane {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .graph-node {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(110, 118, 129, 0.07);
+        padding: 14px;
+        min-height: 108px;
+        transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .graph-node:hover {
+        transform: translateY(-2px);
+        border-color: rgba(88, 166, 255, 0.42);
+        box-shadow: 0 12px 30px rgba(1, 4, 9, 0.35);
+      }
+
+      .graph-node.good {
+        border-color: rgba(63, 185, 80, 0.42);
+        background: rgba(46, 160, 67, 0.08);
+      }
+
+      .graph-node.mixed {
+        border-color: rgba(210, 153, 34, 0.42);
+        background: rgba(210, 153, 34, 0.09);
+      }
+
+      .graph-node.risk {
+        border-color: rgba(248, 81, 73, 0.42);
+        background: rgba(248, 81, 73, 0.08);
+      }
+
+      .graph-node.trigger {
+        border-color: rgba(137, 87, 229, 0.42);
+        background: rgba(137, 87, 229, 0.09);
+      }
+
+      .graph-node.neutral {
+        border-color: rgba(88, 166, 255, 0.22);
+      }
+
+      .graph-node h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        color: #f0f6fc;
+      }
+
+      .graph-node small {
+        display: block;
+        color: var(--muted);
+      }
+
+      .graph-badges {
+        margin-top: 10px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .graph-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        background: rgba(31, 111, 235, 0.12);
+        border: 1px solid rgba(88, 166, 255, 0.18);
+        color: #dbe9ff;
+        font-size: 0.75rem;
+      }
+
+      .graph-empty {
+        padding: 14px;
+        border: 1px dashed var(--border);
+        border-radius: 14px;
+        color: var(--muted);
+      }
+
+      .graph-tooltip {
+        position: fixed;
+        z-index: 40;
+        width: min(360px, calc(100vw - 24px));
+        border: 1px solid var(--border-strong);
+        border-radius: 16px;
+        background: rgba(22, 27, 34, 0.98);
+        box-shadow: 0 20px 50px rgba(1, 4, 9, 0.5);
+        padding: 14px;
+        pointer-events: none;
+      }
+
+      .graph-tooltip h4 {
+        margin: 0 0 8px;
+        color: #f0f6fc;
+      }
+
+      .graph-tooltip .tooltip-section {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 0.92rem;
+      }
+
+      .graph-tooltip ul {
+        margin: 8px 0 0 18px;
+        padding: 0;
+      }
+
+      .edge-needs {
+        stroke: rgba(88, 166, 255, 0.58);
+        stroke-width: 2;
+        fill: none;
+      }
+
+      .edge-trigger {
+        stroke: rgba(137, 87, 229, 0.66);
+        stroke-width: 2;
+        fill: none;
+        stroke-dasharray: 6 5;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.93em;
+      }
+
+      @media (max-width: 1120px) {
+        .hero,
+        .stat-grid,
+        .category-grid,
+        .controls {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="repo-strip">
+          <span class="pill">Audit Report</span>
+          <span class="pill"><code>examples/pipelines/library_package.gitlab-ci.yml</code></span>
+          <span class="pill">Policy Pack: <strong>Library / Package</strong></span>
+        </div>
+
+        <div class="repo-strip">
+          <span class="brand pill">
+            <svg viewBox="0 0 128 128" aria-hidden="true">
+              <polygon fill="#e24329" points="64,110 88,36 40,36"/>
+              <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
+              <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
+              <polygon fill="#fca326" points="24,36 12,68 40,36"/>
+              <polygon fill="#fca326" points="104,36 116,68 88,36"/>
+              <polygon fill="#e24329" points="12,68 64,110 24,36"/>
+              <polygon fill="#e24329" points="116,68 64,110 104,36"/>
+              <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
+            </svg>
+            GitLab
+          </span>
+          <span class="brand pill">
+            <svg viewBox="0 0 128 128" aria-hidden="true">
+              <rect x="22" y="26" width="84" height="64" rx="18" fill="#58a6ff"/>
+              <rect x="34" y="38" width="60" height="40" rx="12" fill="#0d1117"/>
+              <circle cx="52" cy="58" r="7" fill="#58a6ff"/>
+              <circle cx="76" cy="58" r="7" fill="#58a6ff"/>
+              <rect x="52" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
+              <rect x="68" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
+              <rect x="48" y="82" width="32" height="10" rx="5" fill="#2ea043"/>
+              <rect x="28" y="96" width="72" height="12" rx="6" fill="#1f6feb"/>
+            </svg>
+            Dependabot
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="badge pass">
+            strong
+          </span>
+          <h1>SSDLC report for <code>library_package.gitlab-ci.yml</code></h1>
+          <p class="muted">
+            Analysis generated 2026-03-28T20:56:19Z. Active scenarios:
+            <strong>8</strong>,
+            skipped:
+            <strong>1</strong>,
+            scope:
+            <strong>complete</strong>.
+          </p>
+
+          <div class="brand-row">
+            <div class="brand-card">
+              <span>Root + Include + Trigger</span>
+              <strong>1 pipeline files</strong>
+              <span>The full local CI graph was collected into one shared analysis scope.</span>
+            </div>
+            <div class="brand-card">
+              <span>Policy Remediation</span>
+              <strong>1 findings</strong>
+              <span>Each gap includes the issue, the recommendation, and a remediation direction.</span>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <article class="card">
+              <span class="muted">Jobs</span>
+              <strong>4</strong>
+              <div class="muted">Across all discovered pipeline files</div>
+            </article>
+            <article class="card">
+              <span class="muted">Stages</span>
+              <strong>3</strong>
+              <div class="muted">After combining root and child pipelines</div>
+            </article>
+            <article class="card">
+              <span class="muted">Resolved Downstream</span>
+              <strong>0</strong>
+              <div class="muted">Local child or downstream pipelines loaded</div>
+            </article>
+            <article class="card">
+              <span class="muted">Unresolved</span>
+              <strong>0</strong>
+              <div class="muted">Triggers outside the current analysis scope</div>
+            </article>
+            <article class="card">
+              <span class="muted">Warnings</span>
+              <strong>0</strong>
+              <div class="muted">Parser and pipeline graph limitations</div>
+            </article>
+          </div>
+        </div>
+
+        <aside class="score">
+          <span class="muted">Overall Score</span>
+          <strong>100/100</strong>
+          <div class="badge pass" style="margin-top: 14px; width: fit-content;">
+            Grade A
+          </div>
+          <div class="sub">
+            <div><strong>Pipeline:</strong> <code>examples/pipelines/library_package.gitlab-ci.yml</code></div>
+            <div><strong>Policy:</strong> Library / Package (policy_pack)</div>
+            <div><strong>Scope:</strong> complete</div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="tabbar" role="tablist" aria-label="Report views">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
+        <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
+        <button class="tab-btn" data-tab="security">Security</button>
+        <button class="tab-btn" data-tab="maintainability">Maintainability</button>
+      </div>
+
+      <section class="section tab-panel" data-panel="overview">
+        <h2>Scoring Categories</h2>
+        <div class="category-grid">
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Execution Path Coverage</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>20/20</strong>
+              <div class="muted">8/8 active scenarios satisfy the selected SSDLC policy pack</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Unit Test Execution</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Coverage Reporting</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>5/5</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>SAST</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>15/15</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Artifact/Image Scanning</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>15/15</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Automated Test Deployment</h3>
+                <span class="badge disabled">disabled</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>15/15</strong>
+              <div class="muted">Disabled by the selected policy pack</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Security Policies</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
+              <div class="muted">No material policy violations detected</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Maintainability and Complexity</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
+              <div class="muted">The pipeline is relatively easy to maintain</div>
+            </article>
+          
+        </div>
+
+        <div class="list">
+          <div class="list-item">
+            <strong>Global Recommendations</strong>
+            
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Review scenarios blocked by workflow rules if they should remain business-supported paths</span>
+                
+              </div>
+            
+          </div>
+
+          <div class="list-item">
+            <strong>Strengths</strong>
+            
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">The pipeline declares an explicit stage list</span>
+                
+                  <span class="mini-pill">No inline secrets were detected in the variables section</span>
+                
+                  <span class="mini-pill">Images are pinned instead of relying on latest</span>
+                
+                  <span class="mini-pill">At least some execution scenarios achieve full SSDLC coverage</span>
+                
+                  <span class="mini-pill">Coverage artifacts are published for supported scenarios</span>
+                
+                  <span class="mini-pill">Pipeline complexity remains under control</span>
+                
+              </div>
+            
+          </div>
+        </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="graph" hidden>
+        <h2>Pipeline Flow Graph</h2>
+        <div class="finding-copy">
+          Columns represent stages, and edges show <code>needs</code> and <code>trigger</code> relationships.
+          Hover over a job to inspect weak spots and strengths for that step.
+        </div>
+
+        <div class="job-pills" style="margin-top: 14px;">
+          <span class="mini-pill">green: strong step</span>
+          <span class="mini-pill">yellow: mixed</span>
+          <span class="mini-pill">red: weak spot</span>
+          <span class="mini-pill">violet: trigger/downstream</span>
+        </div>
+
+        <div class="graph-shell">
+          <div class="graph-canvas" id="graph-canvas">
+            <svg class="graph-svg" id="graph-svg"></svg>
+            <div class="graph-board" id="graph-board"></div>
+          </div>
+        </div>
+        <div class="graph-tooltip" id="graph-tooltip" hidden></div>
+      </section>
+
+      <section class="section tab-panel" data-panel="ssdlc" hidden>
+        <h2>SSDLC Findings and Remediation</h2>
+        <div class="list">
+          
+            
+              <div class="list-item">
+                <div class="finding-head">
+                  <span class="badge skipped">low</span>
+                  <strong>Some scenarios are blocked by workflow rules</strong>
+                </div>
+                <div class="finding-copy"><strong>Issue:</strong> 1 scenarios do not create a pipeline because of `workflow:rules` or inherited control rules.</div>
+                
+                  <div class="finding-copy"><strong>Evidence:</strong> tag v1.0.0</div>
+                
+                
+                  <div class="finding-copy"><strong>Recommendation:</strong> Verify whether this behavior is intentional and whether it hides SSDLC blind spots.</div>
+                
+                
+                  <div class="finding-copy"><strong>How to fix:</strong> If a branch or source should be supported, add explicit `workflow:rules` and matching quality or security job rules.</div>
+                
+              </div>
+            
+          
+        </div>
+
+        <div class="list">
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> main
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> master
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> develop
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> feature/audit-coverage
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> release/1.0.0
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> hotfix/urgent-fix
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                push -> test
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge pass">pass</span>
+                merge_request_event feature/merge-request -> main
+              </summary>
+
+              
+                
+                
+                <div class="controls">
+                  
+                    <div class="control">
+                      <strong>unit_tests</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>coverage_report</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>scan</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dependency_scan (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>deploy_test</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Disabled by the selected policy pack</p>
+                      
+                    </div>
+                  
+                </div>
+
+                
+
+                <div class="job-pills">
+                  
+                    <span class="job-pill">build_and_test / build / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">sast / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dependency_scan / security / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">publish_package / publish / examples/pipelines/library_package.gitlab-ci.yml</span>
+                  
+                </div>
+              
+            </details>
+          
+            <details>
+              <summary>
+                <span class="badge skipped">skipped</span>
+                tag v1.0.0
+              </summary>
+
+              
+                <p class="muted" style="margin: 12px 0 0;">workflow rules prevented pipeline creation</p>
+              
+            </details>
+          
+        </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="security" hidden>
+        <h2>Security Policies</h2>
+        <div class="list">
+          
+            <div class="list-item">No material violations were detected by the default policy pack.</div>
+          
+        </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="maintainability" hidden>
+        <h2>Pipeline Maintainability</h2>
+        <div class="list">
+          
+            <div class="list-item">No material maintainability problems were detected.</div>
+          
+        </div>
+      </section>
+    </main>
+
+    <script id="graph-data" type="application/json">{"stages":["build","security","publish"],"pipelines":[{"label":"examples/pipelines/library_package.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/library_package.gitlab-ci.yml::build_and_test","label":"build_and_test","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: build/reports/jacoco/test/jacocoTestReport.xml","Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::dependency_scan","label":"dependency_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan","image_scan"],"strengths":["Scans artifacts or dependencies","Scans container images","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::sast","label":"sast","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::publish_package","label":"publish_package","stage":"publish","stage_index":2,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":["Uses a pinned image"],"weaknesses":["Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]}],"edges":[]}</script>
+    <script>
+      (function () {
+        var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
+        var panels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
+        var graphRendered = false;
+        var graphNodes = {};
+        var graphData = {};
+
+        function activateTab(name) {
+          tabButtons.forEach(function (button) {
+            button.classList.toggle("active", button.dataset.tab === name);
+          });
+
+          panels.forEach(function (panel) {
+            var active = panel.dataset.panel === name;
+            panel.hidden = !active;
+          });
+
+          if (name === "graph") {
+            renderGraph();
+            window.requestAnimationFrame(drawEdges);
+          }
+        }
+
+        tabButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            activateTab(button.dataset.tab);
+          });
+        });
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function tooltipList(title, items, emptyText) {
+          if (!items || !items.length) {
+            return '<div class="tooltip-section"><strong>' + title + ':</strong> ' + escapeHtml(emptyText) + "</div>";
+          }
+
+          return '<div class="tooltip-section"><strong>' + title + ':</strong><ul>' +
+            items.map(function (item) { return "<li>" + escapeHtml(item) + "</li>"; }).join("") +
+            "</ul></div>";
+        }
+
+        function showTooltip(node, event) {
+          var tooltip = document.getElementById("graph-tooltip");
+          tooltip.hidden = false;
+          tooltip.innerHTML =
+            "<h4>" + escapeHtml(node.label) + "</h4>" +
+            '<div class="tooltip-section"><strong>Pipeline:</strong> ' + escapeHtml(node.pipeline_label) + "</div>" +
+            '<div class="tooltip-section"><strong>Stage:</strong> ' + escapeHtml(node.stage) + "</div>" +
+            (node.environment ? '<div class="tooltip-section"><strong>Environment:</strong> ' + escapeHtml(node.environment) + "</div>" : "") +
+            tooltipList("Strengths", node.strengths, "No clear positive signals") +
+            tooltipList("Weak spots", node.weaknesses, "No obvious weak spots") +
+            tooltipList("Notes", node.notes, "No additional notes");
+          moveTooltip(event);
+        }
+
+        function moveTooltip(event) {
+          var tooltip = document.getElementById("graph-tooltip");
+          if (tooltip.hidden) {
+            return;
+          }
+
+          var left = event.clientX + 18;
+          var top = event.clientY + 18;
+          var maxLeft = window.innerWidth - tooltip.offsetWidth - 12;
+          var maxTop = window.innerHeight - tooltip.offsetHeight - 12;
+          tooltip.style.left = Math.max(12, Math.min(left, maxLeft)) + "px";
+          tooltip.style.top = Math.max(12, Math.min(top, maxTop)) + "px";
+        }
+
+        function hideTooltip() {
+          var tooltip = document.getElementById("graph-tooltip");
+          tooltip.hidden = true;
+        }
+
+        function renderGraph() {
+          if (graphRendered) {
+            return;
+          }
+
+          graphData = JSON.parse(document.getElementById("graph-data").textContent || "{}");
+          var board = document.getElementById("graph-board");
+          if (!board || !graphData.stages) {
+            return;
+          }
+
+          board.innerHTML = "";
+          board.style.gridTemplateColumns = "repeat(" + Math.max(graphData.stages.length, 1) + ", minmax(250px, 1fr))";
+
+          var nodesByStage = {};
+          (graphData.nodes || []).forEach(function (node) {
+            if (!nodesByStage[node.stage]) {
+              nodesByStage[node.stage] = [];
+            }
+            nodesByStage[node.stage].push(node);
+            graphNodes[node.id] = node;
+          });
+
+          graphData.stages.forEach(function (stage) {
+            var column = document.createElement("div");
+            column.className = "graph-column";
+
+            var stageHead = document.createElement("div");
+            stageHead.className = "graph-stage";
+            stageHead.textContent = stage;
+            column.appendChild(stageHead);
+
+            var lane = document.createElement("div");
+            lane.className = "graph-lane";
+
+            var stageNodes = (nodesByStage[stage] || []).sort(function (a, b) {
+              if (a.pipeline_index !== b.pipeline_index) {
+                return a.pipeline_index - b.pipeline_index;
+              }
+              return a.label.localeCompare(b.label);
+            });
+
+            if (!stageNodes.length) {
+              var empty = document.createElement("div");
+              empty.className = "graph-empty";
+              empty.textContent = "No jobs in this stage";
+              lane.appendChild(empty);
+            } else {
+              stageNodes.forEach(function (node) {
+                var card = document.createElement("div");
+                card.className = "graph-node " + (node.variant || "neutral");
+                card.dataset.nodeId = node.id;
+                card.innerHTML =
+                  "<h3>" + escapeHtml(node.label) + "</h3>" +
+                  "<small>" + escapeHtml(node.pipeline_label) + "</small>" +
+                  '<div class="graph-badges">' +
+                    (node.classifications || []).slice(0, 4).map(function (item) {
+                      return '<span class="graph-chip">' + escapeHtml(item) + "</span>";
+                    }).join("") +
+                  "</div>";
+
+                card.addEventListener("mouseenter", function (event) { showTooltip(node, event); });
+                card.addEventListener("mousemove", moveTooltip);
+                card.addEventListener("mouseleave", hideTooltip);
+                lane.appendChild(card);
+              });
+            }
+
+            column.appendChild(lane);
+            board.appendChild(column);
+          });
+
+          graphRendered = true;
+        }
+
+        function drawEdges() {
+          if (!graphRendered) {
+            return;
+          }
+
+          var board = document.getElementById("graph-board");
+          var canvas = document.getElementById("graph-canvas");
+          var svg = document.getElementById("graph-svg");
+          if (!board || !canvas || !svg) {
+            return;
+          }
+
+          var boardRect = board.getBoundingClientRect();
+          var width = Math.max(board.scrollWidth, board.clientWidth);
+          var height = Math.max(board.scrollHeight, board.clientHeight);
+          canvas.style.width = width + "px";
+          canvas.style.height = height + "px";
+          svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+          svg.setAttribute("width", width);
+          svg.setAttribute("height", height);
+          svg.innerHTML = "";
+
+          var positions = {};
+          Array.prototype.slice.call(board.querySelectorAll(".graph-node")).forEach(function (element) {
+            var rect = element.getBoundingClientRect();
+            positions[element.dataset.nodeId] = {
+              left: rect.left - boardRect.left,
+              right: rect.right - boardRect.left,
+              top: rect.top - boardRect.top,
+              bottom: rect.bottom - boardRect.top,
+              centerY: rect.top - boardRect.top + (rect.height / 2)
+            };
+          });
+
+          (graphData.edges || []).forEach(function (edge) {
+            var from = positions[edge.from];
+            var to = positions[edge.to];
+            if (!from || !to) {
+              return;
+            }
+
+            var startX = from.right;
+            var startY = from.centerY;
+            var endX = to.left;
+            var endY = to.centerY;
+            var curve = Math.max(50, Math.abs(endX - startX) * 0.35);
+            var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", "M " + startX + " " + startY + " C " + (startX + curve) + " " + startY + ", " + (endX - curve) + " " + endY + ", " + endX + " " + endY);
+            path.setAttribute("class", edge.type === "trigger" ? "edge-trigger" : "edge-needs");
+            svg.appendChild(path);
+          });
+        }
+
+        window.addEventListener("resize", function () {
+          if (!document.querySelector('[data-panel="graph"]').hidden) {
+            window.requestAnimationFrame(drawEdges);
+          }
+        });
+
+        activateTab("overview");
+      })();
+    </script>
+  </body>
+</html>

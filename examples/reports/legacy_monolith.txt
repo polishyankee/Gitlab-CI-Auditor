@@ -1,0 +1,82 @@
+GitLab CI SSDLC Audit
+Pipeline: examples/pipelines/legacy_monolith.gitlab-ci.yml
+Score: 16/100 (F)
+Status: critical
+Policy Pack: Strict Platform (policy_pack)
+Scope: complete (pipeline_files=1, downstream_resolved=0, downstream_unresolved=0)
+
+Categories:
+  - Execution Path Coverage: 0/20 [fail] 0/11 active scenarios satisfy the selected SSDLC policy pack
+  - Unit Test Execution: 0/10 [fail] 0 pass, 0 warn, 11 missing
+  - Coverage Reporting: 0/5 [fail] 0 pass, 0 warn, 11 missing
+  - SAST: 0/15 [fail] 0 pass, 0 warn, 11 missing
+  - Artifact/Image Scanning: 0/15 [fail] 0 pass, 0 warn, 11 missing
+  - Automated Test Deployment: 8/15 [warn] 0 pass, 11 warn, 0 missing
+  - Security Policies: 0/10 [fail] 5 security policy violations detected
+  - Maintainability and Complexity: 8/10 [warn] 1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules
+
+Scenario Results:
+  - push -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> master: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> develop: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> feature/audit-coverage: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> release/1.0.0: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> hotfix/urgent-fix: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> test: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - merge_request_event feature/merge-request -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - schedule -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - web -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - tag v1.0.0: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+
+SSDLC Findings:
+  - [high] Unit test gate is not complete
+    issue: 11/11 scenarios do not show unit test execution, and 0 scenarios only run tests in a non-enforcing context.
+    recommendation: Enforce unit test execution across every supported pipeline path.
+    how_to_fix: Add a `unit_tests` job or run tests through `mvn verify|package|install` or `./gradlew build|check` without skip flags. Keep `allow_failure` disabled so the result acts as a gate.
+  - [high] Coverage reporting is not complete
+    issue: 11/11 scenarios do not publish test coverage artifacts, and 0 scenarios only publish them in a non-enforcing context.
+    recommendation: Publish explicit coverage artifacts independently from test execution detection.
+    how_to_fix: Generate and publish coverage outputs such as `jacoco.exec`, `jacoco.xml`, `cobertura-coverage.xml`, or `lcov.info` in job artifacts so the auditor can distinguish coverage reporting from plain test execution.
+  - [high] SAST gate is not complete
+    issue: 11/11 scenarios have no SAST, and 0 scenarios run SAST in a non-enforcing mode.
+    recommendation: Add a mandatory SAST stage for every supported branch and merge request path.
+    how_to_fix: The simplest option is `include: - template: Jobs/SAST.gitlab-ci.yml`, or add a job using `semgrep`, `sonar-scanner`, or another scanner and remove `allow_failure`.
+  - [high] Artifact or image scanning is not complete
+    issue: 11/11 scenarios have no artifact or image scan, and 0 scenarios run the scan in a non-enforcing mode.
+    recommendation: Add a mandatory dependency, artifact, or image scan after build output is produced.
+    how_to_fix: For application or source scans, use tools such as `trivy fs`, `dependency-check`, or `grype`. For container images, add `trivy image` after image build and treat the exit code as a gate.
+  - [medium] Automated test deployment is not complete
+    issue: 0/11 scenarios do not deploy automatically to a test environment, and 11 scenarios do so in a non-enforcing way.
+    recommendation: Deploy automatically to a test environment after tests and scans succeed.
+    how_to_fix: Add a job with `environment: name: test|qa|staging`, `when: on_success`, and `needs` from build, test, and scan jobs. Avoid `when: manual` for the test environment when SSDLC policy expects continuous validation.
+
+Security Findings:
+  - [medium] Image docker:latest uses the latest tag
+    issue: Job build_app [examples/pipelines/legacy_monolith.gitlab-ci.yml] should use an explicit version or digest.
+    recommendation: Pin the image to a concrete version or digest.
+    how_to_fix: Replace `image: docker:latest` with something like `image: docker:1.2.3` or a digest such as `@sha256:...`.
+  - [medium] Image docker:latest uses the latest tag
+    issue: Job deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml] should use an explicit version or digest.
+    recommendation: Pin the image to a concrete version or digest.
+    how_to_fix: Replace `image: docker:latest` with something like `image: docker:1.2.3` or a digest such as `@sha256:...`.
+  - [high] Remote script download and execution in build_app [examples/pipelines/legacy_monolith.gitlab-ci.yml]
+    issue: The job uses a `curl|bash` or `wget|sh` pattern without integrity verification.
+    recommendation: Download the artifact explicitly and verify its checksum or signature before execution.
+    how_to_fix: Split the command into two steps, for example `curl -o installer.sh ...` and `sha256sum -c ... && bash installer.sh`.
+  - [high] Host key verification disabled in deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml]
+    issue: SSH trust is bypassed through `StrictHostKeyChecking no`.
+    recommendation: Manage `known_hosts` instead of disabling host verification.
+    how_to_fix: Add `ssh-keyscan host >> ~/.ssh/known_hosts` and remove `StrictHostKeyChecking no` from the job configuration.
+  - [medium] Test deployment deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml] is manual
+    issue: The test environment is not deployed automatically after the required gates pass.
+    recommendation: Turn the test deployment into an automatic stage after tests and scans.
+    how_to_fix: Remove `when: manual`, set `environment: name: test`, and run the job after `needs` on build, test, and scan jobs.
+
+Recommendations:
+  - Add a dedicated unit-test job or run tests inside the build job without skip flags and publish JaCoCo evidence
+  - Publish explicit coverage artifacts such as JaCoCo, Cobertura, or LCOV so coverage reporting is visible per scenario
+  - Add enforced SAST without allow_failure, ideally through a GitLab template or a dedicated scanner job
+  - Add artifact scanning or image scanning based on the build type and treat the result as a gate
+  - Automate deployment to a test environment and declare it explicitly in the environment section
+  - Add workflow:rules to control centrally when a pipeline should exist
+  - Remove StrictHostKeyChecking no and replace it with controlled known_hosts management

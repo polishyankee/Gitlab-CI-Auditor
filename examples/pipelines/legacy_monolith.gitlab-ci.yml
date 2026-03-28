@@ -1,0 +1,21 @@
+stages:
+  - build
+  - deploy
+
+default:
+  image: docker:latest
+
+build_app:
+  stage: build
+  allow_failure: true
+  script:
+    - curl -sSL https://example.invalid/install.sh | bash
+    - mvn -B clean package -DskipTests
+
+deploy_test:
+  stage: deploy
+  when: manual
+  environment:
+    name: test
+  script:
+    - scp -o StrictHostKeyChecking no target/app.jar deploy@example.invalid:/srv/app/
