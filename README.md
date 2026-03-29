@@ -2,6 +2,12 @@
 
 Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expectations, security policies, and long-term maintainability. The analysis engine is stdlib-first and easy to extend. The optional GUI server uses `webrick` on modern Ruby releases.
 
+Recent additions:
+
+- stack-aware SAST policy enforcement driven by policy packs
+- explicit artifact and container scan family detection
+- OWASP SAMM v2 `Implementation` benchmark in GUI and exported reports
+
 ## What It Checks
 
 - unit test execution
@@ -10,6 +16,7 @@ Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expect
 - artifact scanning or image scanning
 - automated deployment to a test environment
 - baseline security policy compliance
+- OWASP SAMM v2 `Implementation` benchmark alignment
 - pipeline complexity and maintainability
 - active execution paths derived from `workflow`, `rules`, `rules:changes`, `only/except`, branches, and tags
 
@@ -80,6 +87,14 @@ Accepted container or image scan signals:
 
 The report metadata also lists which scanner families were detected so you can see what the auditor actually recognized.
 
+In the GUI and exported reports, the detected security tooling is broken out into:
+
+- SAST families
+- artifact or dependency scan families
+- image scan families
+- secret-management signals
+- integrity-verification signals
+
 ## OWASP SAMM v2 Benchmark
 
 The HTML, CSV, JSON bundle, and text exports now include a pipeline-derived benchmark for the OWASP SAMM v2 `Implementation` business function, focused on:
@@ -95,6 +110,13 @@ This is intentionally an estimate from static pipeline evidence, not a full orga
 - the good signals visible in the pipeline
 - the gaps still visible from CI/CD automation
 - the official OWASP SAMM reference URL for each practice
+
+The benchmark is available in:
+
+- the HTML GUI report as a dedicated `OWASP SAMM` tab
+- text export
+- CSV export
+- JSON bundle export
 
 ## Run
 
