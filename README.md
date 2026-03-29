@@ -7,6 +7,7 @@ Recent additions:
 - stack-aware SAST policy enforcement driven by policy packs
 - explicit artifact and container scan family detection
 - OWASP SAMM v2 `Implementation` benchmark in GUI and exported reports
+- richer `Observed Detection Signals` and explicit auditor-to-SAMM rule mapping in the benchmark tab
 
 ## What It Checks
 
@@ -107,6 +108,8 @@ This is intentionally an estimate from static pipeline evidence, not a full orga
 
 - the estimated maturity level from `0` to `3`
 - the alignment score from `0` to `100`
+- the observed detection signals used to justify the estimate
+- the concrete auditor rules mapped to each SAMM practice
 - the good signals visible in the pipeline
 - the gaps still visible from CI/CD automation
 - the official OWASP SAMM reference URL for each practice
