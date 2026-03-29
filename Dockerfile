@@ -14,8 +14,7 @@ ENV APP_HOME=${APP_HOME} \
     WORKSPACE_DIR=${WORKSPACE_DIR} \
     HOME=/home/app \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    RUBYOPT=--disable=gems
+    LC_ALL=C.UTF-8
 
 LABEL org.opencontainers.image.title="GitLab CI SSDLC Auditor" \
       org.opencontainers.image.description="Static SSDLC auditor for GitLab CI pipelines" \
@@ -30,6 +29,7 @@ WORKDIR ${APP_HOME}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && gem install --no-document webrick \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid 10001 --create-home --home-dir /home/app app \

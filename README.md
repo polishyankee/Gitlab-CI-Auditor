@@ -1,6 +1,6 @@
 # GitLab CI SSDLC Auditor
 
-Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expectations, security policies, and long-term maintainability. It uses only the Ruby standard library and is designed to stay easy to extend.
+Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expectations, security policies, and long-term maintainability. The analysis engine is stdlib-first and easy to extend. The optional GUI server uses `webrick` on modern Ruby releases.
 
 ## What It Checks
 
@@ -76,8 +76,11 @@ JSON bundle export:
 GUI:
 
 ```bash
+gem install webrick
 ./bin/gitlab-ci-auditor serve --host 127.0.0.1 --port 4567
 ```
+
+If you only use `scan` and report export modes, `webrick` is not required.
 
 ## Docker
 

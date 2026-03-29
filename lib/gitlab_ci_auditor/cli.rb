@@ -91,6 +91,8 @@ module GitlabCiAuditor
       end
       parser.parse!(argv)
 
+      GitlabCiAuditor.require_server!
+
       puts "Serving GitLab CI auditor on http://#{options[:host]}:#{options[:port]}"
       Server.new(
         host: options[:host],

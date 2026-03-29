@@ -5,7 +5,6 @@ require "ostruct"
 require "time"
 require "strscan"
 require "optparse"
-require "webrick"
 require "tmpdir"
 require "csv"
 
@@ -78,6 +77,10 @@ module GitlabCiAuditor
   def self.job_definition?(name, value)
     value.is_a?(Hash) && !RESERVED_KEYS.include?(name)
   end
+
+  def self.require_server!
+    require_relative "gitlab_ci_auditor/server"
+  end
 end
 
 require_relative "gitlab_ci_auditor/policy_loader"
@@ -85,5 +88,4 @@ require_relative "gitlab_ci_auditor/pipeline_loader"
 require_relative "gitlab_ci_auditor/rule_evaluator"
 require_relative "gitlab_ci_auditor/analyzer"
 require_relative "gitlab_ci_auditor/report_renderer"
-require_relative "gitlab_ci_auditor/server"
 require_relative "gitlab_ci_auditor/cli"

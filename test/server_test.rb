@@ -4,6 +4,8 @@ class ServerTest < Minitest::Test
   RequestStub = Struct.new(:query)
 
   def test_analyze_request_allows_nil_snapshot_file_in_gui_flow
+    GitlabCiAuditor.require_server!
+
     server = GitlabCiAuditor::Server.new(
       host: "127.0.0.1",
       port: 4567
@@ -21,5 +23,7 @@ class ServerTest < Minitest::Test
 
     assert_equal "complete", report[:summary][:analysis_scope]
     assert report[:summary][:overall_score] >= 75
+  rescue LoadError => error
+    skip(error.message)
   end
 end

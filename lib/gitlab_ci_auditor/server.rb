@@ -1,3 +1,9 @@
+begin
+  require "webrick"
+rescue LoadError
+  raise LoadError, "The GUI server requires the `webrick` gem on modern Ruby releases. Install it with `gem install webrick` or use the Docker image."
+end
+
 module GitlabCiAuditor
   class Server
     def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil)
