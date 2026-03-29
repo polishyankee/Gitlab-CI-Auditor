@@ -239,6 +239,13 @@
         margin-left: calc(-50vw + 16px);
       }
 
+      .benchmark-panel {
+        position: relative;
+        left: 50%;
+        width: calc(100vw - 32px);
+        margin-left: calc(-50vw + 16px);
+      }
+
       .tabbar {
         margin-top: 22px;
         display: flex;
@@ -276,7 +283,7 @@
         margin-top: 16px;
         display: grid;
         gap: 16px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
 
       .meter {
@@ -322,10 +329,61 @@
         margin-top: 10px;
         color: var(--muted);
         line-height: 1.65;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .finding-copy strong {
         color: var(--ink);
+      }
+
+      .benchmark-card {
+        max-width: 100%;
+      }
+
+      .benchmark-card h3,
+      .benchmark-card strong,
+      .benchmark-card a {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .benchmark-head,
+      .benchmark-subhead {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .benchmark-head .badge,
+      .benchmark-subhead .badge {
+        flex-shrink: 0;
+      }
+
+      .benchmark-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.35;
+      }
+
+      .benchmark-card > strong {
+        font-size: 1.2rem;
+        line-height: 1.3;
+      }
+
+      .benchmark-card .list-item strong {
+        font-size: 0.98rem;
+        line-height: 1.45;
+        margin: 0;
+      }
+
+      .benchmark-link {
+        color: #79c0ff;
+        display: inline-block;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       details {
@@ -758,7 +816,7 @@
         </div>
       </section>
 
-      <section class="section tab-panel" data-panel="benchmark" hidden>
+      <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
         <h2>OWASP SAMM v2 Benchmark</h2>
         <div class="finding-copy">
           <%= @report.dig(:benchmarks, :owasp_samm_v2, :note) %>
@@ -779,8 +837,8 @@
 
         <div class="benchmark-grid">
           <% @report.dig(:benchmarks, :owasp_samm_v2, :practices).to_a.each do |practice| %>
-            <article class="card">
-              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <article class="card benchmark-card">
+              <div class="benchmark-head">
                 <h3><%= practice[:title] %></h3>
                 <span class="badge <%= practice[:status] %>"><%= practice[:status] %></span>
               </div>
@@ -796,7 +854,7 @@
               <div class="list" style="margin-top:10px;">
                 <% practice[:rules].to_a.each do |rule| %>
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong><%= rule[:title] %></strong>
                       <span class="badge <%= rule[:status] %>"><%= rule[:status] %></span>
                     </div>
@@ -812,7 +870,7 @@
               <div class="list" style="margin-top:10px;">
                 <% practice[:questions].to_a.each do |question| %>
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong><%= question[:key] %> · <%= question[:title] %></strong>
                       <span class="badge <%= question[:status] %>"><%= question[:status] %></span>
                     </div>
@@ -824,14 +882,14 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> <%= question[:static_limitations] %></div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="<%= question[:source_url] %>" target="_blank" rel="noreferrer" style="color:#79c0ff;"><%= question[:source_url] %></a>
+                      <a class="benchmark-link" href="<%= question[:source_url] %>" target="_blank" rel="noreferrer"><%= question[:source_url] %></a>
                     </div>
                   </div>
                 <% end %>
               </div>
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Reference:</strong>
-                <a href="<%= practice[:reference_url] %>" target="_blank" rel="noreferrer" style="color:#79c0ff;"><%= practice[:reference_url] %></a>
+                <a class="benchmark-link" href="<%= practice[:reference_url] %>" target="_blank" rel="noreferrer"><%= practice[:reference_url] %></a>
               </div>
             </article>
           <% end %>
