@@ -1,0 +1,46 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+  - security
+  - deploy
+
+dotnet_tests:
+  stage: test
+  script:
+    - dotnet restore src/App.sln
+    - dotnet test src/App.sln --collect:"XPlat Code Coverage"
+  artifacts:
+    paths:
+      - coverage/cobertura-coverage.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+node_tests:
+  stage: test
+  script:
+    - npm ci
+    - npm test
+  artifacts:
+    paths:
+      - coverage/lcov.info
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dependency_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+deploy_test:
+  stage: deploy
+  environment:
+    name: test
+  script:
+    - kubectl apply -f k8s/test.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

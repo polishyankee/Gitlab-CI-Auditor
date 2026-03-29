@@ -23,4 +23,12 @@ class ReportRendererTest < Minitest::Test
     assert_equal @report[:summary][:overall_score], payload.dig("report", "summary", "overall_score")
     assert_includes payload.dig("exports", "text"), "GitLab CI SSDLC Audit"
   end
+
+  def test_render_html_includes_full_width_graph_panel_markup
+    html = @renderer.render_html
+
+    assert_includes html, 'class="section tab-panel graph-panel"'
+    assert_includes html, "pipeline_short_label"
+    assert_includes html, "minmax(320px, 1fr)"
+  end
 end

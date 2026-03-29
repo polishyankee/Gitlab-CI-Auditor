@@ -10,10 +10,6 @@ module GitlabCiAuditorTestHelpers
   def example_path(relative_path)
     File.expand_path(File.join("..", "examples", relative_path), __dir__)
   end
-
-  def repo_pipeline
-    File.expand_path(File.join("..", "..", "..", ".gitlab-ci.yml"), __dir__)
-  end
 end
 
 class Minitest::Test

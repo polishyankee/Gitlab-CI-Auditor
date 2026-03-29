@@ -34,6 +34,20 @@ The unit-test control is considered satisfied not only by a dedicated test job, 
 
 Coverage reporting is tracked separately from plain test execution. The auditor recognizes common artifacts such as JaCoCo, Cobertura, and LCOV outputs.
 
+## SAST Heuristics
+
+The SAST control recognizes both GitLab SAST templates and common stack-specific scanners. The current heuristics cover:
+
+- Java: `spotbugs`, `findsecbugs`, `sonar-scanner`, `semgrep`, `codeql`
+- .NET: `dotnet sonarscanner`, `SonarScanner.MSBuild.exe`, `Security Code Scan`, `semgrep`, `snyk code test`
+- Node / JS: `semgrep`, `njsscan`, `nodejsscan`, `sonar-scanner`, `snyk code test`
+- Python: `bandit`, `semgrep`, `codeql`
+- Go: `gosec`, `semgrep`, `codeql`
+- Ruby: `brakeman`, `semgrep`, `codeql`
+- PHP: `psalm --taint-analysis`, `progpilot`, `semgrep`, `codeql`
+
+When SAST is missing, remediation guidance is adapted to the stacks detected from the pipeline definition.
+
 ## Run
 
 CLI:

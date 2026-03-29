@@ -24,8 +24,8 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert report[:scenarios].any? { |scenario| scenario[:status] == "pass" }
   end
 
-  def test_repository_pipeline_reports_missing_ssdlc_controls
-    pipeline = @loader.load(repo_pipeline)
+  def test_legacy_pipeline_reports_missing_ssdlc_controls
+    pipeline = @loader.load(example_path("pipelines/legacy_monolith.gitlab-ci.yml"))
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
 
     unit_tests = report[:categories].find { |category| category[:key] == "unit_tests" }
@@ -38,7 +38,7 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_equal "fail", coverage_report[:status]
     assert_equal "fail", sast[:status]
     assert_equal "fail", scan[:status]
-    assert_equal "fail", deploy_test[:status]
+    assert_equal "warn", deploy_test[:status]
     assert report[:recommendations].any? { |item| item.include?("workflow:rules") }
   end
 
@@ -59,6 +59,43 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_includes classified_jobs, "jacoco_artifacts_build"
     assert_equal ["jacoco_artifacts_build"], coverage_jobs
     refute_includes classified_jobs, "skipped_tests_build"
+  end
+
+  def test_stack_specific_sast_tools_satisfy_the_sast_control
+    pipeline = @loader.load(fixture("stack_specific_sast.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    sast = report[:categories].find { |category| category[:key] == "sast" }
+    scenario = report[:scenarios].find { |item| item[:status] != "skipped" }
+    sast_jobs = scenario[:jobs].select { |job| job[:classifications].include?("sast") }.map { |job| job[:name] }
+
+    assert_equal "pass", sast[:status]
+    assert_includes sast_jobs, "dotnet_code_analysis"
+    assert_includes sast_jobs, "node_source_review"
+  end
+
+  def test_sast_guidance_is_adapted_to_detected_dotnet_and_node_stacks
+    pipeline = @loader.load(fixture("polyglot_without_sast.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    sast_finding = report[:ssdlc_findings].find { |finding| finding[:title] == "SAST gate is not complete" }
+
+    refute_nil sast_finding
+    assert_includes sast_finding[:recommendation], ".NET"
+    assert_includes sast_finding[:recommendation], "Node / JS"
+    assert_includes sast_finding[:how_to_fix], "dotnet sonarscanner"
+    assert_includes sast_finding[:how_to_fix], "njsscan"
+  end
+
+  def test_graph_nodes_expose_short_pipeline_labels_for_long_paths
+    pipeline = @loader.load(example_path("pipelines/library_package.gitlab-ci.yml"))
+    report = GitlabCiAuditor::Analyzer.new(
+      pipeline,
+      GitlabCiAuditor::PolicyLoader.load(pack: "library")
+    ).analyze
+    graph_node = report[:graph][:nodes].find { |node| node[:pipeline_label].include?("examples/pipelines/") }
+
+    refute_nil graph_node
+    assert_equal ".../pipelines/library_package.gitlab-ci.yml", graph_node[:pipeline_short_label]
   end
 
   def test_downstream_child_pipeline_is_scanned_as_part_of_whole_pipeline
