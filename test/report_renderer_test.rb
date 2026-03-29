@@ -15,6 +15,8 @@ class ReportRendererTest < Minitest::Test
     assert_includes text, "Scope:"
     assert_includes text, "Categories:"
     assert_includes text, "OWASP SAMM v2:"
+    assert_includes text, "observed Analysis Scope:"
+    assert_includes text, "rule ["
   end
 
   def test_render_json_bundle_contains_report_and_exporter_meta
@@ -31,6 +33,9 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, 'class="section tab-panel graph-panel"'
     assert_includes html, 'data-tab="benchmark"'
     assert_includes html, "OWASP SAMM v2 Benchmark"
+    assert_includes html, "Analysis Scope"
+    assert_includes html, "Image scan families: none detected"
+    assert_includes html, "OWASP SAMM rules:"
     assert_includes html, "pipeline_short_label"
     assert_includes html, "minmax(320px, 1fr)"
   end

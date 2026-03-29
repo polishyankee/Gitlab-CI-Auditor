@@ -1369,11 +1369,102 @@ module GitlabCiAuditor
         framework: "OWASP SAMM v2",
         scope: "Implementation",
         note: "Pipeline-derived estimate based on static CI/CD evidence. Organizational process evidence outside YAML may increase or decrease the real SAMM maturity.",
+        observed_signals: samm_observed_signals(active_scenarios, coverage, jobs, security_findings),
         references: OWASP_SAMM_REFERENCES.map do |key, url|
           { key: key, url: url }
         end,
         practices: practices
       }
+    end
+
+    def samm_observed_signals(active_scenarios, coverage, jobs, security_findings)
+      security_tools = detected_security_tools
+      report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
+      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
+      environments = jobs.map { |job| job[:environment] }.compact.uniq
+      workflow_governed = all_pipelines.none? { |pipeline| pipeline.workflow.empty? }
+      gating = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
+
+      [
+        benchmark_signal_group(
+          "analysis_scope",
+          "Analysis Scope",
+          [
+            "Analysis scope: #{unresolved_downstream_references.empty? ? 'complete' : 'partial'}",
+            "Pipeline files analyzed: #{all_pipelines.size}",
+            "Active scenarios analyzed: #{active_scenarios.size}",
+            "Unique active jobs mapped into the benchmark: #{jobs.size}",
+            "Resolved downstream pipelines: #{resolved_downstream_references.size}",
+            unresolved_downstream_references.any? ? "Unresolved downstream pipelines: #{unresolved_downstream_references.size}" : "No unresolved downstream pipelines detected"
+          ]
+        ),
+        benchmark_signal_group(
+          "technology_and_flow",
+          "Technology and Flow Signals",
+          [
+            detected_stack_labels.any? ? "Detected stacks: #{detected_stack_labels.join(', ')}" : "No application stack signal detected from images, scripts, or artifact names",
+            "Stage model: #{effective_stages.join(', ')}",
+            workflow_governed ? "workflow:rules is present on every analyzed pipeline file" : "At least one analyzed pipeline file has no workflow:rules",
+            environments.any? ? "Declared environments: #{environments.join(', ')}" : "No explicit deployment environment detected"
+          ]
+        ),
+        benchmark_signal_group(
+          "controls_and_gates",
+          "Controls and Gates",
+          [
+            benchmark_control_signal("Unit test execution", coverage[:unit_tests], active_scenarios.size),
+            benchmark_control_signal("Coverage reporting", coverage[:coverage_report], active_scenarios.size),
+            benchmark_control_signal("SAST coverage", coverage[:sast], active_scenarios.size),
+            benchmark_control_signal("Artifact or image scanning", coverage[:scan], active_scenarios.size),
+            benchmark_control_signal("Automated test deployment", coverage[:deploy_test], active_scenarios.size),
+            gating ? "Critical quality and security jobs are blocking" : "At least one critical quality or security job is optional because `allow_failure` is enabled"
+          ]
+        ),
+        benchmark_signal_group(
+          "security_tooling",
+          "Security Tooling",
+          [
+            benchmark_family_signal("SAST families", security_tools[:sast]),
+            benchmark_family_signal("Artifact scan families", security_tools[:artifact_scan]),
+            benchmark_family_signal("Image scan families", security_tools[:image_scan]),
+            benchmark_family_signal("Secret-management signals", security_tools[:secret_management]),
+            benchmark_family_signal("Integrity-verification signals", security_tools[:integrity_verification])
+          ]
+        ),
+        benchmark_signal_group(
+          "reports_and_feedback",
+          "Reports and Feedback Loops",
+          [
+            benchmark_family_signal("Report artifacts", report_families.map { |family| tool_family_label(family) }),
+            benchmark_family_signal("Security report artifacts", security_reports.map { |family| tool_family_label(family) }),
+            security_findings.empty? ? "No policy findings reduced benchmark confidence on the analyzed YAML" : "#{security_findings.size} policy findings reduce benchmark confidence on the analyzed YAML",
+            all_pipelines.size > 1 ? "Cross-component scope detected: #{all_pipelines.size} pipeline files analyzed together" : "Cross-component scope is limited to a single pipeline file"
+          ]
+        )
+      ]
+    end
+
+    def benchmark_signal_group(key, label, values)
+      {
+        key: key,
+        label: label,
+        values: Array(values).flatten.compact.map(&:to_s).reject(&:empty?).uniq
+      }
+    end
+
+    def benchmark_control_signal(label, status_counts, active_scenarios_count)
+      if active_scenarios_count.zero?
+        "#{label}: no active scenarios were created by the current workflow and ruleset"
+      else
+        "#{label}: #{status_summary(status_counts)} across #{active_scenarios_count} active scenarios"
+      end
+    end
+
+    def benchmark_family_signal(label, values)
+      list = Array(values).flatten.compact.map(&:to_s).reject(&:empty?).uniq
+      return "#{label}: #{list.join(', ')}" if list.any?
+
+      "#{label}: none detected"
     end
 
     def unique_active_jobs(active_scenarios)
@@ -1393,8 +1484,16 @@ module GitlabCiAuditor
       scan_ratio = ratio_for(coverage[:scan])
       workflow_governed = all_pipelines.none? { |pipeline| pipeline.workflow.empty? }
       gated = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
+      orchestration_status = if effective_stages.any? && workflow_governed
+                               "pass"
+                             elsif effective_stages.any? || workflow_governed
+                               "warn"
+                             else
+                               "fail"
+                             end
       good_signals = []
       gaps = []
+      rules = []
 
       good_signals << "Build flow uses explicit stages" if effective_stages.any?
       good_signals << "Unit tests are part of active build paths" if unit_ratio >= 0.45
@@ -1421,6 +1520,43 @@ module GitlabCiAuditor
       score += 10 if gated
       score = [score, 100].min
 
+      rules << benchmark_rule(
+        "Repeatable build orchestration is visible",
+        orchestration_status,
+        if orchestration_status == "pass"
+          "Explicit stages are declared and workflow governance is visible on every analyzed pipeline file."
+        elsif effective_stages.any?
+          "An explicit stage model exists, but at least one analyzed pipeline file still lacks workflow governance."
+        else
+          "No explicit stage model or consistent workflow governance was detected."
+        end
+      )
+      rules << benchmark_rule(
+        "Unit tests execute across supported build paths",
+        score_status(unit_ratio),
+        "#{status_summary(coverage[:unit_tests])} across active scenarios."
+      )
+      rules << benchmark_rule(
+        "Coverage evidence is published for build outputs",
+        score_status(coverage_ratio),
+        "#{status_summary(coverage[:coverage_report])} across active scenarios."
+      )
+      rules << benchmark_rule(
+        "Stack-aware SAST is enforced in the build flow",
+        score_status(sast_ratio),
+        "#{status_summary(coverage[:sast])} across active scenarios."
+      )
+      rules << benchmark_rule(
+        "Artifact or image scanning is enforced on the build path",
+        score_status(scan_ratio),
+        "#{status_summary(coverage[:scan])} across active scenarios."
+      )
+      rules << benchmark_rule(
+        "Critical quality and security gates block progression",
+        gated ? "pass" : "fail",
+        gated ? "No `allow_failure` exception was detected on critical quality or security jobs." : "At least one quality or security job is optional because `allow_failure` is enabled."
+      )
+
       benchmark_practice(
         "secure_build",
         "Secure Build",
@@ -1429,7 +1565,8 @@ module GitlabCiAuditor
         "high",
         "Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.",
         good_signals,
-        gaps
+        gaps,
+        rules
       )
     end
 
@@ -1446,6 +1583,7 @@ module GitlabCiAuditor
       end
       good_signals = []
       gaps = []
+      rules = []
 
       good_signals << "Deployment jobs declare explicit environments" if environment_count.positive?
       good_signals << "Test deployment is automated on the happy path" if deploy_ratio >= 0.45
@@ -1473,6 +1611,42 @@ module GitlabCiAuditor
       score += 5 if deploy_hygiene
       score = [score, 100].min
 
+      rules << benchmark_rule(
+        "Deployment jobs declare explicit environments",
+        environment_count.positive? ? "pass" : "fail",
+        environment_count.positive? ? "Detected #{environment_count} explicit environment declaration(s)." : "No deployment job with an explicit environment declaration was detected."
+      )
+      rules << benchmark_rule(
+        "A test environment deployment is automated",
+        score_status(deploy_ratio),
+        "#{status_summary(coverage[:deploy_test])} across active scenarios."
+      )
+      rules << benchmark_rule(
+        "Deployment is gated by tests and security scans",
+        gating ? "pass" : "fail",
+        gating ? "Unit tests, SAST, and artifact or image scanning all appear on the supported path before deployment." : "Deployment is not clearly gated by the expected test and security controls."
+      )
+      rules << benchmark_rule(
+        "External secret management is referenced in deployment automation",
+        secret_tools.any? ? "pass" : "fail",
+        secret_tools.any? ? "Detected #{secret_tools.map { |family| tool_family_label(family) }.join(', ')} in deployment automation." : "No external secret-management signal was detected in deployment automation."
+      )
+      rules << benchmark_rule(
+        "Artifact integrity is verified before deployment",
+        integrity_tools.any? ? "pass" : "fail",
+        integrity_tools.any? ? "Detected #{integrity_tools.map { |family| tool_family_label(family) }.join(', ')} before deployment." : "No signature or checksum verification was detected before deployment."
+      )
+      rules << benchmark_rule(
+        "A production deployment path is visible",
+        production_present ? "pass" : "warn",
+        production_present ? "A production deployment path is defined in the analyzed YAML." : "No production deployment path was detected in the analyzed YAML."
+      )
+      rules << benchmark_rule(
+        "Deployment hygiene remains policy-compliant",
+        deploy_hygiene ? "pass" : "fail",
+        deploy_hygiene ? "No high-risk deployment hygiene violations were detected." : "Deployment hygiene findings lower confidence in secure deployment."
+      )
+
       benchmark_practice(
         "secure_deployment",
         "Secure Deployment",
@@ -1481,7 +1655,8 @@ module GitlabCiAuditor
         "medium",
         "Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.",
         good_signals,
-        gaps
+        gaps,
+        rules
       )
     end
 
@@ -1498,6 +1673,7 @@ module GitlabCiAuditor
       cross_component = @pipeline.downstream_references.any? || all_pipelines.size > 1
       good_signals = []
       gaps = []
+      rules = []
 
       good_signals << "Structured test reports are published" if structured_reporting
       good_signals << "Security defect reports are exported as machine-readable artifacts" if security_reports.any?
@@ -1522,6 +1698,36 @@ module GitlabCiAuditor
       score += 5 if cross_component
       score = [score, 100].min
 
+      rules << benchmark_rule(
+        "Structured test reporting is published",
+        structured_reporting ? "pass" : "fail",
+        structured_reporting ? "Detected structured test or coverage report artifacts in the analyzed jobs." : "No structured test or coverage report artifacts were detected."
+      )
+      rules << benchmark_rule(
+        "Machine-readable security defect reports are exported",
+        security_reports.any? ? "pass" : "fail",
+        security_reports.any? ? "Detected #{security_reports.map { |family| tool_family_label(family) }.join(', ')} artifacts." : "No machine-readable SAST or scan report artifact was detected."
+      )
+      rules << benchmark_rule(
+        "Tests and scans act as blocking defect gates",
+        blocking_gates && unit_ratio >= 0.45 && (sast_ratio >= 0.45 || scan_ratio >= 0.45) ? "pass" : "fail",
+        if blocking_gates
+          "Unit test, SAST, and scan coverage is able to influence the flow without `allow_failure` on critical jobs."
+        else
+          "At least one critical test or scan job is optional because `allow_failure` is enabled."
+        end
+      )
+      rules << benchmark_rule(
+        "Deployment is influenced by earlier defect signals",
+        flow_influenced ? "pass" : "warn",
+        flow_influenced ? "Deployment follows earlier quality and security controls on the analyzed path." : "The analyzed flow does not clearly show deployment reacting to earlier defect signals."
+      )
+      rules << benchmark_rule(
+        "Cross-component defect visibility is represented",
+        cross_component ? "pass" : "warn",
+        cross_component ? "Multiple pipeline components are analyzed together, so cross-component feedback is visible." : "The current YAML view is limited to a single pipeline component."
+      )
+
       benchmark_practice(
         "defect_management",
         "Defect Management",
@@ -1530,11 +1736,12 @@ module GitlabCiAuditor
         "medium",
         "Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.",
         good_signals,
-        gaps
+        gaps,
+        rules
       )
     end
 
-    def benchmark_practice(key, title, score, estimated_level, confidence, rationale, good_signals, gaps)
+    def benchmark_practice(key, title, score, estimated_level, confidence, rationale, good_signals, gaps, rules)
       {
         key: key,
         title: title,
@@ -1546,7 +1753,16 @@ module GitlabCiAuditor
         rationale: rationale,
         good_signals: good_signals,
         gaps: gaps,
+        rules: rules,
         reference_url: OWASP_SAMM_REFERENCES.fetch(key)
+      }
+    end
+
+    def benchmark_rule(title, status, detail)
+      {
+        title: title,
+        status: status,
+        detail: detail
       }
     end
 

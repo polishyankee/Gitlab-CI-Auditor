@@ -109,12 +109,21 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     secure_build = benchmark[:practices].find { |practice| practice[:key] == "secure_build" }
     secure_deployment = benchmark[:practices].find { |practice| practice[:key] == "secure_deployment" }
     defect_management = benchmark[:practices].find { |practice| practice[:key] == "defect_management" }
+    signals = benchmark[:observed_signals]
+    analysis_scope = signals.find { |group| group[:key] == "analysis_scope" }
+    security_tooling = signals.find { |group| group[:key] == "security_tooling" }
+    secure_build_sast_rule = secure_build[:rules].find { |rule| rule[:title] == "Stack-aware SAST is enforced in the build flow" }
 
     assert_equal "OWASP SAMM v2", benchmark[:framework]
     assert_equal "Implementation", benchmark[:scope]
     assert_equal 3, secure_build[:estimated_level]
     assert_equal 3, secure_deployment[:estimated_level]
     assert defect_management[:estimated_level] >= 2
+    refute_empty signals
+    assert_includes analysis_scope[:values], "Analysis scope: complete"
+    assert security_tooling[:values].any? { |value| value.include?("Artifact scan families:") && value.include?("trivy fs") }
+    refute_nil secure_build_sast_rule
+    assert_equal "pass", secure_build_sast_rule[:status]
     assert_includes report.dig(:metadata, :detected_security_tools, :artifact_scan), "trivy fs"
     assert_includes report.dig(:metadata, :detected_security_tools, :image_scan), "trivy image"
     assert_includes report.dig(:metadata, :detected_security_tools, :secret_management), "HashiCorp Vault"

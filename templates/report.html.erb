@@ -764,26 +764,16 @@
         </div>
 
         <div class="list">
-          <div class="list-item">
-            <strong>Observed Detection Signals</strong>
-            <div class="job-pills" style="margin-top:12px;">
-              <% @report.dig(:metadata, :detected_stacks).to_a.each do |stack| %>
-                <span class="mini-pill">stack: <%= stack %></span>
-              <% end %>
-              <% @report.dig(:metadata, :detected_security_tools, :artifact_scan).to_a.each do |tool| %>
-                <span class="mini-pill">artifact scan: <%= tool %></span>
-              <% end %>
-              <% @report.dig(:metadata, :detected_security_tools, :image_scan).to_a.each do |tool| %>
-                <span class="mini-pill">image scan: <%= tool %></span>
-              <% end %>
-              <% @report.dig(:metadata, :detected_security_tools, :secret_management).to_a.each do |tool| %>
-                <span class="mini-pill">secret mgmt: <%= tool %></span>
-              <% end %>
-              <% @report.dig(:metadata, :detected_security_tools, :integrity_verification).to_a.each do |tool| %>
-                <span class="mini-pill">integrity: <%= tool %></span>
-              <% end %>
+          <% @report.dig(:benchmarks, :owasp_samm_v2, :observed_signals).to_a.each do |signal_group| %>
+            <div class="list-item">
+              <strong><%= signal_group[:label] %></strong>
+              <div class="job-pills" style="margin-top:12px;">
+                <% signal_group[:values].to_a.each do |value| %>
+                  <span class="mini-pill"><%= value %></span>
+                <% end %>
+              </div>
             </div>
-          </div>
+          <% end %>
         </div>
 
         <div class="benchmark-grid">
@@ -801,6 +791,18 @@
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> <%= practice[:rationale] %></div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> <%= practice[:good_signals].any? ? practice[:good_signals].join(" | ") : "No strong signals detected" %></div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> <%= practice[:gaps].any? ? practice[:gaps].join(" | ") : "No significant gaps detected from the pipeline definition" %></div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
+              <div class="list" style="margin-top:10px;">
+                <% practice[:rules].to_a.each do |rule| %>
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong><%= rule[:title] %></strong>
+                      <span class="badge <%= rule[:status] %>"><%= rule[:status] %></span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><%= rule[:detail] %></div>
+                  </div>
+                <% end %>
+              </div>
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Reference:</strong>
                 <a href="<%= practice[:reference_url] %>" target="_blank" rel="noreferrer" style="color:#79c0ff;"><%= practice[:reference_url] %></a>

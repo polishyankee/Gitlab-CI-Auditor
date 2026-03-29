@@ -7,6 +7,7 @@
 - [x] richer scan detection for artifact, dependency, and container-image scanners
 - [x] OWASP SAMM v2 `Implementation` benchmark for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - [x] report and GUI support for benchmark views, detected security tooling, and remediation context
+- [x] explicit benchmark detection signals and per-practice rule mapping in the `OWASP SAMM` tab
 
 ## Near Term
 

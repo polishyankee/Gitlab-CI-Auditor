@@ -122,9 +122,15 @@ module GitlabCiAuditor
       end
       lines << ""
       lines << "OWASP SAMM v2:"
+      @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:observed_signals, []).each do |signal_group|
+        lines << "  observed #{signal_group[:label]}: #{signal_group[:values].join(' | ')}"
+      end
       @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:practices, []).each do |practice|
         lines << "  - #{practice[:title]}: level #{practice[:estimated_level]}/#{practice[:max_level]} [#{practice[:status]}] alignment=#{practice[:alignment_score]}/100 confidence=#{practice[:confidence]}"
         lines << "    rationale: #{practice[:rationale]}"
+        practice.fetch(:rules, []).each do |rule|
+          lines << "    rule [#{rule[:status]}]: #{rule[:title]} - #{rule[:detail]}"
+        end
       end
       lines << ""
       lines << "Scenario Results:"
