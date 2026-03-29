@@ -130,6 +130,26 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_includes report.dig(:metadata, :detected_security_tools, :integrity_verification), "cosign verify"
   end
 
+  def test_owasp_samm_benchmark_maps_all_implementation_questions
+    pipeline = @loader.load(example_path("pipelines/samm_question_rich.gitlab-ci.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    benchmark = report.dig(:benchmarks, :owasp_samm_v2)
+    secure_build = benchmark[:practices].find { |practice| practice[:key] == "secure_build" }
+    secure_deployment = benchmark[:practices].find { |practice| practice[:key] == "secure_deployment" }
+    defect_management = benchmark[:practices].find { |practice| practice[:key] == "defect_management" }
+    mapped_questions = benchmark[:practices].sum { |practice| practice[:questions].size }
+    question_signal = benchmark[:observed_signals].find { |group| group[:key] == "question_mapping" }
+
+    assert_equal 18, mapped_questions
+    assert_equal 6, secure_build[:questions].size
+    assert_equal 6, secure_deployment[:questions].size
+    assert_equal 6, defect_management[:questions].size
+    assert_equal "pass", secure_build[:questions].find { |question| question[:key] == "I-SB-1-A" }[:status]
+    assert_equal "pass", secure_deployment[:questions].find { |question| question[:key] == "I-SD-3-A" }[:status]
+    assert_equal "review", defect_management[:questions].find { |question| question[:key] == "I-DM-2-A" }[:status]
+    assert_includes question_signal[:values], "Mapped implementation questions: 18"
+  end
+
   def test_graph_nodes_expose_short_pipeline_labels_for_long_paths
     pipeline = @loader.load(example_path("pipelines/library_package.gitlab-ci.yml"))
     report = GitlabCiAuditor::Analyzer.new(

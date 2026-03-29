@@ -22,6 +22,16 @@ class ExamplesSmokeTest < Minitest::Test
         path: example_path("pipelines/snapshot_root.gitlab-ci.yml"),
         policy_pack: "balanced",
         expected_grade: "A"
+      },
+      {
+        path: example_path("pipelines/samm_question_rich.gitlab-ci.yml"),
+        policy_pack: "balanced",
+        expected_grade: "A"
+      },
+      {
+        path: example_path("pipelines/samm_question_gaps.gitlab-ci.yml"),
+        policy_pack: "strict",
+        expected_grade: "F"
       }
     ]
   end

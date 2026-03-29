@@ -595,7 +595,7 @@
       <div class="topbar-inner">
         <div class="repo-strip">
           <span class="pill">Audit Report</span>
-          <span class="pill"><code>examples/pipelines/legacy_monolith.gitlab-ci.yml</code></span>
+          <span class="pill"><code>examples/pipelines/samm_question_gaps.gitlab-ci.yml</code></span>
           <span class="pill">Policy Pack: <strong>Strict Platform</strong></span>
         </div>
 
@@ -636,12 +636,12 @@
           <span class="badge fail">
             critical
           </span>
-          <h1>SSDLC report for <code>legacy_monolith.gitlab-ci.yml</code></h1>
+          <h1>SSDLC report for <code>samm_question_gaps.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-03-29T20:25:36Z. Active scenarios:
-            <strong>11</strong>,
+            Analysis generated 2026-03-29T20:25:41Z. Active scenarios:
+            <strong>8</strong>,
             skipped:
-            <strong>0</strong>,
+            <strong>1</strong>,
             scope:
             <strong>complete</strong>.
           </p>
@@ -654,7 +654,7 @@
             </div>
             <div class="brand-card">
               <span>Policy Remediation</span>
-              <strong>5 findings</strong>
+              <strong>6 findings</strong>
               <span>Each gap includes the issue, the recommendation, and a remediation direction.</span>
             </div>
           </div>
@@ -690,12 +690,12 @@
 
         <aside class="score">
           <span class="muted">Overall Score</span>
-          <strong>16/100</strong>
+          <strong>26/100</strong>
           <div class="badge fail" style="margin-top: 14px; width: fit-content;">
             Grade F
           </div>
           <div class="sub">
-            <div><strong>Pipeline:</strong> <code>examples/pipelines/legacy_monolith.gitlab-ci.yml</code></div>
+            <div><strong>Pipeline:</strong> <code>examples/pipelines/samm_question_gaps.gitlab-ci.yml</code></div>
             <div><strong>Policy:</strong> Strict Platform (policy_pack)</div>
             <div><strong>Scope:</strong> complete</div>
           </div>
@@ -724,7 +724,7 @@
                 <span style="width: 0%"></span>
               </div>
               <strong>0/20</strong>
-              <div class="muted">0/11 active scenarios satisfy the selected SSDLC policy pack</div>
+              <div class="muted">0/8 active scenarios satisfy the selected SSDLC policy pack</div>
             </article>
           
             <article class="card">
@@ -736,7 +736,7 @@
                 <span style="width: 0%"></span>
               </div>
               <strong>0/10</strong>
-              <div class="muted">0 pass, 0 warn, 11 missing</div>
+              <div class="muted">0 pass, 0 warn, 8 missing</div>
             </article>
           
             <article class="card">
@@ -748,7 +748,7 @@
                 <span style="width: 0%"></span>
               </div>
               <strong>0/5</strong>
-              <div class="muted">0 pass, 0 warn, 11 missing</div>
+              <div class="muted">0 pass, 0 warn, 8 missing</div>
             </article>
           
             <article class="card">
@@ -760,7 +760,7 @@
                 <span style="width: 0%"></span>
               </div>
               <strong>0/15</strong>
-              <div class="muted">0 pass, 0 warn, 11 missing</div>
+              <div class="muted">0 pass, 0 warn, 8 missing</div>
             </article>
           
             <article class="card">
@@ -772,7 +772,7 @@
                 <span style="width: 0%"></span>
               </div>
               <strong>0/15</strong>
-              <div class="muted">0 pass, 0 warn, 11 missing</div>
+              <div class="muted">0 pass, 0 warn, 8 missing</div>
             </article>
           
             <article class="card">
@@ -784,31 +784,31 @@
                 <span style="width: 53%"></span>
               </div>
               <strong>8/15</strong>
-              <div class="muted">0 pass, 11 warn, 0 missing</div>
+              <div class="muted">0 pass, 8 warn, 0 missing</div>
             </article>
           
             <article class="card">
               <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
                 <h3>Security Policies</h3>
-                <span class="badge fail">fail</span>
-              </div>
-              <div class="meter">
-                <span style="width: 0%"></span>
-              </div>
-              <strong>0/10</strong>
-              <div class="muted">5 security policy violations detected</div>
-            </article>
-          
-            <article class="card">
-              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
-                <h3>Maintainability and Complexity</h3>
                 <span class="badge warn">warn</span>
               </div>
               <div class="meter">
                 <span style="width: 80%"></span>
               </div>
               <strong>8/10</strong>
-              <div class="muted">1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules</div>
+              <div class="muted">1 security policy violations detected</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Maintainability and Complexity</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
+              <div class="muted">The pipeline is relatively easy to maintain</div>
             </article>
           
         </div>
@@ -829,9 +829,7 @@
                 
                   <span class="mini-pill">Automate deployment to a test environment and declare it explicitly in the environment section</span>
                 
-                  <span class="mini-pill">Add workflow:rules to control centrally when a pipeline should exist</span>
-                
-                  <span class="mini-pill">Remove StrictHostKeyChecking no and replace it with controlled known_hosts management</span>
+                  <span class="mini-pill">Review scenarios blocked by workflow rules if they should remain business-supported paths</span>
                 
               </div>
             
@@ -845,6 +843,8 @@
                   <span class="mini-pill">The pipeline declares an explicit stage list</span>
                 
                   <span class="mini-pill">No inline secrets were detected in the variables section</span>
+                
+                  <span class="mini-pill">Images are pinned instead of relying on latest</span>
                 
                   <span class="mini-pill">Pipeline complexity remains under control</span>
                 
@@ -870,7 +870,7 @@
                 
                   <span class="mini-pill">Pipeline files analyzed: 1</span>
                 
-                  <span class="mini-pill">Active scenarios analyzed: 11</span>
+                  <span class="mini-pill">Active scenarios analyzed: 8</span>
                 
                   <span class="mini-pill">Unique active jobs mapped into the benchmark: 2</span>
                 
@@ -889,7 +889,7 @@
                 
                   <span class="mini-pill">Stage model: build, deploy</span>
                 
-                  <span class="mini-pill">At least one analyzed pipeline file has no workflow:rules</span>
+                  <span class="mini-pill">workflow:rules is present on every analyzed pipeline file</span>
                 
                   <span class="mini-pill">Declared environments: test</span>
                 
@@ -900,15 +900,15 @@
               <strong>Controls and Gates</strong>
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">Unit test execution: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                  <span class="mini-pill">Unit test execution: 0 pass, 0 warn, 8 missing across 8 active scenarios</span>
                 
-                  <span class="mini-pill">Coverage reporting: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                  <span class="mini-pill">Coverage reporting: 0 pass, 0 warn, 8 missing across 8 active scenarios</span>
                 
-                  <span class="mini-pill">SAST coverage: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                  <span class="mini-pill">SAST coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios</span>
                 
-                  <span class="mini-pill">Artifact or image scanning: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                  <span class="mini-pill">Artifact or image scanning: 0 pass, 0 warn, 8 missing across 8 active scenarios</span>
                 
-                  <span class="mini-pill">Automated test deployment: 0 pass, 11 warn, 0 missing across 11 active scenarios</span>
+                  <span class="mini-pill">Automated test deployment: 0 pass, 8 warn, 0 missing across 8 active scenarios</span>
                 
                   <span class="mini-pill">Critical quality and security jobs are blocking</span>
                 
@@ -940,7 +940,7 @@
                 
                   <span class="mini-pill">Security report artifacts: none detected</span>
                 
-                  <span class="mini-pill">5 policy findings reduce benchmark confidence on the analyzed YAML</span>
+                  <span class="mini-pill">1 policy findings reduce benchmark confidence on the analyzed YAML</span>
                 
                   <span class="mini-pill">Cross-component scope is limited to a single pipeline file</span>
                 
@@ -953,7 +953,7 @@
                 
                   <span class="mini-pill">Mapped implementation questions: 18</span>
                 
-                  <span class="mini-pill">Question status counts: 0 pass, 5 warn, 13 fail, 4 review</span>
+                  <span class="mini-pill">Question status counts: 1 pass, 4 warn, 13 fail, 4 review</span>
                 
                   <span class="mini-pill">Questions that require manual or process evidence: 4</span>
                 
@@ -972,22 +972,22 @@
                 <span class="badge fail">fail</span>
               </div>
               <div class="meter">
-                <span style="width: 20%"></span>
+                <span style="width: 30%"></span>
               </div>
-              <strong>Level 0/3</strong>
-              <div class="muted">Alignment 20/100 · Confidence high</div>
+              <strong>Level 1/3</strong>
+              <div class="muted">Alignment 30/100 · Confidence high</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Quality and security gates are blocking</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Unit tests are not consistently enforced across active scenarios | Coverage artifacts are not consistently published | SAST is missing or does not meet the detected stack policy | Artifact or image scanning is missing on part of the build path | Some pipelines still rely on job-level rules without workflow governance</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Quality and security gates are blocking | workflow:rules governs pipeline creation</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Unit tests are not consistently enforced across active scenarios | Coverage artifacts are not consistently published | SAST is missing or does not meet the detected stack policy | Artifact or image scanning is missing on part of the build path</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
                     <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
                       <strong>Repeatable build orchestration is visible</strong>
-                      <span class="badge warn">warn</span>
+                      <span class="badge pass">pass</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">An explicit stage model exists, but at least one analyzed pipeline file still lacks workflow governance.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Explicit stages are declared and workflow governance is visible on every analyzed pipeline file.</div>
                   </div>
                 
                   <div class="list-item">
@@ -995,7 +995,7 @@
                       <strong>Unit tests execute across supported build paths</strong>
                       <span class="badge fail">fail</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 8 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1003,7 +1003,7 @@
                       <strong>Coverage evidence is published for build outputs</strong>
                       <span class="badge fail">fail</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 8 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1011,7 +1011,7 @@
                       <strong>Stack-aware SAST is enforced in the build flow</strong>
                       <span class="badge fail">fail</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 8 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1019,7 +1019,7 @@
                       <strong>Artifact or image scanning is enforced on the build path</strong>
                       <span class="badge fail">fail</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 8 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1034,19 +1034,17 @@
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Upstream question mapping:</strong>
                 
-                0 pass · 2 warn · 4 fail · 0 review
+                1 pass · 1 warn · 4 fail · 0 review
               </div>
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
                     <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
                       <strong>I-SB-1-A · Is your full build process formally described?</strong>
-                      <span class="badge warn">warn</span>
+                      <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
-                    <div class="finding-copy" style="margin-top:8px;">Build logic exists in CI/CD YAML, but explicit stages or workflow governance are incomplete.</div>
-                    
-                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Keep the build as code in version control with explicit stages and `workflow:rules` for repeatability.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Build logic is codified in the pipeline with explicit stages and workflow governance.</div>
                     
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Build documentation freshness, accessibility, and build-tool hardening still require evidence outside CI/CD YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
@@ -1153,13 +1151,13 @@
                 <span class="badge fail">fail</span>
               </div>
               <div class="meter">
-                <span style="width: 30%"></span>
+                <span style="width: 35%"></span>
               </div>
               <strong>Level 1/3</strong>
-              <div class="muted">Alignment 30/100 · Confidence medium</div>
+              <div class="muted">Alignment 35/100 · Confidence medium</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment jobs declare explicit environments | Test deployment is automated on the happy path</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Deployment is not clearly gated by tests and security scans | No external secret manager signal was detected in deployment automation | No signature or checksum verification was detected before deployment | No production deployment path was detected | Deployment hygiene findings reduce confidence in secure deployment</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment jobs declare explicit environments | Test deployment is automated on the happy path | No deployment hygiene policy violations were detected</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Deployment is not clearly gated by tests and security scans | No external secret manager signal was detected in deployment automation | No signature or checksum verification was detected before deployment | No production deployment path was detected</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
@@ -1176,7 +1174,7 @@
                       <strong>A test environment deployment is automated</strong>
                       <span class="badge warn">warn</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">0 pass, 11 warn, 0 missing across active scenarios.</div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 8 warn, 0 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1214,9 +1212,9 @@
                   <div class="list-item">
                     <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
                       <strong>Deployment hygiene remains policy-compliant</strong>
-                      <span class="badge fail">fail</span>
+                      <span class="badge pass">pass</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">Deployment hygiene findings lower confidence in secure deployment.</div>
+                    <div class="finding-copy" style="margin-top:8px;">No high-risk deployment hygiene violations were detected.</div>
                   </div>
                 
               </div>
@@ -1545,7 +1543,7 @@
                   <span class="badge fail">high</span>
                   <strong>Unit test gate is not complete</strong>
                 </div>
-                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios do not show unit test execution, and 0 scenarios only run tests in a non-enforcing context.</div>
+                <div class="finding-copy"><strong>Issue:</strong> 8/8 scenarios do not show unit test execution, and 0 scenarios only run tests in a non-enforcing context.</div>
                 
                   <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
                 
@@ -1562,7 +1560,7 @@
                   <span class="badge fail">high</span>
                   <strong>Coverage reporting is not complete</strong>
                 </div>
-                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios do not publish test coverage artifacts, and 0 scenarios only publish them in a non-enforcing context.</div>
+                <div class="finding-copy"><strong>Issue:</strong> 8/8 scenarios do not publish test coverage artifacts, and 0 scenarios only publish them in a non-enforcing context.</div>
                 
                   <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
                 
@@ -1579,7 +1577,7 @@
                   <span class="badge fail">high</span>
                   <strong>SAST gate is not complete</strong>
                 </div>
-                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios have no SAST, and 0 scenarios run SAST in a non-enforcing mode.</div>
+                <div class="finding-copy"><strong>Issue:</strong> 8/8 scenarios have no SAST, and 0 scenarios run SAST in a non-enforcing mode.</div>
                 
                   <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
                 
@@ -1596,7 +1594,7 @@
                   <span class="badge fail">high</span>
                   <strong>Artifact or image scanning is not complete</strong>
                 </div>
-                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios have no artifact or image scan, and 0 scenarios run the scan in a non-enforcing mode.</div>
+                <div class="finding-copy"><strong>Issue:</strong> 8/8 scenarios have no artifact or image scan, and 0 scenarios run the scan in a non-enforcing mode.</div>
                 
                   <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
                 
@@ -1613,7 +1611,7 @@
                   <span class="badge warn">medium</span>
                   <strong>Automated test deployment is not complete</strong>
                 </div>
-                <div class="finding-copy"><strong>Issue:</strong> 0/11 scenarios do not deploy automatically to a test environment, and 11 scenarios do so in a non-enforcing way.</div>
+                <div class="finding-copy"><strong>Issue:</strong> 0/8 scenarios do not deploy automatically to a test environment, and 8 scenarios do so in a non-enforcing way.</div>
                 
                   <div class="finding-copy"><strong>Evidence:</strong> push -> main -> deploy_test is present but not enforcing | push -> master -> deploy_test is present but not enforcing | push -> develop -> deploy_test is present but not enforcing | push -> feature/audit-coverage -> deploy_test is present but not enforcing | push -> release/1.0.0 -> deploy_test is present but not enforcing</div>
                 
@@ -1622,6 +1620,23 @@
                 
                 
                   <div class="finding-copy"><strong>How to fix:</strong> Add a job with `environment: name: test|qa|staging`, `when: on_success`, and `needs` from build, test, and scan jobs. Avoid `when: manual` for the test environment when SSDLC policy expects continuous validation.</div>
+                
+              </div>
+            
+              <div class="list-item">
+                <div class="finding-head">
+                  <span class="badge skipped">low</span>
+                  <strong>Some scenarios are blocked by workflow rules</strong>
+                </div>
+                <div class="finding-copy"><strong>Issue:</strong> 1 scenarios do not create a pipeline because of `workflow:rules` or inherited control rules.</div>
+                
+                  <div class="finding-copy"><strong>Evidence:</strong> tag v1.0.0</div>
+                
+                
+                  <div class="finding-copy"><strong>Recommendation:</strong> Verify whether this behavior is intentional and whether it hides SSDLC blind spots.</div>
+                
+                
+                  <div class="finding-copy"><strong>How to fix:</strong> If a branch or source should be supported, add explicit `workflow:rules` and matching quality or security job rules.</div>
                 
               </div>
             
@@ -1679,9 +1694,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1736,9 +1751,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1793,9 +1808,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1850,9 +1865,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1907,9 +1922,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1964,9 +1979,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2021,9 +2036,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2078,66 +2093,9 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                </div>
-              
-            </details>
-          
-            <details>
-              <summary>
-                <span class="badge warn">warn</span>
-                schedule -> main
-              </summary>
-
-              
-                
-                
-                <div class="controls">
-                  
-                    <div class="control">
-                      <strong>unit_tests</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>coverage_report</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>sast</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>scan</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>deploy_test</strong>
-                      <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
-                      
-                        <p class="muted" style="margin:10px 0 0;">deploy_test is present but not enforcing</p>
-                      
-                    </div>
-                  
-                </div>
-
-                
-
-                <div class="job-pills">
-                  
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_gaps.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2145,115 +2103,12 @@
           
             <details>
               <summary>
-                <span class="badge warn">warn</span>
-                web -> main
-              </summary>
-
-              
-                
-                
-                <div class="controls">
-                  
-                    <div class="control">
-                      <strong>unit_tests</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>coverage_report</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>sast</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>scan</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>deploy_test</strong>
-                      <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
-                      
-                        <p class="muted" style="margin:10px 0 0;">deploy_test is present but not enforcing</p>
-                      
-                    </div>
-                  
-                </div>
-
-                
-
-                <div class="job-pills">
-                  
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                </div>
-              
-            </details>
-          
-            <details>
-              <summary>
-                <span class="badge warn">warn</span>
+                <span class="badge skipped">skipped</span>
                 tag v1.0.0
               </summary>
 
               
-                
-                
-                <div class="controls">
-                  
-                    <div class="control">
-                      <strong>unit_tests</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>coverage_report</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>sast</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>scan</strong>
-                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
-                      
-                    </div>
-                  
-                    <div class="control">
-                      <strong>deploy_test</strong>
-                      <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
-                      
-                        <p class="muted" style="margin:10px 0 0;">deploy_test is present but not enforcing</p>
-                      
-                    </div>
-                  
-                </div>
-
-                
-
-                <div class="job-pills">
-                  
-                    <span class="job-pill">build_app / build / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/legacy_monolith.gitlab-ci.yml</span>
-                  
-                </div>
+                <p class="muted" style="margin: 12px 0 0;">workflow rules prevented pipeline creation</p>
               
             </details>
           
@@ -2268,63 +2123,7 @@
               <div class="list-item">
                 <div class="finding-head">
                   <span class="badge warn">medium</span>
-                  <strong>Image docker:latest uses the latest tag</strong>
-                </div>
-                <div class="finding-copy"><strong>Issue:</strong> Job build_app [examples/pipelines/legacy_monolith.gitlab-ci.yml] should use an explicit version or digest.</div>
-                
-                  <div class="finding-copy"><strong>Recommendation:</strong> Pin the image to a concrete version or digest.</div>
-                
-                
-                  <div class="finding-copy"><strong>How to fix:</strong> Replace `image: docker:latest` with something like `image: docker:1.2.3` or a digest such as `@sha256:...`.</div>
-                
-              </div>
-            
-              <div class="list-item">
-                <div class="finding-head">
-                  <span class="badge warn">medium</span>
-                  <strong>Image docker:latest uses the latest tag</strong>
-                </div>
-                <div class="finding-copy"><strong>Issue:</strong> Job deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml] should use an explicit version or digest.</div>
-                
-                  <div class="finding-copy"><strong>Recommendation:</strong> Pin the image to a concrete version or digest.</div>
-                
-                
-                  <div class="finding-copy"><strong>How to fix:</strong> Replace `image: docker:latest` with something like `image: docker:1.2.3` or a digest such as `@sha256:...`.</div>
-                
-              </div>
-            
-              <div class="list-item">
-                <div class="finding-head">
-                  <span class="badge fail">high</span>
-                  <strong>Remote script download and execution in build_app [examples/pipelines/legacy_monolith.gitlab-ci.yml]</strong>
-                </div>
-                <div class="finding-copy"><strong>Issue:</strong> The job uses a `curl|bash` or `wget|sh` pattern without integrity verification.</div>
-                
-                  <div class="finding-copy"><strong>Recommendation:</strong> Download the artifact explicitly and verify its checksum or signature before execution.</div>
-                
-                
-                  <div class="finding-copy"><strong>How to fix:</strong> Split the command into two steps, for example `curl -o installer.sh ...` and `sha256sum -c ... && bash installer.sh`.</div>
-                
-              </div>
-            
-              <div class="list-item">
-                <div class="finding-head">
-                  <span class="badge fail">high</span>
-                  <strong>Host key verification disabled in deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml]</strong>
-                </div>
-                <div class="finding-copy"><strong>Issue:</strong> SSH trust is bypassed through `StrictHostKeyChecking no`.</div>
-                
-                  <div class="finding-copy"><strong>Recommendation:</strong> Manage `known_hosts` instead of disabling host verification.</div>
-                
-                
-                  <div class="finding-copy"><strong>How to fix:</strong> Add `ssh-keyscan host >> ~/.ssh/known_hosts` and remove `StrictHostKeyChecking no` from the job configuration.</div>
-                
-              </div>
-            
-              <div class="list-item">
-                <div class="finding-head">
-                  <span class="badge warn">medium</span>
-                  <strong>Test deployment deploy_test [examples/pipelines/legacy_monolith.gitlab-ci.yml] is manual</strong>
+                  <strong>Test deployment deploy_test [examples/pipelines/samm_question_gaps.gitlab-ci.yml] is manual</strong>
                 </div>
                 <div class="finding-copy"><strong>Issue:</strong> The test environment is not deployed automatically after the required gates pass.</div>
                 
@@ -2343,15 +2142,13 @@
         <h2>Pipeline Maintainability</h2>
         <div class="list">
           
-            
-              <div class="list-item">1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules</div>
-            
+            <div class="list-item">No material maintainability problems were detected.</div>
           
         </div>
       </section>
     </main>
 
-    <script id="graph-data" type="application/json">{"stages":["build","deploy"],"pipelines":[{"label":"examples/pipelines/legacy_monolith.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/legacy_monolith.gitlab-ci.yml::build_app","label":"build_app","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/legacy_monolith.gitlab-ci.yml","pipeline_short_label":".../pipelines/legacy_monolith.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":[],"weaknesses":["Disables Maven tests through skip flags","Uses a latest image tag","Does not contribute a direct SSDLC control"],"variant":"risk","when":"on_success","manual":false,"allow_failure":true,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 2"]},{"id":"examples/pipelines/legacy_monolith.gitlab-ci.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":1,"pipeline_label":"examples/pipelines/legacy_monolith.gitlab-ci.yml","pipeline_short_label":".../pipelines/legacy_monolith.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_test"],"strengths":[],"weaknesses":["Test deployment is manual","Uses a latest image tag"],"variant":"risk","when":"manual","manual":true,"allow_failure":false,"environment":"test","needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Environment: test","Script lines: 1"]}],"edges":[]}</script>
+    <script id="graph-data" type="application/json">{"stages":["build","deploy"],"pipelines":[{"label":"examples/pipelines/samm_question_gaps.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/samm_question_gaps.gitlab-ci.yml::build_app","label":"build_app","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/samm_question_gaps.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_gaps.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":["Uses a pinned image"],"weaknesses":["Disables Maven tests through skip flags","Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: target/app.jar","Script lines: 1"]},{"id":"examples/pipelines/samm_question_gaps.gitlab-ci.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_gaps.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_gaps.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_test"],"strengths":["Uses a pinned image"],"weaknesses":["Test deployment is manual"],"variant":"mixed","when":"manual","manual":true,"allow_failure":false,"environment":"test","needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Environment: test","Script lines: 3"]}],"edges":[]}</script>
     <script>
       (function () {
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));

@@ -1,0 +1,143 @@
+- key: I-SB-1-A
+  practice: secure_build
+  title: Is your full build process formally described?
+  heuristic: build_process_formally_described
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml
+  static_limitations: Build documentation freshness, accessibility, and build-tool hardening still require evidence outside CI/CD YAML.
+
+- key: I-SB-1-B
+  practice: secure_build
+  title: Do you have solid knowledge about dependencies you're relying on?
+  heuristic: dependency_knowledge_baseline
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml
+  static_limitations: Historical review cadence and CVE triage recency cannot be proven from the pipeline definition alone.
+
+- key: I-SB-2-A
+  practice: secure_build
+  title: Is the build process fully automated?
+  heuristic: build_process_fully_automated
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml
+  static_limitations: Tool hardening and least-privilege access for build secrets require platform or IAM evidence beyond YAML.
+
+- key: I-SB-2-B
+  practice: secure_build
+  title: Do you handle 3rd party dependency risk by a formal process?
+  heuristic: dependency_risk_formal_process
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml
+  static_limitations: Approved dependency lists, legal review, and unmaintained-package governance are usually stored outside the pipeline.
+
+- key: I-SB-3-A
+  practice: secure_build
+  title: Do you enforce automated security checks in your build processes?
+  heuristic: automated_security_checks_in_build
+  observability: direct
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml
+  static_limitations: Severity thresholds and yearly reassessment of tool configuration may require evidence from scanner policy systems.
+
+- key: I-SB-3-B
+  practice: secure_build
+  title: Do you prevent build of software if it's affected by vulnerabilities in dependencies?
+  heuristic: vulnerable_dependencies_block_build
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml
+  static_limitations: Responsible disclosure workflows and explicit risk acceptance usually live outside CI/CD YAML.
+
+- key: I-SD-1-A
+  practice: secure_deployment
+  title: Do you use repeatable deployment processes?
+  heuristic: repeatable_deployment_processes
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml
+  static_limitations: Personnel authorization models and deployment tool hardening require evidence beyond the pipeline file.
+
+- key: I-SD-1-B
+  practice: secure_deployment
+  title: Do you limit access to application secrets according to the least privilege principle?
+  heuristic: least_privilege_secrets
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml
+  static_limitations: Developer access to production secrets and environment separation must be validated in the secret platform or IAM layer.
+
+- key: I-SD-2-A
+  practice: secure_deployment
+  title: Are deployment processes automated and employing security checks?
+  heuristic: deployment_automation_with_security_checks
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml
+  static_limitations: Alert routing and long-term deployment log retention usually require evidence from observability or ticketing systems.
+
+- key: I-SD-2-B
+  practice: secure_deployment
+  title: Do you inject production secrets into configuration files during deployment?
+  heuristic: deployment_secret_injection
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml
+  static_limitations: Human break-glass access patterns and abnormal secret-access alerting require secret-platform evidence.
+
+- key: I-SD-3-A
+  practice: secure_deployment
+  title: Do you consistently validate the integrity of deployed artifacts?
+  heuristic: deployed_artifact_integrity_validation
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml
+  static_limitations: Rollback behavior and compensating controls for externally built software may need runtime or release-management evidence.
+
+- key: I-SD-3-B
+  practice: secure_deployment
+  title: Do you practice proper lifecycle management for application secrets?
+  heuristic: secret_lifecycle_management
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml
+  static_limitations: Rotation cadence, uniqueness per instance, and synchronization guarantees usually require secret-store policy evidence.
+
+- key: I-DM-1-A
+  practice: defect_management
+  title: Do you track all known security defects in accessible locations?
+  heuristic: known_security_defects_tracking
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml
+  static_limitations: Defect-system accessibility, duplicate handling, and false-positive workflows require evidence from tracking systems.
+
+- key: I-DM-1-B
+  practice: defect_management
+  title: Do you use basic metrics about recorded security defects to carry out quick win improvement activities?
+  heuristic: defect_metrics_quick_wins
+  observability: partial
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml
+  static_limitations: Time-based metric review and resulting improvement activities usually require issue-tracker or reporting evidence.
+
+- key: I-DM-2-A
+  practice: defect_management
+  title: Do you keep an overview of the state of security defects across the organization?
+  heuristic: organizational_defect_overview
+  observability: review
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml
+  static_limitations: Organization-wide severity schemes, SLAs, and compliance reporting are normally managed outside individual pipeline definitions.
+
+- key: I-DM-2-B
+  practice: defect_management
+  title: Do you improve your security assurance program upon standardized metrics?
+  heuristic: standardized_defect_metrics_program
+  observability: review
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml
+  static_limitations: Management reporting and improvement planning are governance activities that cannot be proven from CI/CD YAML alone.
+
+- key: I-DM-3-A
+  practice: defect_management
+  title: Do you enforce SLAs for fixing security defects?
+  heuristic: defect_sla_enforcement
+  observability: review
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml
+  static_limitations: SLA clocks, breach alerts, and risk-transfer workflows require data from defect management and risk systems.
+
+- key: I-DM-3-B
+  practice: defect_management
+  title: Do you regularly evaluate the effectiveness of your security metrics so that the input helps drive your security strategy?
+  heuristic: security_metrics_effectiveness
+  observability: review
+  source_url: https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml
+  static_limitations: Strategy changes, metric validation, and cross-program aggregation require evidence outside the pipeline definition.

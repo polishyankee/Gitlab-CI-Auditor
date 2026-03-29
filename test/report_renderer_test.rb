@@ -36,6 +36,8 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, "Analysis Scope"
     assert_includes html, "Image scan families: none detected"
     assert_includes html, "OWASP SAMM rules:"
+    assert_includes html, "Upstream question mapping:"
+    assert_includes html, "Observability:"
     assert_includes html, "pipeline_short_label"
     assert_includes html, "minmax(320px, 1fr)"
   end

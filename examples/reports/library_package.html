@@ -91,6 +91,7 @@
       .pass { color: #3fb950; background: rgba(63, 185, 80, 0.12); }
       .warn { color: #d29922; background: rgba(210, 153, 34, 0.12); }
       .fail { color: #f85149; background: rgba(248, 81, 73, 0.12); }
+      .review { color: #a371f7; background: rgba(163, 113, 247, 0.12); }
       .skipped { color: #8b949e; background: rgba(139, 148, 158, 0.12); }
       .disabled { color: #79c0ff; background: rgba(88, 166, 255, 0.12); }
 
@@ -231,6 +232,13 @@
         padding: 24px;
       }
 
+      .graph-panel {
+        position: relative;
+        left: 50%;
+        width: calc(100vw - 32px);
+        margin-left: calc(-50vw + 16px);
+      }
+
       .tabbar {
         margin-top: 22px;
         display: flex;
@@ -262,6 +270,13 @@
       .category-grid {
         margin-top: 16px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .benchmark-grid {
+        margin-top: 16px;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .meter {
@@ -375,7 +390,7 @@
       .graph-canvas {
         position: relative;
         min-width: 100%;
-        min-height: 420px;
+        min-height: 460px;
       }
 
       .graph-svg {
@@ -390,14 +405,14 @@
       .graph-board {
         position: relative;
         display: grid;
-        gap: 18px;
-        padding: 20px;
+        gap: 20px;
+        padding: 24px;
         align-items: start;
       }
 
       .graph-column {
         position: relative;
-        min-width: 240px;
+        min-width: 320px;
       }
 
       .graph-stage {
@@ -461,12 +476,18 @@
       .graph-node h3 {
         margin: 0 0 8px;
         font-size: 1rem;
+        line-height: 1.35;
         color: #f0f6fc;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .graph-node small {
         display: block;
+        line-height: 1.45;
         color: var(--muted);
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .graph-badges {
@@ -523,6 +544,23 @@
         padding: 0;
       }
 
+      @supports (-webkit-line-clamp: 2) {
+        .graph-node h3,
+        .graph-node small {
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .graph-node h3 {
+          -webkit-line-clamp: 2;
+        }
+
+        .graph-node small {
+          -webkit-line-clamp: 2;
+        }
+      }
+
       .edge-needs {
         stroke: rgba(88, 166, 255, 0.58);
         stroke-width: 2;
@@ -545,7 +583,8 @@
         .hero,
         .stat-grid,
         .category-grid,
-        .controls {
+        .controls,
+        .benchmark-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -599,7 +638,7 @@
           </span>
           <h1>SSDLC report for <code>library_package.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-03-28T20:56:19Z. Active scenarios:
+            Analysis generated 2026-03-29T20:25:36Z. Active scenarios:
             <strong>8</strong>,
             skipped:
             <strong>1</strong>,
@@ -665,6 +704,7 @@
 
       <div class="tabbar" role="tablist" aria-label="Report views">
         <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="benchmark">OWASP SAMM</button>
         <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
         <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
         <button class="tab-btn" data-tab="security">Security</button>
@@ -808,7 +848,659 @@
         </div>
       </section>
 
-      <section class="section tab-panel" data-panel="graph" hidden>
+      <section class="section tab-panel" data-panel="benchmark" hidden>
+        <h2>OWASP SAMM v2 Benchmark</h2>
+        <div class="finding-copy">
+          Pipeline-derived estimate based on static CI/CD evidence. Organizational process evidence outside YAML may increase or decrease the real SAMM maturity.
+        </div>
+
+        <div class="list">
+          
+            <div class="list-item">
+              <strong>Analysis Scope</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Analysis scope: complete</span>
+                
+                  <span class="mini-pill">Pipeline files analyzed: 1</span>
+                
+                  <span class="mini-pill">Active scenarios analyzed: 8</span>
+                
+                  <span class="mini-pill">Unique active jobs mapped into the benchmark: 4</span>
+                
+                  <span class="mini-pill">Resolved downstream pipelines: 0</span>
+                
+                  <span class="mini-pill">No unresolved downstream pipelines detected</span>
+                
+              </div>
+            </div>
+          
+            <div class="list-item">
+              <strong>Technology and Flow Signals</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Detected stacks: Java</span>
+                
+                  <span class="mini-pill">Stage model: build, security, publish</span>
+                
+                  <span class="mini-pill">workflow:rules is present on every analyzed pipeline file</span>
+                
+                  <span class="mini-pill">No explicit deployment environment detected</span>
+                
+              </div>
+            </div>
+          
+            <div class="list-item">
+              <strong>Controls and Gates</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Unit test execution: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">Coverage reporting: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">SAST coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">Artifact or image scanning: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">Automated test deployment: 0 pass, 0 warn, 0 missing, 8 disabled across 8 active scenarios</span>
+                
+                  <span class="mini-pill">Critical quality and security jobs are blocking</span>
+                
+              </div>
+            </div>
+          
+            <div class="list-item">
+              <strong>Security Tooling</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">SAST families: semgrep</span>
+                
+                  <span class="mini-pill">Artifact scan families: grype</span>
+                
+                  <span class="mini-pill">Image scan families: grype</span>
+                
+                  <span class="mini-pill">Secret-management signals: none detected</span>
+                
+                  <span class="mini-pill">Integrity-verification signals: none detected</span>
+                
+              </div>
+            </div>
+          
+            <div class="list-item">
+              <strong>Reports and Feedback Loops</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Report artifacts: coverage report</span>
+                
+                  <span class="mini-pill">Security report artifacts: none detected</span>
+                
+                  <span class="mini-pill">No policy findings reduced benchmark confidence on the analyzed YAML</span>
+                
+                  <span class="mini-pill">Cross-component scope is limited to a single pipeline file</span>
+                
+              </div>
+            </div>
+          
+            <div class="list-item">
+              <strong>Upstream Question Mapping</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                
+                  <span class="mini-pill">Mapped implementation questions: 18</span>
+                
+                  <span class="mini-pill">Question status counts: 3 pass, 4 warn, 11 fail, 4 review</span>
+                
+                  <span class="mini-pill">Questions that require manual or process evidence: 4</span>
+                
+                  <span class="mini-pill">Some SAMM questions remain review-oriented because CI/CD YAML cannot prove organizational process maturity on its own</span>
+                
+              </div>
+            </div>
+          
+        </div>
+
+        <div class="benchmark-grid">
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Secure Build</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>Level 3/3</strong>
+              <div class="muted">Alignment 100/100 · Confidence high</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Unit tests are part of active build paths | Coverage evidence is published | SAST is embedded into the build path | Dependency or image scanning is embedded into the build path | Quality and security gates are blocking | workflow:rules governs pipeline creation</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No significant gaps detected from the pipeline definition</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Repeatable build orchestration is visible</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">Explicit stages are declared and workflow governance is visible on every analyzed pipeline file.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Unit tests execute across supported build paths</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Coverage evidence is published for build outputs</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Stack-aware SAST is enforced in the build flow</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Artifact or image scanning is enforced on the build path</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Critical quality and security gates block progression</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No `allow_failure` exception was detected on critical quality or security jobs.</div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Upstream question mapping:</strong>
+                
+                3 pass · 3 warn · 0 fail · 0 review
+              </div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-1-A · Is your full build process formally described?</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Build logic is codified in the pipeline with explicit stages and workflow governance.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Build documentation freshness, accessibility, and build-tool hardening still require evidence outside CI/CD YAML.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-1-B · Do you have solid knowledge about dependencies you're relying on?</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Some dependency visibility exists through grype, but report depth or SBOM evidence is incomplete.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Publish dependency-scanning reports plus SBOM artifacts such as CycloneDX to improve dependency inventory quality.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Historical review cadence and CVE triage recency cannot be proven from the pipeline definition alone.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-2-A · Is the build process fully automated?</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">The build path appears automated, but no external secret-management signal was detected for build tooling.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Use a managed secret source for build credentials and keep the build path fully non-interactive.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Tool hardening and least-privilege access for build secrets require platform or IAM evidence beyond YAML.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-2-B · Do you handle 3rd party dependency risk by a formal process?</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Dependency-risk checks are present via grype, but the pipeline does not show the fuller process expected for approvals, license, and package hygiene.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Add enforced dependency scanning together with SBOM or license evidence and treat findings as a release gate.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Approved dependency lists, legal review, and unmaintained-package governance are usually stored outside the pipeline.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-3-A · Do you enforce automated security checks in your build processes?</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> direct</div>
+                    <div class="finding-copy" style="margin-top:8px;">Build security checks are automated and blocking across supported scenarios.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Severity thresholds and yearly reassessment of tool configuration may require evidence from scanner policy systems.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SB-3-B · Do you prevent build of software if it's affected by vulnerabilities in dependencies?</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Dependency scanning via grype is enforced without optional gate behavior on the build path.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Responsible disclosure workflows and explicit risk acceptance usually live outside CI/CD YAML.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml</a>
+                    </div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Reference:</strong>
+                <a href="https://owaspsamm.org/model/implementation/secure-build/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/secure-build/</a>
+              </div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Secure Deployment</h3>
+                <span class="badge fail">fail</span>
+              </div>
+              <div class="meter">
+                <span style="width: 20%"></span>
+              </div>
+              <strong>Level 0/3</strong>
+              <div class="muted">Alignment 20/100 · Confidence medium</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment runs after quality and security gates | No deployment hygiene policy violations were detected</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No deployment jobs with explicit environments were detected | Test deployment is missing or manual in part of the supported paths | No external secret manager signal was detected in deployment automation | No signature or checksum verification was detected before deployment | No production deployment path was detected</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Deployment jobs declare explicit environments</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No deployment job with an explicit environment declaration was detected.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>A test environment deployment is automated</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 0 missing, 8 disabled across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Deployment is gated by tests and security scans</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">Unit tests, SAST, and artifact or image scanning all appear on the supported path before deployment.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>External secret management is referenced in deployment automation</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No external secret-management signal was detected in deployment automation.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Artifact integrity is verified before deployment</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No signature or checksum verification was detected before deployment.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>A production deployment path is visible</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No production deployment path was detected in the analyzed YAML.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Deployment hygiene remains policy-compliant</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No high-risk deployment hygiene violations were detected.</div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Upstream question mapping:</strong>
+                
+                0 pass · 0 warn · 6 fail · 0 review
+              </div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-1-A · Do you use repeatable deployment processes?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No deployment process was detected in the analyzed YAML.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Define deployment jobs in CI/CD with explicit environments and release stages.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Personnel authorization models and deployment tool hardening require evidence beyond the pipeline file.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-1-B · Do you limit access to application secrets according to the least privilege principle?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No deployment-secret handling path was detected.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Introduce managed secret retrieval in deployment automation.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Developer access to production secrets and environment separation must be validated in the secret platform or IAM layer.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-2-A · Are deployment processes automated and employing security checks?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Deployment is not clearly automated with security checks on the supported path.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Add automated deployment jobs that depend on test and security gates.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Alert routing and long-term deployment log retention usually require evidence from observability or ticketing systems.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-2-B · Do you inject production secrets into configuration files during deployment?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No deployment path was detected, so secret injection behavior cannot be demonstrated.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Define deployment jobs and use managed secret retrieval during release.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Human break-glass access patterns and abnormal secret-access alerting require secret-platform evidence.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-3-A · Do you consistently validate the integrity of deployed artifacts?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No deployment-time integrity verification was detected.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Verify signatures or checksums before deployment and fail or roll back on integrity mismatches.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Rollback behavior and compensating controls for externally built software may need runtime or release-management evidence.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-SD-3-B · Do you practice proper lifecycle management for application secrets?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No managed secret-lifecycle signal was detected for deployment automation.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Adopt a managed secret platform with rotation and instance-specific secret handling.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Rotation cadence, uniqueness per instance, and synchronization guarantees usually require secret-store policy evidence.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml</a>
+                    </div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Reference:</strong>
+                <a href="https://owaspsamm.org/model/implementation/secure-deployment/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/secure-deployment/</a>
+              </div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Defect Management</h3>
+                <span class="badge warn">warn</span>
+              </div>
+              <div class="meter">
+                <span style="width: 80%"></span>
+              </div>
+              <strong>Level 2/3</strong>
+              <div class="muted">Alignment 80/100 · Confidence medium</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Structured test reports are published | Tests and scans act as blocking defect gates</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No machine-readable SAST or scan report artifacts were detected | Deployment is not clearly influenced by earlier defect signals | The current YAML view does not show cross-component defect feedback loops</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Structured test reporting is published</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">Detected structured test or coverage report artifacts in the analyzed jobs.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Machine-readable security defect reports are exported</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">No machine-readable SAST or scan report artifact was detected.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Tests and scans act as blocking defect gates</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">Unit test, SAST, and scan coverage is able to influence the flow without `allow_failure` on critical jobs.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Deployment is influenced by earlier defect signals</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">The analyzed flow does not clearly show deployment reacting to earlier defect signals.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>Cross-component defect visibility is represented</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">The current YAML view is limited to a single pipeline component.</div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Upstream question mapping:</strong>
+                
+                0 pass · 1 warn · 5 fail · 4 review
+              </div>
+              <div class="list" style="margin-top:10px;">
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-1-A · Do you track all known security defects in accessible locations?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">No machine-readable security defect artifacts were detected.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Export SAST or scan findings as machine-readable artifacts so defects can be tracked in accessible systems.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Defect-system accessibility, duplicate handling, and false-positive workflows require evidence from tracking systems.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-1-B · Do you use basic metrics about recorded security defects to carry out quick win improvement activities?</strong>
+                      <span class="badge warn">warn</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
+                    <div class="finding-copy" style="margin-top:8px;">Some metric-ready artifacts exist, but the pipeline evidence is too thin to support a quick-win defect loop.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Publish both structured test metrics and machine-readable security findings to support defect analytics.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Time-based metric review and resulting improvement activities usually require issue-tracker or reporting evidence.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-2-A · Do you keep an overview of the state of security defects across the organization?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> review</div>
+                    <div class="finding-copy" style="margin-top:8px;">No structured security-defect data was detected for broader aggregation.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Export machine-readable security findings before attempting organization-level rollups.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Organization-wide severity schemes, SLAs, and compliance reporting are normally managed outside individual pipeline definitions.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-2-B · Do you improve your security assurance program upon standardized metrics?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> review</div>
+                    <div class="finding-copy" style="margin-top:8px;">No standardized defect-metrics input was detected in the pipeline.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Export consistent machine-readable findings and test reports that can feed a shared metrics program.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Management reporting and improvement planning are governance activities that cannot be proven from CI/CD YAML alone.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-3-A · Do you enforce SLAs for fixing security defects?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> review</div>
+                    <div class="finding-copy" style="margin-top:8px;">No structured security-defect feed was detected to support SLA enforcement.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Export machine-readable findings before attempting SLA tracking.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> SLA clocks, breach alerts, and risk-transfer workflows require data from defect management and risk systems.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml</a>
+                    </div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                      <strong>I-DM-3-B · Do you regularly evaluate the effectiveness of your security metrics so that the input helps drive your security strategy?</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> review</div>
+                    <div class="finding-copy" style="margin-top:8px;">No metric-ready security defect evidence was detected in the pipeline.</div>
+                    
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Export structured findings so metric effectiveness can be evaluated outside the pipeline.</div>
+                    
+                    <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Strategy changes, metric validation, and cross-program aggregation require evidence outside the pipeline definition.</div>
+                    <div class="finding-copy" style="margin-top:8px;">
+                      <strong>Source:</strong>
+                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml</a>
+                    </div>
+                  </div>
+                
+              </div>
+              <div class="finding-copy" style="margin-top:10px;">
+                <strong>Reference:</strong>
+                <a href="https://owaspsamm.org/model/implementation/defect-management/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/defect-management/</a>
+              </div>
+            </article>
+          
+        </div>
+      </section>
+
+      <section class="section tab-panel graph-panel" data-panel="graph" hidden>
         <h2>Pipeline Flow Graph</h2>
         <div class="finding-copy">
           Columns represent stages, and edges show <code>needs</code> and <code>trigger</code> relationships.
@@ -1443,7 +2135,7 @@
       </section>
     </main>
 
-    <script id="graph-data" type="application/json">{"stages":["build","security","publish"],"pipelines":[{"label":"examples/pipelines/library_package.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/library_package.gitlab-ci.yml::build_and_test","label":"build_and_test","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: build/reports/jacoco/test/jacocoTestReport.xml","Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::dependency_scan","label":"dependency_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan","image_scan"],"strengths":["Scans artifacts or dependencies","Scans container images","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::sast","label":"sast","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::publish_package","label":"publish_package","stage":"publish","stage_index":2,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":["Uses a pinned image"],"weaknesses":["Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]}],"edges":[]}</script>
+    <script id="graph-data" type="application/json">{"stages":["build","security","publish"],"pipelines":[{"label":"examples/pipelines/library_package.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/library_package.gitlab-ci.yml::build_and_test","label":"build_and_test","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_short_label":".../pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: build/reports/jacoco/test/jacocoTestReport.xml","Reports: coverage report","Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::dependency_scan","label":"dependency_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_short_label":".../pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan","image_scan"],"strengths":["Scans artifacts or dependencies","Scans container images","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::sast","label":"sast","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_short_label":".../pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/library_package.gitlab-ci.yml::publish_package","label":"publish_package","stage":"publish","stage_index":2,"pipeline_label":"examples/pipelines/library_package.gitlab-ci.yml","pipeline_short_label":".../pipelines/library_package.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":["Uses a pinned image"],"weaknesses":["Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]}],"edges":[]}</script>
     <script>
       (function () {
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
@@ -1538,7 +2230,7 @@
           }
 
           board.innerHTML = "";
-          board.style.gridTemplateColumns = "repeat(" + Math.max(graphData.stages.length, 1) + ", minmax(250px, 1fr))";
+          board.style.gridTemplateColumns = "repeat(" + Math.max(graphData.stages.length, 1) + ", minmax(320px, 1fr))";
 
           var nodesByStage = {};
           (graphData.nodes || []).forEach(function (node) {
@@ -1580,7 +2272,7 @@
                 card.dataset.nodeId = node.id;
                 card.innerHTML =
                   "<h3>" + escapeHtml(node.label) + "</h3>" +
-                  "<small>" + escapeHtml(node.pipeline_label) + "</small>" +
+                  "<small>" + escapeHtml(node.pipeline_short_label || node.pipeline_label) + "</small>" +
                   '<div class="graph-badges">' +
                     (node.classifications || []).slice(0, 4).map(function (item) {
                       return '<span class="graph-chip">' + escapeHtml(item) + "</span>";

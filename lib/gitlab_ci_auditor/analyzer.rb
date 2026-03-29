@@ -50,6 +50,10 @@ module GitlabCiAuditor
       "onepassword" => "1Password",
       "doppler" => "Doppler",
       "sops" => "sops",
+      "cosign_sign" => "cosign sign",
+      "notation_sign" => "notation sign",
+      "gpg_sign" => "gpg signing",
+      "checksum_generate" => "checksum generation",
       "cosign_verify" => "cosign verify",
       "notation_verify" => "notation verify",
       "slsa_verifier" => "slsa-verifier",
@@ -104,6 +108,12 @@ module GitlabCiAuditor
       "doppler" => /\bdoppler\b/,
       "sops" => /\bsops\b/
     }.freeze
+    ARTIFACT_SIGNING_PATTERNS = {
+      "cosign_sign" => /\bcosign\s+sign(?:-blob)?\b/,
+      "notation_sign" => /\bnotation\s+sign\b/,
+      "gpg_sign" => /\bgpg\s+--detach-sign\b|\bgpg\s+--sign\b/,
+      "checksum_generate" => /\bsha256sum\b(?!\s+-c\b)|\bshasum\s+-a\s+256\b(?!\s+-c\b)|\bopenssl\s+dgst\s+-sha256\b/
+    }.freeze
     DEPLOY_INTEGRITY_PATTERNS = {
       "cosign_verify" => /\bcosign\s+verify(?:-attestation)?\b/,
       "notation_verify" => /\bnotation\s+verify\b/,
@@ -154,6 +164,9 @@ module GitlabCiAuditor
       "secure_deployment" => "https://owaspsamm.org/model/implementation/secure-deployment/",
       "defect_management" => "https://owaspsamm.org/model/implementation/defect-management/"
     }.freeze
+    IMPLEMENTATION_QUESTION_CATALOG = YAML.load_file(
+      File.join(GitlabCiAuditor.root_dir, "config", "owasp_samm", "implementation_questions.yml")
+    ).freeze
 
     class ScenarioBuilder
       BASE_BRANCHES = [
@@ -635,6 +648,9 @@ module GitlabCiAuditor
         sast_tools: detect_sast_tools(text),
         artifact_scan_tools: detect_artifact_scan_tools(text),
         image_scan_tools: detect_image_scan_tools(text),
+        secret_management_tools: detect_secret_management_tools(text),
+        artifact_signing_tools: detect_artifact_signing_tools(text),
+        integrity_verification_tools: detect_integrity_verification_tools(text),
         report_families: detect_report_families(artifact_strings),
         pipeline_path: pipeline.path,
         pipeline_label: relative_pipeline_path(pipeline.path),
@@ -1208,6 +1224,10 @@ module GitlabCiAuditor
       detect_tool_families(SECRET_MANAGEMENT_PATTERNS, text)
     end
 
+    def detect_artifact_signing_tools(text)
+      detect_tool_families(ARTIFACT_SIGNING_PATTERNS, text)
+    end
+
     def detect_integrity_verification_tools(text)
       detect_tool_families(DEPLOY_INTEGRITY_PATTERNS, text)
     end
@@ -1369,7 +1389,7 @@ module GitlabCiAuditor
         framework: "OWASP SAMM v2",
         scope: "Implementation",
         note: "Pipeline-derived estimate based on static CI/CD evidence. Organizational process evidence outside YAML may increase or decrease the real SAMM maturity.",
-        observed_signals: samm_observed_signals(active_scenarios, coverage, jobs, security_findings),
+        observed_signals: samm_observed_signals(active_scenarios, coverage, jobs, security_findings, practices),
         references: OWASP_SAMM_REFERENCES.map do |key, url|
           { key: key, url: url }
         end,
@@ -1377,13 +1397,14 @@ module GitlabCiAuditor
       }
     end
 
-    def samm_observed_signals(active_scenarios, coverage, jobs, security_findings)
+    def samm_observed_signals(active_scenarios, coverage, jobs, security_findings, practices = [])
       security_tools = detected_security_tools
       report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
       security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
       environments = jobs.map { |job| job[:environment] }.compact.uniq
       workflow_governed = all_pipelines.none? { |pipeline| pipeline.workflow.empty? }
       gating = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
+      question_summary = benchmark_question_summary(practices.flat_map { |practice| practice[:questions] })
 
       [
         benchmark_signal_group(
@@ -1440,6 +1461,16 @@ module GitlabCiAuditor
             security_findings.empty? ? "No policy findings reduced benchmark confidence on the analyzed YAML" : "#{security_findings.size} policy findings reduce benchmark confidence on the analyzed YAML",
             all_pipelines.size > 1 ? "Cross-component scope detected: #{all_pipelines.size} pipeline files analyzed together" : "Cross-component scope is limited to a single pipeline file"
           ]
+        ),
+        benchmark_signal_group(
+          "question_mapping",
+          "Upstream Question Mapping",
+          [
+            "Mapped implementation questions: #{question_summary[:total]}",
+            "Question status counts: #{question_summary[:pass]} pass, #{question_summary[:warn]} warn, #{question_summary[:fail]} fail, #{question_summary[:review]} review",
+            "Questions that require manual or process evidence: #{question_summary[:review_only]}",
+            question_summary[:review_only].positive? ? "Some SAMM questions remain review-oriented because CI/CD YAML cannot prove organizational process maturity on its own" : "All mapped SAMM questions are directly or partially observable from CI/CD evidence"
+          ]
         )
       ]
     end
@@ -1465,6 +1496,300 @@ module GitlabCiAuditor
       return "#{label}: #{list.join(', ')}" if list.any?
 
       "#{label}: none detected"
+    end
+
+    def implementation_questions_for(practice_key)
+      IMPLEMENTATION_QUESTION_CATALOG.select { |question| question["practice"] == practice_key }
+    end
+
+    def assess_implementation_questions(practice_key, context)
+      implementation_questions_for(practice_key).map do |question|
+        evaluate_implementation_question(question, context)
+      end
+    end
+
+    def evaluate_implementation_question(question, context)
+      result = send("evaluate_question_#{question.fetch('heuristic')}", context)
+      {
+        key: question.fetch("key"),
+        title: question.fetch("title"),
+        status: result.fetch(:status),
+        observability: question.fetch("observability"),
+        detail: result.fetch(:detail),
+        recommendation: result[:recommendation],
+        static_limitations: question.fetch("static_limitations"),
+        source_url: question.fetch("source_url")
+      }
+    end
+
+    def benchmark_question_summary(questions)
+      Array(questions).each_with_object({ total: 0, pass: 0, warn: 0, fail: 0, review: 0, direct: 0, partial: 0, review_only: 0 }) do |question, summary|
+        status = question[:status].to_s
+        observability = question[:observability].to_s
+        summary[:total] += 1
+        summary[status.to_sym] += 1 if summary.key?(status.to_sym)
+        summary[observability.to_sym] += 1 if summary.key?(observability.to_sym)
+        summary[:review_only] += 1 if observability == "review"
+      end
+    end
+
+    def question_result(status, detail, recommendation = nil)
+      {
+        status: status,
+        detail: detail,
+        recommendation: recommendation
+      }
+    end
+
+    def secure_build_question_context(jobs, coverage, security_findings)
+      build_jobs = jobs.reject { |job| deployment_job?(job) }
+      report_families = build_jobs.flat_map { |job| Array(job[:report_families]) }.uniq
+      dependency_scan_jobs = build_jobs.select { |job| Array(job[:artifact_scan_tools]).any? }
+
+      {
+        build_jobs: build_jobs,
+        build_manual_jobs: build_jobs.select { |job| job[:manual] },
+        stages_present: effective_stages.any?,
+        workflow_governed: all_pipelines.none? { |pipeline| pipeline.workflow.empty? },
+        unit_ratio: ratio_for(coverage[:unit_tests]),
+        coverage_ratio: ratio_for(coverage[:coverage_report]),
+        sast_ratio: ratio_for(coverage[:sast]),
+        scan_ratio: ratio_for(coverage[:scan]),
+        gated: security_findings.none? { |finding| finding[:title].include?("allow_failure") },
+        dependency_scan_tools: dependency_scan_jobs.flat_map { |job| Array(job[:artifact_scan_tools]) }.uniq,
+        dependency_scan_reports: report_families & %w[dependency_scanning_report],
+        sbom_present: build_jobs.any? { |job| Array(job[:artifacts]).join("\n").downcase.match?(/cyclonedx|sbom|spdx/) },
+        license_scan_present: build_jobs.any? { |job| Array(job[:artifact_scan_tools]).include?("license_scanning") },
+        build_secret_tools: build_jobs.flat_map { |job| Array(job[:secret_management_tools]) }.uniq,
+        artifact_signing_tools: build_jobs.flat_map { |job| Array(job[:artifact_signing_tools]) }.uniq,
+        dependency_scan_enforced: dependency_scan_jobs.any? { |job| !job[:manual] && !job[:allow_failure] }
+      }
+    end
+
+    def secure_deployment_question_context(jobs, coverage, security_findings)
+      deploy_jobs = jobs.select { |job| deployment_job?(job) }
+
+      {
+        deploy_jobs: deploy_jobs,
+        manual_deploy_jobs: deploy_jobs.select { |job| job[:manual] },
+        environments: deploy_jobs.map { |job| job[:environment] }.compact.uniq,
+        deploy_ratio: ratio_for(coverage[:deploy_test]),
+        gating: ratio_for(coverage[:unit_tests]) >= 0.45 && ratio_for(coverage[:sast]) >= 0.45 && ratio_for(coverage[:scan]) >= 0.45,
+        production_present: jobs.any? { |job| job[:classifications].include?("deploy_prod") },
+        secret_management_tools: deploy_jobs.flat_map { |job| Array(job[:secret_management_tools]) }.uniq,
+        artifact_signing_tools: jobs.flat_map { |job| Array(job[:artifact_signing_tools]) }.uniq,
+        integrity_verification_tools: deploy_jobs.flat_map { |job| Array(job[:integrity_verification_tools]) }.uniq,
+        inline_secret_findings: security_findings.select { |finding| finding[:title].include?("Sensitive variable") }
+      }
+    end
+
+    def defect_management_question_context(jobs, coverage, security_findings)
+      report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
+      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
+
+      {
+        structured_reporting: report_families.include?("junit") || report_families.include?("coverage_report"),
+        security_reports: security_reports,
+        blocking_gates: security_findings.none? { |finding| finding[:title].include?("allow_failure") },
+        flow_influenced: ratio_for(coverage[:deploy_test]) >= 0.45 && ratio_for(coverage[:unit_tests]) >= 0.45 && ratio_for(coverage[:sast]) >= 0.45 && ratio_for(coverage[:scan]) >= 0.45,
+        cross_component: @pipeline.downstream_references.any? || all_pipelines.size > 1
+      }
+    end
+
+    def family_labels(families)
+      Array(families).uniq.map { |family| tool_family_label(family) }
+    end
+
+    def evaluate_question_build_process_formally_described(context)
+      if context[:build_jobs].any? && context[:stages_present] && context[:workflow_governed]
+        extra = context[:artifact_signing_tools].any? ? " Build-time integrity material is also generated (#{family_labels(context[:artifact_signing_tools]).join(', ')})." : ""
+        question_result("pass", "Build logic is codified in the pipeline with explicit stages and workflow governance.#{extra}")
+      elsif context[:build_jobs].any?
+        question_result("warn", "Build logic exists in CI/CD YAML, but explicit stages or workflow governance are incomplete.", "Keep the build as code in version control with explicit stages and `workflow:rules` for repeatability.")
+      else
+        question_result("fail", "No repeatable build flow was detected in the analyzed YAML.", "Define the full build path in version-controlled CI/CD jobs rather than relying on manual or undocumented build steps.")
+      end
+    end
+
+    def evaluate_question_dependency_knowledge_baseline(context)
+      tools = family_labels(context[:dependency_scan_tools])
+      if context[:dependency_scan_reports].any? && context[:sbom_present]
+        question_result("pass", "Dependency scanning reports and SBOM-style artifacts are published#{tools.any? ? " using #{tools.join(', ')}" : ''}.")
+      elsif context[:dependency_scan_tools].any? || context[:sbom_present]
+        question_result("warn", "Some dependency visibility exists#{tools.any? ? " through #{tools.join(', ')}" : ''}, but report depth or SBOM evidence is incomplete.", "Publish dependency-scanning reports plus SBOM artifacts such as CycloneDX to improve dependency inventory quality.")
+      else
+        question_result("fail", "No dependency inventory or dependency-risk signal was detected in the build path.", "Add dependency scanning and publish SBOM artifacts so affected applications can be identified quickly.")
+      end
+    end
+
+    def evaluate_question_build_process_fully_automated(context)
+      if context[:build_jobs].empty?
+        question_result("fail", "No build automation path was detected in the analyzed YAML.", "Move the build path into non-manual CI jobs.")
+      elsif context[:build_manual_jobs].any?
+        question_result("fail", "At least one build-path job is manual, so the build is not fully automated.", "Remove manual gates from the build path or restrict them to post-build release approvals.")
+      elsif context[:build_secret_tools].any?
+        question_result("pass", "The build path runs without manual interaction and references external secret management (#{family_labels(context[:build_secret_tools]).join(', ')}).")
+      else
+        question_result("warn", "The build path appears automated, but no external secret-management signal was detected for build tooling.", "Use a managed secret source for build credentials and keep the build path fully non-interactive.")
+      end
+    end
+
+    def evaluate_question_dependency_risk_formal_process(context)
+      tools = family_labels(context[:dependency_scan_tools])
+      if context[:dependency_scan_enforced] && context[:license_scan_present] && (context[:dependency_scan_reports].any? || context[:sbom_present])
+        question_result("pass", "Dependency risk is gated by enforced scanning#{tools.any? ? " via #{tools.join(', ')}" : ''}, with extra evidence from license or SBOM artifacts.")
+      elsif context[:dependency_scan_enforced] || context[:dependency_scan_tools].any?
+        question_result("warn", "Dependency-risk checks are present#{tools.any? ? " via #{tools.join(', ')}" : ''}, but the pipeline does not show the fuller process expected for approvals, license, and package hygiene.", "Add enforced dependency scanning together with SBOM or license evidence and treat findings as a release gate.")
+      else
+        question_result("fail", "No formal dependency-risk process signal was detected on the build path.", "Add dependency scanning and license or SBOM checks, then block releases on unacceptable dependency risk.")
+      end
+    end
+
+    def evaluate_question_automated_security_checks_in_build(context)
+      if context[:sast_ratio] >= 0.85 && context[:scan_ratio] >= 0.85 && context[:gated]
+        question_result("pass", "Build security checks are automated and blocking across supported scenarios.")
+      elsif context[:sast_ratio] >= 0.45 || context[:scan_ratio] >= 0.45
+        question_result("warn", "Some automated build-time security checks exist, but coverage or gate strength is incomplete.", "Enforce stack-appropriate SAST and dependency or image scanning with blocking behavior on all supported paths.")
+      else
+        question_result("fail", "Automated security checks are missing or not enforced on the build path.", "Add mandatory SAST and dependency or image scanning to the build path and remove `allow_failure` from critical jobs.")
+      end
+    end
+
+    def evaluate_question_vulnerable_dependencies_block_build(context)
+      tools = family_labels(context[:dependency_scan_tools])
+      if context[:dependency_scan_enforced]
+        question_result("pass", "Dependency scanning#{tools.any? ? " via #{tools.join(', ')}" : ''} is enforced without optional gate behavior on the build path.")
+      elsif context[:dependency_scan_tools].any?
+        question_result("warn", "Dependency scanning exists#{tools.any? ? " via #{tools.join(', ')}" : ''}, but the build path does not clearly fail on unacceptable dependency risk.", "Make dependency scans blocking and capture accepted-risk exceptions outside the YAML.")
+      else
+        question_result("fail", "No dependency-vulnerability gate was detected in the build path.", "Add a blocking dependency scan job that fails the build on disallowed vulnerabilities.")
+      end
+    end
+
+    def evaluate_question_repeatable_deployment_processes(context)
+      if context[:deploy_jobs].empty?
+        question_result("fail", "No deployment process was detected in the analyzed YAML.", "Define deployment jobs in CI/CD with explicit environments and release stages.")
+      elsif context[:environments].any? && context[:manual_deploy_jobs].empty?
+        question_result("pass", "Deployment is codified with explicit environments and no manual steps on the supported deployment path.")
+      elsif context[:environments].any?
+        question_result("warn", "Deployment jobs declare environments, but manual intervention is still part of the deployment path.", "Reduce manual deployment steps or keep them limited to explicit approval stages outside the repeatable deployment flow.")
+      else
+        question_result("warn", "Deployment jobs exist, but they do not declare explicit environments.", "Declare environments in deployment jobs so the release process is easier to repeat and audit.")
+      end
+    end
+
+    def evaluate_question_least_privilege_secrets(context)
+      if context[:inline_secret_findings].any?
+        question_result("fail", "Sensitive variable findings indicate secrets may be handled directly in YAML or pipeline variables.", "Move secrets to a managed secret store and remove inline secret material from pipeline definitions.")
+      elsif context[:secret_management_tools].any?
+        question_result("pass", "Deployment automation references managed secrets through #{family_labels(context[:secret_management_tools]).join(', ')}.")
+      elsif context[:deploy_jobs].any?
+        question_result("warn", "Deployment exists, but no managed secret-access signal was detected.", "Use an external secret manager so deployments do not rely on broad variable exposure.")
+      else
+        question_result("fail", "No deployment-secret handling path was detected.", "Introduce managed secret retrieval in deployment automation.")
+      end
+    end
+
+    def evaluate_question_deployment_automation_with_security_checks(context)
+      if context[:deploy_ratio] >= 0.85 && context[:gating] && context[:manual_deploy_jobs].empty?
+        question_result("pass", "Deployment is automated and follows earlier quality and security checks on supported scenarios.")
+      elsif context[:deploy_ratio] >= 0.45 && context[:gating]
+        question_result("warn", "Deployment automation exists and is partially gated by security checks, but coverage is incomplete or manual steps remain.", "Automate deployment on all supported paths and keep test, SAST, and scan controls as blocking predecessors.")
+      else
+        question_result("fail", "Deployment is not clearly automated with security checks on the supported path.", "Add automated deployment jobs that depend on test and security gates.")
+      end
+    end
+
+    def evaluate_question_deployment_secret_injection(context)
+      if context[:inline_secret_findings].any?
+        question_result("fail", "Inline secret findings reduce confidence that production secrets are injected safely during deployment.", "Fetch secrets at deploy time from a managed store instead of storing active secret values in source or pipeline variables.")
+      elsif context[:secret_management_tools].any? && context[:deploy_jobs].any?
+        question_result("pass", "Deployment jobs fetch secrets dynamically through #{family_labels(context[:secret_management_tools]).join(', ')}.")
+      elsif context[:deploy_jobs].any?
+        question_result("warn", "Deployment exists, but no dynamic production-secret injection signal was detected.", "Inject secrets during deployment from a managed secret source rather than embedding them in repository files or static variables.")
+      else
+        question_result("fail", "No deployment path was detected, so secret injection behavior cannot be demonstrated.", "Define deployment jobs and use managed secret retrieval during release.")
+      end
+    end
+
+    def evaluate_question_deployed_artifact_integrity_validation(context)
+      verify_labels = family_labels(context[:integrity_verification_tools])
+      signing_labels = family_labels(context[:artifact_signing_tools])
+      if context[:integrity_verification_tools].any? && context[:artifact_signing_tools].any?
+        question_result("pass", "Deployment validates artifact integrity using #{verify_labels.join(', ')} against build-time signing or checksum evidence (#{signing_labels.join(', ')}).")
+      elsif context[:integrity_verification_tools].any?
+        question_result("warn", "Integrity verification exists (#{verify_labels.join(', ')}), but build-time signing or checksum generation was not detected.", "Generate signatures or checksums during the build and verify them before deployment.")
+      else
+        question_result("fail", "No deployment-time integrity verification was detected.", "Verify signatures or checksums before deployment and fail or roll back on integrity mismatches.")
+      end
+    end
+
+    def evaluate_question_secret_lifecycle_management(context)
+      if context[:secret_management_tools].any?
+        question_result("review", "Managed secret tooling is present (#{family_labels(context[:secret_management_tools]).join(', ')}), but rotation cadence and per-instance uniqueness require manual verification.", "Review secret rotation, synchronization, and per-environment uniqueness in the secret-management platform.")
+      else
+        question_result("fail", "No managed secret-lifecycle signal was detected for deployment automation.", "Adopt a managed secret platform with rotation and instance-specific secret handling.")
+      end
+    end
+
+    def evaluate_question_known_security_defects_tracking(context)
+      if context[:security_reports].any? && context[:structured_reporting]
+        question_result("pass", "Machine-readable security reports and structured test or coverage reporting are exported from the pipeline.")
+      elsif context[:security_reports].any?
+        question_result("warn", "Security report artifacts exist, but supporting structured reporting is incomplete.", "Publish structured report artifacts consistently so findings can be aggregated more easily.")
+      else
+        question_result("fail", "No machine-readable security defect artifacts were detected.", "Export SAST or scan findings as machine-readable artifacts so defects can be tracked in accessible systems.")
+      end
+    end
+
+    def evaluate_question_defect_metrics_quick_wins(context)
+      if context[:security_reports].any? && context[:structured_reporting]
+        question_result("review", "The pipeline exports structured defect data that could feed quick-win metrics, but the review and improvement loop must be confirmed outside CI/CD.", "Verify that exported findings are aggregated and used for recurring improvement actions.")
+      elsif context[:security_reports].any? || context[:structured_reporting]
+        question_result("warn", "Some metric-ready artifacts exist, but the pipeline evidence is too thin to support a quick-win defect loop.", "Publish both structured test metrics and machine-readable security findings to support defect analytics.")
+      else
+        question_result("fail", "No structured defect metrics signal was detected.", "Export structured findings so defect trends can be analyzed and acted upon.")
+      end
+    end
+
+    def evaluate_question_organizational_defect_overview(context)
+      if context[:security_reports].any? && context[:cross_component]
+        question_result("review", "Cross-component pipeline evidence exists, but organization-wide severity schemes, SLAs, and roll-up dashboards require external defect-management systems.", "Review whether defect data from multiple pipelines is normalized into a central view with shared severities and SLAs.")
+      elsif context[:security_reports].any?
+        question_result("review", "Project-level defect data exists, but organization-wide aggregation and shared severity schemes still require manual validation outside the current YAML view.", "Aggregate machine-readable findings from multiple pipelines into a shared defect-management view.")
+      else
+        question_result("fail", "No structured security-defect data was detected for broader aggregation.", "Export machine-readable security findings before attempting organization-level rollups.")
+      end
+    end
+
+    def evaluate_question_standardized_defect_metrics_program(context)
+      if context[:security_reports].any? && context[:structured_reporting]
+        question_result("review", "Standardizable defect data exists, but management reporting and program improvements cannot be proven from YAML alone.", "Verify that exported metrics are standardized and regularly reviewed by both engineering and leadership.")
+      elsif context[:security_reports].any?
+        question_result("warn", "Some security metrics data exists, but it is not enough to demonstrate a standardized improvement program.", "Publish richer structured reports and connect them to program-level dashboards.")
+      else
+        question_result("fail", "No standardized defect-metrics input was detected in the pipeline.", "Export consistent machine-readable findings and test reports that can feed a shared metrics program.")
+      end
+    end
+
+    def evaluate_question_defect_sla_enforcement(context)
+      if context[:security_reports].any? && context[:blocking_gates]
+        question_result("review", "Blocking security signals exist, but SLA tracking, breach alerts, and risk transfers require external defect-management workflow evidence.", "Review ticketing and risk-management integrations to confirm SLA enforcement for security findings.")
+      elsif context[:security_reports].any?
+        question_result("warn", "Security findings are exported, but the pipeline does not show SLA enforcement behavior.", "Connect exported findings to defect-management tooling with severity and SLA handling.")
+      else
+        question_result("fail", "No structured security-defect feed was detected to support SLA enforcement.", "Export machine-readable findings before attempting SLA tracking.")
+      end
+    end
+
+    def evaluate_question_security_metrics_effectiveness(context)
+      if context[:security_reports].any? && context[:structured_reporting]
+        question_result("review", "The pipeline emits metric-ready data, but metric validation and strategy impact must be verified in reporting and governance systems.", "Review whether exported metrics are checked for accuracy and used to drive security strategy.")
+      elsif context[:security_reports].any?
+        question_result("warn", "Some metric inputs exist, but they are not enough to demonstrate effective security-metric evaluation.", "Combine machine-readable findings with structured test metrics and external reporting workflows.")
+      else
+        question_result("fail", "No metric-ready security defect evidence was detected in the pipeline.", "Export structured findings so metric effectiveness can be evaluated outside the pipeline.")
+      end
     end
 
     def unique_active_jobs(active_scenarios)
@@ -1556,6 +1881,7 @@ module GitlabCiAuditor
         gated ? "pass" : "fail",
         gated ? "No `allow_failure` exception was detected on critical quality or security jobs." : "At least one quality or security job is optional because `allow_failure` is enabled."
       )
+      questions = assess_implementation_questions("secure_build", secure_build_question_context(jobs, coverage, security_findings))
 
       benchmark_practice(
         "secure_build",
@@ -1566,7 +1892,8 @@ module GitlabCiAuditor
         "Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.",
         good_signals,
         gaps,
-        rules
+        rules,
+        questions
       )
     end
 
@@ -1646,6 +1973,7 @@ module GitlabCiAuditor
         deploy_hygiene ? "pass" : "fail",
         deploy_hygiene ? "No high-risk deployment hygiene violations were detected." : "Deployment hygiene findings lower confidence in secure deployment."
       )
+      questions = assess_implementation_questions("secure_deployment", secure_deployment_question_context(jobs, coverage, security_findings))
 
       benchmark_practice(
         "secure_deployment",
@@ -1656,7 +1984,8 @@ module GitlabCiAuditor
         "Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.",
         good_signals,
         gaps,
-        rules
+        rules,
+        questions
       )
     end
 
@@ -1727,6 +2056,7 @@ module GitlabCiAuditor
         cross_component ? "pass" : "warn",
         cross_component ? "Multiple pipeline components are analyzed together, so cross-component feedback is visible." : "The current YAML view is limited to a single pipeline component."
       )
+      questions = assess_implementation_questions("defect_management", defect_management_question_context(jobs, coverage, security_findings))
 
       benchmark_practice(
         "defect_management",
@@ -1737,11 +2067,12 @@ module GitlabCiAuditor
         "Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.",
         good_signals,
         gaps,
-        rules
+        rules,
+        questions
       )
     end
 
-    def benchmark_practice(key, title, score, estimated_level, confidence, rationale, good_signals, gaps, rules)
+    def benchmark_practice(key, title, score, estimated_level, confidence, rationale, good_signals, gaps, rules, questions)
       {
         key: key,
         title: title,
@@ -1754,6 +2085,8 @@ module GitlabCiAuditor
         good_signals: good_signals,
         gaps: gaps,
         rules: rules,
+        questions: questions,
+        question_summary: benchmark_question_summary(questions),
         reference_url: OWASP_SAMM_REFERENCES.fetch(key)
       }
     end
