@@ -24,8 +24,8 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert report[:scenarios].any? { |scenario| scenario[:status] == "pass" }
   end
 
-  def test_repository_pipeline_reports_missing_ssdlc_controls
-    pipeline = @loader.load(repo_pipeline)
+  def test_legacy_pipeline_reports_missing_ssdlc_controls
+    pipeline = @loader.load(example_path("pipelines/legacy_monolith.gitlab-ci.yml"))
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
 
     unit_tests = report[:categories].find { |category| category[:key] == "unit_tests" }
@@ -38,7 +38,7 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_equal "fail", coverage_report[:status]
     assert_equal "fail", sast[:status]
     assert_equal "fail", scan[:status]
-    assert_equal "fail", deploy_test[:status]
+    assert_equal "warn", deploy_test[:status]
     assert report[:recommendations].any? { |item| item.include?("workflow:rules") }
   end
 
