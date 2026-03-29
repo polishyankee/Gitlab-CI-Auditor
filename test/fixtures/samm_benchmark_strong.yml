@@ -1,0 +1,76 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - security
+  - deploy
+
+default:
+  image: gradle:8.7.0-jdk21
+
+build_app:
+  stage: build
+  script:
+    - ./gradlew build jacocoTestReport
+  artifacts:
+    paths:
+      - build/libs/app.jar
+      - coverage/jacoco.xml
+      - test-results/junit.xml
+
+semgrep_sast:
+  stage: security
+  script:
+    - semgrep --config auto .
+  artifacts:
+    paths:
+      - gl-sast-report.json
+
+dependency_scan:
+  stage: security
+  script:
+    - trivy fs --exit-code 1 .
+  artifacts:
+    paths:
+      - gl-dependency-scanning-report.json
+
+container_scan:
+  stage: security
+  script:
+    - trivy image --exit-code 1 registry.example.com/app:$CI_COMMIT_SHA
+  artifacts:
+    paths:
+      - gl-container-scanning-report.json
+
+deploy_test:
+  stage: deploy
+  environment:
+    name: test
+  needs:
+    - build_app
+    - semgrep_sast
+    - dependency_scan
+    - container_scan
+  script:
+    - vault kv get -field=config secret/app/test > config.yaml
+    - cosign verify --key cosign.pub registry.example.com/app:$CI_COMMIT_SHA
+    - kubectl apply -f k8s/test.yaml
+
+deploy_prod:
+  stage: deploy
+  environment:
+    name: production
+  needs:
+    - build_app
+    - semgrep_sast
+    - dependency_scan
+    - container_scan
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - vault kv get -field=config secret/app/prod > config.yaml
+    - cosign verify --key cosign.pub registry.example.com/app:$CI_COMMIT_SHA
+    - helm upgrade --install app chart/ --values values-prod.yaml

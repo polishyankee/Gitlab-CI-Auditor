@@ -48,6 +48,54 @@ The SAST control recognizes both GitLab SAST templates and common stack-specific
 
 When SAST is missing, remediation guidance is adapted to the stacks detected from the pipeline definition.
 
+Bundled policy packs also define `stack_sast_requirements`, so a generic SAST job is no longer enough when the detected stack expects different tooling. For example:
+
+- a Node / JS pipeline with only `spotbugs` is treated as incomplete
+- a Python pipeline with only `findsecbugs` is treated as incomplete
+- a polyglot repository can satisfy the gate with a mix of accepted families, for example `dotnet sonarscanner` for .NET and `njsscan` for Node / JS
+
+The current built-in rule packs expose stack-specific accepted families for .NET, Node / JS, Java, Python, Go, Ruby, and PHP.
+
+## Artifact and Image Scan Heuristics
+
+The scan control is satisfied when at least one enforcing artifact or image scan is present on the supported pipeline path.
+
+Accepted artifact or dependency scan signals:
+
+- `dependency-scanning`
+- `dependency-check`
+- `trivy fs`
+- `grype`
+- `snyk test`
+- `license-scanning`
+
+Accepted container or image scan signals:
+
+- `container-scanning`
+- `trivy image`
+- `grype`
+- `docker scan`
+- `snyk container`
+- `anchore`
+
+The report metadata also lists which scanner families were detected so you can see what the auditor actually recognized.
+
+## OWASP SAMM v2 Benchmark
+
+The HTML, CSV, JSON bundle, and text exports now include a pipeline-derived benchmark for the OWASP SAMM v2 `Implementation` business function, focused on:
+
+- `Secure Build`
+- `Secure Deployment`
+- `Defect Management`
+
+This is intentionally an estimate from static pipeline evidence, not a full organizational SAMM assessment. The benchmark explains:
+
+- the estimated maturity level from `0` to `3`
+- the alignment score from `0` to `100`
+- the good signals visible in the pipeline
+- the gaps still visible from CI/CD automation
+- the official OWASP SAMM reference URL for each practice
+
 ## Run
 
 CLI:
@@ -183,6 +231,14 @@ Or provide a custom JSON policy file:
 ```bash
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --policy ./my-policy.json
 ```
+
+Custom policies can override:
+
+- `required_controls`
+- `test_environments`
+- `production_environments`
+- `security_policies`
+- `stack_sast_requirements`
 
 ## Unit Tests
 

@@ -86,6 +86,41 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_includes sast_finding[:how_to_fix], "njsscan"
   end
 
+  def test_stack_policy_rules_require_stack_appropriate_sast_tools
+    pipeline = @loader.load(fixture("mismatched_sast.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    sast = report[:categories].find { |category| category[:key] == "sast" }
+    sast_finding = report[:ssdlc_findings].find { |finding| finding[:title] == "SAST gate is not complete" }
+
+    assert_equal "warn", sast[:status]
+    refute_nil sast_finding
+    assert_includes sast_finding[:recommendation], "Node / JS"
+    assert_includes sast_finding[:recommendation], "Python"
+    assert_includes sast_finding[:how_to_fix], "njsscan"
+    assert_includes sast_finding[:how_to_fix], "bandit"
+    assert_includes sast_finding[:evidence].join(" "), "Detected Node / JS"
+    assert_includes sast_finding[:evidence].join(" "), "Detected Python"
+  end
+
+  def test_owasp_samm_benchmark_uses_pipeline_evidence
+    pipeline = @loader.load(fixture("samm_benchmark_strong.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    benchmark = report.dig(:benchmarks, :owasp_samm_v2)
+    secure_build = benchmark[:practices].find { |practice| practice[:key] == "secure_build" }
+    secure_deployment = benchmark[:practices].find { |practice| practice[:key] == "secure_deployment" }
+    defect_management = benchmark[:practices].find { |practice| practice[:key] == "defect_management" }
+
+    assert_equal "OWASP SAMM v2", benchmark[:framework]
+    assert_equal "Implementation", benchmark[:scope]
+    assert_equal 3, secure_build[:estimated_level]
+    assert_equal 3, secure_deployment[:estimated_level]
+    assert defect_management[:estimated_level] >= 2
+    assert_includes report.dig(:metadata, :detected_security_tools, :artifact_scan), "trivy fs"
+    assert_includes report.dig(:metadata, :detected_security_tools, :image_scan), "trivy image"
+    assert_includes report.dig(:metadata, :detected_security_tools, :secret_management), "HashiCorp Vault"
+    assert_includes report.dig(:metadata, :detected_security_tools, :integrity_verification), "cosign verify"
+  end
+
   def test_graph_nodes_expose_short_pipeline_labels_for_long_paths
     pipeline = @loader.load(example_path("pipelines/library_package.gitlab-ci.yml"))
     report = GitlabCiAuditor::Analyzer.new(
