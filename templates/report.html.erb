@@ -231,6 +231,13 @@
         padding: 24px;
       }
 
+      .graph-panel {
+        position: relative;
+        left: 50%;
+        width: calc(100vw - 32px);
+        margin-left: calc(-50vw + 16px);
+      }
+
       .tabbar {
         margin-top: 22px;
         display: flex;
@@ -375,7 +382,7 @@
       .graph-canvas {
         position: relative;
         min-width: 100%;
-        min-height: 420px;
+        min-height: 460px;
       }
 
       .graph-svg {
@@ -390,14 +397,14 @@
       .graph-board {
         position: relative;
         display: grid;
-        gap: 18px;
-        padding: 20px;
+        gap: 20px;
+        padding: 24px;
         align-items: start;
       }
 
       .graph-column {
         position: relative;
-        min-width: 240px;
+        min-width: 320px;
       }
 
       .graph-stage {
@@ -461,12 +468,18 @@
       .graph-node h3 {
         margin: 0 0 8px;
         font-size: 1rem;
+        line-height: 1.35;
         color: #f0f6fc;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .graph-node small {
         display: block;
+        line-height: 1.45;
         color: var(--muted);
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .graph-badges {
@@ -521,6 +534,23 @@
       .graph-tooltip ul {
         margin: 8px 0 0 18px;
         padding: 0;
+      }
+
+      @supports (-webkit-line-clamp: 2) {
+        .graph-node h3,
+        .graph-node small {
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .graph-node h3 {
+          -webkit-line-clamp: 2;
+        }
+
+        .graph-node small {
+          -webkit-line-clamp: 2;
+        }
       }
 
       .edge-needs {
@@ -718,7 +748,7 @@
         </div>
       </section>
 
-      <section class="section tab-panel" data-panel="graph" hidden>
+      <section class="section tab-panel graph-panel" data-panel="graph" hidden>
         <h2>Pipeline Flow Graph</h2>
         <div class="finding-copy">
           Columns represent stages, and edges show <code>needs</code> and <code>trigger</code> relationships.
@@ -946,7 +976,7 @@
           }
 
           board.innerHTML = "";
-          board.style.gridTemplateColumns = "repeat(" + Math.max(graphData.stages.length, 1) + ", minmax(250px, 1fr))";
+          board.style.gridTemplateColumns = "repeat(" + Math.max(graphData.stages.length, 1) + ", minmax(320px, 1fr))";
 
           var nodesByStage = {};
           (graphData.nodes || []).forEach(function (node) {
@@ -988,7 +1018,7 @@
                 card.dataset.nodeId = node.id;
                 card.innerHTML =
                   "<h3>" + escapeHtml(node.label) + "</h3>" +
-                  "<small>" + escapeHtml(node.pipeline_label) + "</small>" +
+                  "<small>" + escapeHtml(node.pipeline_short_label || node.pipeline_label) + "</small>" +
                   '<div class="graph-badges">' +
                     (node.classifications || []).slice(0, 4).map(function (item) {
                       return '<span class="graph-chip">' + escapeHtml(item) + "</span>";

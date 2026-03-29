@@ -2,6 +2,15 @@ module GitlabCiAuditor
   class Analyzer
     DEFAULT_POLICY = GitlabCiAuditor::PolicyLoader.load
     CONTROL_KEYS = %i[unit_tests coverage_report sast scan deploy_test].freeze
+    STACK_LABELS = {
+      "dotnet" => ".NET",
+      "node_js" => "Node / JS",
+      "java" => "Java",
+      "python" => "Python",
+      "go" => "Go",
+      "ruby" => "Ruby",
+      "php" => "PHP"
+    }.freeze
 
     class ScenarioBuilder
       BASE_BRANCHES = [
@@ -312,6 +321,7 @@ module GitlabCiAuditor
       @pipeline = pipeline
       @policy = policy || DEFAULT_POLICY
       @template_features = extract_template_features
+      @detected_stacks = detect_stacks
     end
 
     def analyze
@@ -521,7 +531,7 @@ module GitlabCiAuditor
       classifications = []
       classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
       classifications << "coverage_report" if coverage_report_job?(artifact_strings)
-      classifications << "sast" if sast_job?(text)
+      classifications << "sast" if sast_job?(text, script_lines)
       classifications << "artifact_scan" if artifact_scan_job?(text)
       classifications << "image_scan" if image_scan_job?(text)
       classifications << "deploy_test" if deploy_test_job?(text, environment_name)
@@ -545,8 +555,13 @@ module GitlabCiAuditor
       end
     end
 
-    def sast_job?(text)
-      text.match?(/\b(sast|semgrep|sonarqube|sonar-scanner|bandit|brakeman|gosec|spotbugs|checkov|kics|codeql)\b/)
+    def sast_job?(text, script_lines)
+      return true if text.match?(/\b(sast|semgrep|sonarqube|sonar-scanner|sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe|bandit|brakeman|gosec|spotbugs|findsecbugs|security[- ]code[- ]scan|checkov|kics|codeql|horusec|fortify|coverity|checkmarx|veracode|njsscan|nodejsscan|progpilot)\b/)
+      return true if text.match?(/\bsnyk\s+code\s+test\b/)
+      return true if script_lines.any? { |line| line.to_s.downcase.match?(/\b(dotnet\s+sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe|snyk\s+code\s+test|njsscan|nodejsscan|security[- ]code[- ]scan|findsecbugs|spotbugs|bandit|brakeman|gosec|semgrep|codeql|horusec|progpilot)\b/) }
+      return true if script_lines.any? { |line| line.to_s.downcase.include?("psalm") && line.to_s.downcase.include?("taint-analysis") }
+
+      false
     end
 
     def artifact_scan_job?(text)
@@ -1119,10 +1134,23 @@ module GitlabCiAuditor
         severity: status == "fail" ? "high" : "medium",
         title: guidance[:title],
         issue: guidance[:issue].call(status_counts, active_scenarios.size),
-        recommendation: guidance[:recommendation],
-        how_to_fix: guidance[:how_to_fix],
+        recommendation: resolve_guidance_value(guidance[:recommendation], status_counts, active_scenarios.size),
+        how_to_fix: resolve_guidance_value(guidance[:how_to_fix], status_counts, active_scenarios.size),
         evidence: failing_evidence
       }]
+    end
+
+    def resolve_guidance_value(value, status_counts, total)
+      return value unless value.respond_to?(:call)
+
+      case value.arity
+      when 0
+        value.call
+      when 1
+        value.call(status_counts)
+      else
+        value.call(status_counts, total)
+      end
     end
 
     def overall_control_status(status_counts)
@@ -1164,8 +1192,14 @@ module GitlabCiAuditor
           issue: lambda { |counts, total|
             "#{counts[:missing]}/#{total} scenarios have no SAST, and #{counts[:warn]} scenarios run SAST in a non-enforcing mode."
           },
-          recommendation: "Add a mandatory SAST stage for every supported branch and merge request path.",
-          how_to_fix: "The simplest option is `include: - template: Jobs/SAST.gitlab-ci.yml`, or add a job using `semgrep`, `sonar-scanner`, or another scanner and remove `allow_failure`."
+          recommendation: lambda {
+            recommendation = "Add a mandatory SAST stage for every supported branch and merge request path."
+            if @detected_stacks.any?
+              recommendation += " Align the tooling with the detected stack: #{detected_stack_labels.join(', ')}."
+            end
+            recommendation
+          },
+          how_to_fix: lambda { sast_how_to_fix }
         },
         scan: {
           title: "Artifact or image scanning is not complete",
@@ -1257,6 +1291,7 @@ module GitlabCiAuditor
         stage: stage,
         stage_index: stage_index.fetch(stage, stage_index.size),
         pipeline_label: relative_pipeline_path(pipeline.path),
+        pipeline_short_label: compact_pipeline_label(relative_pipeline_path(pipeline.path)),
         pipeline_index: pipeline_idx,
         classifications: classifications,
         strengths: strengths,
@@ -1275,6 +1310,21 @@ module GitlabCiAuditor
 
     def graph_node_id(pipeline, job_name)
       "#{relative_pipeline_path(pipeline.path)}::#{job_name}"
+    end
+
+    def compact_pipeline_label(path)
+      return path if path.to_s.length <= 36
+
+      segments = path.to_s.split("/")
+      return path if segments.length <= 1
+
+      last_two = segments.last(2).join("/")
+      return ".../#{last_two}" if last_two.length <= 52
+
+      last_segment = segments.last.to_s
+      return ".../#{last_segment}" unless last_segment.empty?
+
+      path
     end
 
     def job_needs(job)
@@ -1373,6 +1423,81 @@ module GitlabCiAuditor
 
     def relative_pipeline_path(path)
       path.sub(%r{\A#{Regexp.escape(Dir.pwd)}/?}, "")
+    end
+
+    def detect_stacks
+      text = all_pipelines.flat_map do |pipeline|
+        items = []
+        items << pipeline.path
+        items << extract_image_name(pipeline.raw_config["image"])
+        items.concat(pipeline.global_before_script)
+        items.concat(pipeline.global_after_script)
+
+        pipeline.jobs.each do |job_name, job|
+          items << job_name
+          items << job["stage"]
+          items << extract_image_name(job["image"])
+          items.concat(collect_script_lines(pipeline, job))
+          items.concat(collect_artifact_strings(job["artifacts"]))
+        end
+        items
+      end.compact.join("\n").downcase
+
+      STACK_LABELS.keys.select do |stack_key|
+        stack_signal_pattern(stack_key).match?(text)
+      end
+    end
+
+    def detected_stack_labels
+      @detected_stacks.map { |stack_key| STACK_LABELS.fetch(stack_key) }
+    end
+
+    def stack_signal_pattern(stack_key)
+      case stack_key
+      when "dotnet"
+        /\b(dotnet|msbuild|nuget|csharp|fsharp)\b|\.csproj\b|\.sln\b/
+      when "node_js"
+        /\b(node|npm|npx|pnpm|yarn|next|vite|webpack|angular|react)\b|package(?:-lock)?\.json|pnpm-lock\.yaml|yarn\.lock/
+      when "java"
+        /\b(mvn|mvnw|gradle|gradlew|java|jar|jdk)\b|pom\.xml|build\.gradle(?:\.kts)?/
+      when "python"
+        /\b(pytest|pip|poetry|tox|django|flask|python)\b|pyproject\.toml|requirements\.txt|poetry\.lock/
+      when "go"
+        /\b(go test|golang|go build|gosec)\b|go\.mod/
+      when "ruby"
+        /\b(bundle exec|rspec|rake|rubocop|ruby|brakeman)\b|gemfile|\.gemspec/
+      when "php"
+        /\b(phpunit|composer|phpstan|psalm|php|laravel|symfony)\b|composer\.json/
+      else
+        /$^/
+      end
+    end
+
+    def sast_how_to_fix
+      generic = "The simplest baseline is `include: - template: Jobs/SAST.gitlab-ci.yml`, or add an enforcing scanner job and remove `allow_failure`."
+      stack_guidance = @detected_stacks.map { |stack_key| sast_guidance_for_stack(stack_key) }.compact
+      return generic if stack_guidance.empty?
+
+      [generic, stack_guidance.join(" ")].join(" ")
+    end
+
+    def sast_guidance_for_stack(stack_key)
+      case stack_key
+      when "dotnet"
+        "For .NET, prefer `dotnet sonarscanner begin/end`, `Security Code Scan`, `semgrep`, or `snyk code test`."
+      when "node_js"
+        "For Node / JS, prefer `semgrep`, `njsscan`, `nodejsscan`, `sonar-scanner`, or `snyk code test`."
+      when "java"
+        "For Java, prefer `spotbugs` with `findsecbugs`, `sonar-scanner`, `semgrep`, or `codeql`."
+      when "python"
+        "For Python, prefer `bandit`, `semgrep`, or `codeql`."
+      when "go"
+        "For Go, prefer `gosec`, `semgrep`, or `codeql`."
+      when "ruby"
+        "For Ruby, prefer `brakeman`, `semgrep`, or `codeql`."
+      when "php"
+        "For PHP, prefer `psalm --taint-analysis`, `progpilot`, `semgrep`, or `codeql`."
+      end
     end
 
     def job_reference(job_name, pipeline)
