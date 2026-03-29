@@ -2,6 +2,32 @@
 
 This repository is meant to keep growing. New rules, policy packs, graph features, and report capabilities should be added in a way that keeps the auditor deterministic and easy to review.
 
+## Development Workflow
+
+All changes should go through a pull request.
+
+1. Create a short-lived branch from `main`.
+2. Keep the branch focused on one problem or one logical improvement.
+3. Add or update tests together with the implementation.
+4. Open a pull request instead of pushing directly to `main`.
+5. Merge only after CI passes and the review comments are resolved.
+
+Recommended branch prefixes:
+
+- `feature/` for new capabilities
+- `fix/` for bug fixes
+- `chore/` for repository maintenance
+- `docs/` for documentation-only changes
+
+Recommended pull request scope:
+
+- one rule family
+- one UI/report improvement
+- one CI or Docker change
+- one bug fix with its regression test
+
+Direct pushes to `main` should be avoided. The repository should treat `main` as the protected integration branch.
+
 ## Core Principles
 
 - Prefer static analysis over implicit guesswork.
@@ -48,7 +74,7 @@ This repository is meant to keep growing. New rules, policy packs, graph feature
 Run the local test suite with:
 
 ```bash
-ruby -I lib test/test_gitlab_ci_auditor.rb
+ruby -I lib:test test/run_all.rb
 ```
 
 Run a manual scan with:
@@ -57,3 +83,32 @@ Run a manual scan with:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format html --output report.html
 ```
+
+If you want to validate the Docker image locally, run:
+
+```bash
+docker build --pull -t gitlab-ci-ssdlc-auditor .
+docker run --rm gitlab-ci-ssdlc-auditor scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
+```
+
+## Pull Request Expectations
+
+Every pull request should explain:
+
+- what changed
+- why the change was needed
+- how it was verified
+- whether the rule model, policy packs, or report output changed
+
+If the change affects scoring, findings, or scenario generation, include fixture updates and mention the expected user-facing impact in the PR description.
+
+## Recommended GitHub Settings
+
+These settings are not enforced by files in the repository and should be enabled in GitHub repository settings:
+
+- protect `main`
+- require pull requests before merging
+- require at least one approval
+- require status checks from `CI`
+- dismiss stale approvals when new commits are pushed
+- restrict force pushes to `main`

@@ -224,6 +224,20 @@ git push origin v0.3.0
 
 Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.
 
+## Contribution Flow
+
+Repository changes should go through pull requests rather than direct pushes to `main`.
+
+Recommended flow:
+
+1. Create a branch from `main`.
+2. Implement one focused change.
+3. Run `ruby -I lib:test test/run_all.rb`.
+4. Open a pull request with the provided template.
+5. Merge only after CI passes and review comments are closed.
+
+The repository includes [`.github/pull_request_template.md`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/.github/pull_request_template.md) and [`.github/CODEOWNERS`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/.github/CODEOWNERS) to support that workflow.
+
 ## Designed For Growth
 
 This repository is intended to keep evolving. The core extension points are:
