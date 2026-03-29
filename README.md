@@ -8,6 +8,7 @@ Recent additions:
 - explicit artifact and container scan family detection
 - OWASP SAMM v2 `Implementation` benchmark in GUI and exported reports
 - richer `Observed Detection Signals` and explicit auditor-to-SAMM rule mapping in the benchmark tab
+- question-level mapping for all 18 OWASP SAMM `Implementation` questions from the upstream `core` repository
 
 ## What It Checks
 
@@ -110,9 +111,25 @@ This is intentionally an estimate from static pipeline evidence, not a full orga
 - the alignment score from `0` to `100`
 - the observed detection signals used to justify the estimate
 - the concrete auditor rules mapped to each SAMM practice
+- the upstream `Implementation` question mapping used for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - the good signals visible in the pipeline
 - the gaps still visible from CI/CD automation
 - the official OWASP SAMM reference URL for each practice
+
+The current implementation now maps all 18 question files from OWASP SAMM section `I`:
+
+- `I-SB-*` for `Secure Build`
+- `I-SD-*` for `Secure Deployment`
+- `I-DM-*` for `Defect Management`
+
+Each mapped question is labeled with:
+
+- a status such as `pass`, `warn`, `fail`, or `review`
+- an `observability` level showing whether the question is directly visible, only partially visible, or fundamentally review-oriented from pipeline evidence
+- a concrete explanation of what was or was not detected
+- a static limitation note when the pipeline alone cannot prove the full maturity claim
+
+This makes the SAMM benchmark more explicit about what the auditor can truly verify from `.gitlab-ci.yml` and what still needs evidence from ticketing, IAM, secret-management, reporting, or governance systems.
 
 The benchmark is available in:
 
@@ -120,6 +137,8 @@ The benchmark is available in:
 - text export
 - CSV export
 - JSON bundle export
+
+The roadmap item about expanding beyond SAMM `Implementation` remains intentionally open. The auditor now covers `Implementation` in depth at the question level, but additional business functions still need separate source modeling where CI/CD evidence is actually meaningful.
 
 ## Run
 

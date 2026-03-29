@@ -1,0 +1,28 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - deploy
+
+default:
+  image: maven:3.9.9-eclipse-temurin-21
+
+build_app:
+  stage: build
+  script:
+    - mvn -DskipTests package
+  artifacts:
+    paths:
+      - target/app.jar
+
+deploy_test:
+  stage: deploy
+  environment:
+    name: test
+  when: manual
+  script:
+    - export APP_PASSWORD=supersecret
+    - scp target/app.jar ops@example.internal:/srv/app/
+    - ssh ops@example.internal 'systemctl restart app'

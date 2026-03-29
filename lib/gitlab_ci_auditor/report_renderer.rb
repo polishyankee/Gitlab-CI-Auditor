@@ -131,6 +131,13 @@ module GitlabCiAuditor
         practice.fetch(:rules, []).each do |rule|
           lines << "    rule [#{rule[:status]}]: #{rule[:title]} - #{rule[:detail]}"
         end
+        summary = practice.fetch(:question_summary, {})
+        lines << "    questions: #{summary.fetch(:pass, 0)} pass, #{summary.fetch(:warn, 0)} warn, #{summary.fetch(:fail, 0)} fail, #{summary.fetch(:review, 0)} review"
+        practice.fetch(:questions, []).each do |question|
+          lines << "    question [#{question[:status]}] #{question[:key]} (#{question[:observability]}): #{question[:title]}"
+          lines << "      detail: #{question[:detail]}"
+          lines << "      recommendation: #{question[:recommendation]}" if question[:recommendation]
+        end
       end
       lines << ""
       lines << "Scenario Results:"
@@ -184,6 +191,9 @@ module GitlabCiAuditor
 
         @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:practices, []).each do |practice|
           csv << ["benchmark", "owasp_samm_v2", practice[:key], practice[:title], practice[:status], nil, practice[:alignment_score], 100, "level=#{practice[:estimated_level]}/#{practice[:max_level]}; confidence=#{practice[:confidence]}; reference=#{practice[:reference_url]}", practice[:rationale], Array(practice[:good_signals]).join(" | "), Array(practice[:gaps]).join(" | "), nil]
+          practice.fetch(:questions, []).each do |question|
+            csv << ["benchmark_question", "owasp_samm_v2", question[:key], question[:title], question[:status], question[:observability], nil, nil, question[:detail], nil, question[:recommendation], question[:static_limitations], question[:source_url]]
+          end
         end
 
         @report[:scenarios].each do |scenario|

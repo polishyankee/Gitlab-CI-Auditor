@@ -8,6 +8,7 @@
 - [x] OWASP SAMM v2 `Implementation` benchmark for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - [x] report and GUI support for benchmark views, detected security tooling, and remediation context
 - [x] explicit benchmark detection signals and per-practice rule mapping in the `OWASP SAMM` tab
+- [x] question-level mapping for all upstream OWASP SAMM `Implementation` files (`I-SB-*`, `I-SD-*`, `I-DM-*`)
 
 ## Near Term
 
@@ -26,6 +27,7 @@
 - [ ] graph legend, gate overlays, and critical path highlighting
 - [ ] stack-aware policy rules for artifact scanning, container scanning, and package-manager specific dependency analysis
 - [ ] benchmark expansion beyond SAMM `Implementation` into additional SAMM business functions where CI/CD evidence is meaningful
+  Reviewed: not checked yet. `Implementation` is now covered down to the upstream question level, but additional business functions still need dedicated source mapping and heuristics before the benchmark can be expanded honestly.
 
 ## Long Term
 
