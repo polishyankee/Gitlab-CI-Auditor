@@ -14,7 +14,7 @@ class RepositoryAssetsTest < Minitest::Test
   def test_ci_workflow_targets_repository_root_and_smoke_tests_container
     workflow = YAML.load_file(File.join(GitlabCiAuditor.root_dir, ".github", "workflows", "ci.yml"))
     docker_build = workflow.fetch("jobs").fetch("docker-build")
-    build_step = docker_build.fetch("steps").find { |step| step["uses"] == "docker/build-push-action@v6" }
+    build_step = docker_build.fetch("steps").find { |step| step["uses"] == "docker/build-push-action@v7" }
     smoke_step = docker_build.fetch("steps").find { |step| step["name"] == "Smoke test CLI image" }
 
     refute_nil build_step

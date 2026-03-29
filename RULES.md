@@ -12,11 +12,11 @@ Dedicated test job, Maven or Gradle build without test-skip flags, or JaCoCo art
 
 2. SAST must be present and enforcing on every supported branch and merge request path.
 Evidence:
-Known scanners or GitLab SAST template inference.
+Known scanners or GitLab SAST template inference, plus stack-specific accepted tool families from the active policy pack.
 
 3. Artifact scanning or image scanning must be present and enforcing after build output exists.
 Evidence:
-Dependency scan, filesystem scan, artifact scan, or container image scan job.
+Dependency scan, filesystem scan, artifact scan, or container image scan job such as `dependency-check`, `trivy fs`, `grype`, `trivy image`, `snyk test`, or `snyk container`.
 
 4. Deployment to a non-production test environment should run automatically after quality and security gates pass.
 Evidence:

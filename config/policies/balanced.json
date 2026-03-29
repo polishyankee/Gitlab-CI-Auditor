@@ -21,5 +21,35 @@
     "forbid_strict_host_key_bypass": true,
     "forbid_inline_secrets": true,
     "forbid_remote_script_piping": true
+  },
+  "stack_sast_requirements": {
+    "dotnet": {
+      "label": ".NET",
+      "accepted_families": ["semgrep", "codeql", "sonar_scanner", "dotnet_sonarscanner", "security_code_scan", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "node_js": {
+      "label": "Node / JS",
+      "accepted_families": ["semgrep", "codeql", "sonar_scanner", "njsscan", "nodejsscan", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "java": {
+      "label": "Java",
+      "accepted_families": ["semgrep", "codeql", "sonar_scanner", "spotbugs", "findsecbugs", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "python": {
+      "label": "Python",
+      "accepted_families": ["semgrep", "codeql", "sonar_scanner", "bandit", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "go": {
+      "label": "Go",
+      "accepted_families": ["semgrep", "codeql", "gosec", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "ruby": {
+      "label": "Ruby",
+      "accepted_families": ["semgrep", "codeql", "brakeman", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    },
+    "php": {
+      "label": "PHP",
+      "accepted_families": ["semgrep", "codeql", "psalm_taint", "progpilot", "snyk_code", "horusec", "fortify", "coverity", "checkmarx", "veracode"]
+    }
   }
 }

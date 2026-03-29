@@ -2,6 +2,12 @@
 
 Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expectations, security policies, and long-term maintainability. The analysis engine is stdlib-first and easy to extend. The optional GUI server uses `webrick` on modern Ruby releases.
 
+Recent additions:
+
+- stack-aware SAST policy enforcement driven by policy packs
+- explicit artifact and container scan family detection
+- OWASP SAMM v2 `Implementation` benchmark in GUI and exported reports
+
 ## What It Checks
 
 - unit test execution
@@ -10,6 +16,7 @@ Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expect
 - artifact scanning or image scanning
 - automated deployment to a test environment
 - baseline security policy compliance
+- OWASP SAMM v2 `Implementation` benchmark alignment
 - pipeline complexity and maintainability
 - active execution paths derived from `workflow`, `rules`, `rules:changes`, `only/except`, branches, and tags
 
@@ -47,6 +54,69 @@ The SAST control recognizes both GitLab SAST templates and common stack-specific
 - PHP: `psalm --taint-analysis`, `progpilot`, `semgrep`, `codeql`
 
 When SAST is missing, remediation guidance is adapted to the stacks detected from the pipeline definition.
+
+Bundled policy packs also define `stack_sast_requirements`, so a generic SAST job is no longer enough when the detected stack expects different tooling. For example:
+
+- a Node / JS pipeline with only `spotbugs` is treated as incomplete
+- a Python pipeline with only `findsecbugs` is treated as incomplete
+- a polyglot repository can satisfy the gate with a mix of accepted families, for example `dotnet sonarscanner` for .NET and `njsscan` for Node / JS
+
+The current built-in rule packs expose stack-specific accepted families for .NET, Node / JS, Java, Python, Go, Ruby, and PHP.
+
+## Artifact and Image Scan Heuristics
+
+The scan control is satisfied when at least one enforcing artifact or image scan is present on the supported pipeline path.
+
+Accepted artifact or dependency scan signals:
+
+- `dependency-scanning`
+- `dependency-check`
+- `trivy fs`
+- `grype`
+- `snyk test`
+- `license-scanning`
+
+Accepted container or image scan signals:
+
+- `container-scanning`
+- `trivy image`
+- `grype`
+- `docker scan`
+- `snyk container`
+- `anchore`
+
+The report metadata also lists which scanner families were detected so you can see what the auditor actually recognized.
+
+In the GUI and exported reports, the detected security tooling is broken out into:
+
+- SAST families
+- artifact or dependency scan families
+- image scan families
+- secret-management signals
+- integrity-verification signals
+
+## OWASP SAMM v2 Benchmark
+
+The HTML, CSV, JSON bundle, and text exports now include a pipeline-derived benchmark for the OWASP SAMM v2 `Implementation` business function, focused on:
+
+- `Secure Build`
+- `Secure Deployment`
+- `Defect Management`
+
+This is intentionally an estimate from static pipeline evidence, not a full organizational SAMM assessment. The benchmark explains:
+
+- the estimated maturity level from `0` to `3`
+- the alignment score from `0` to `100`
+- the good signals visible in the pipeline
+- the gaps still visible from CI/CD automation
+- the official OWASP SAMM reference URL for each practice
+
+The benchmark is available in:
+
+- the HTML GUI report as a dedicated `OWASP SAMM` tab
+- text export
+- CSV export
+- JSON bundle export
 
 ## Run
 
@@ -183,6 +253,14 @@ Or provide a custom JSON policy file:
 ```bash
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --policy ./my-policy.json
 ```
+
+Custom policies can override:
+
+- `required_controls`
+- `test_environments`
+- `production_environments`
+- `security_policies`
+- `stack_sast_requirements`
 
 ## Unit Tests
 

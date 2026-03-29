@@ -11,6 +11,149 @@ module GitlabCiAuditor
       "ruby" => "Ruby",
       "php" => "PHP"
     }.freeze
+    TOOL_LABELS = {
+      "semgrep" => "semgrep",
+      "codeql" => "CodeQL",
+      "sonar_scanner" => "sonar-scanner",
+      "dotnet_sonarscanner" => "dotnet sonarscanner",
+      "security_code_scan" => "Security Code Scan",
+      "snyk_code" => "snyk code test",
+      "njsscan" => "njsscan",
+      "nodejsscan" => "nodejsscan",
+      "spotbugs" => "spotbugs",
+      "findsecbugs" => "findsecbugs",
+      "bandit" => "bandit",
+      "gosec" => "gosec",
+      "brakeman" => "brakeman",
+      "psalm_taint" => "psalm --taint-analysis",
+      "progpilot" => "progpilot",
+      "horusec" => "horusec",
+      "fortify" => "Fortify",
+      "coverity" => "Coverity",
+      "checkmarx" => "Checkmarx",
+      "veracode" => "Veracode",
+      "dependency_scanning" => "GitLab Dependency Scanning",
+      "dependency_check" => "OWASP Dependency-Check",
+      "trivy_fs" => "trivy fs",
+      "grype" => "grype",
+      "snyk_test" => "snyk test",
+      "license_scanning" => "GitLab License Scanning",
+      "container_scanning" => "GitLab Container Scanning",
+      "trivy_image" => "trivy image",
+      "docker_scan" => "docker scan",
+      "snyk_container" => "snyk container",
+      "anchore" => "Anchore",
+      "vault" => "HashiCorp Vault",
+      "aws_secretsmanager" => "AWS Secrets Manager",
+      "azure_keyvault" => "Azure Key Vault",
+      "gcp_secret_manager" => "Google Secret Manager",
+      "onepassword" => "1Password",
+      "doppler" => "Doppler",
+      "sops" => "sops",
+      "cosign_verify" => "cosign verify",
+      "notation_verify" => "notation verify",
+      "slsa_verifier" => "slsa-verifier",
+      "checksum_verify" => "checksum verification",
+      "gpg_verify" => "gpg --verify",
+      "helm_verify" => "helm verify"
+    }.freeze
+    SAST_TOOL_PATTERNS = {
+      "semgrep" => /\bsemgrep\b/,
+      "codeql" => /\bcodeql\b/,
+      "sonar_scanner" => /\b(sonarqube|sonar-scanner|sonarscanner)\b/,
+      "dotnet_sonarscanner" => /\b(dotnet\s+sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe)\b/,
+      "security_code_scan" => /\bsecurity[- ]code[- ]scan\b/,
+      "snyk_code" => /\bsnyk\s+code\s+test\b/,
+      "njsscan" => /\bnjsscan\b/,
+      "nodejsscan" => /\bnodejsscan\b/,
+      "spotbugs" => /\bspotbugs\b/,
+      "findsecbugs" => /\bfindsecbugs\b/,
+      "bandit" => /\bbandit\b/,
+      "gosec" => /\bgosec\b/,
+      "brakeman" => /\bbrakeman\b/,
+      "psalm_taint" => /\bpsalm\b.*\btaint-analysis\b|\btaint-analysis\b.*\bpsalm\b/,
+      "progpilot" => /\bprogpilot\b/,
+      "horusec" => /\bhorusec\b/,
+      "fortify" => /\bfortify\b/,
+      "coverity" => /\bcoverity\b/,
+      "checkmarx" => /\bcheckmarx\b/,
+      "veracode" => /\bveracode\b/
+    }.freeze
+    ARTIFACT_SCAN_TOOL_PATTERNS = {
+      "dependency_scanning" => /\bdependency[- ]scanning\b/,
+      "dependency_check" => /\bdependency-check\b|\bowasp\b/,
+      "trivy_fs" => /\btrivy\s+fs\b/,
+      "grype" => /\bgrype\b/,
+      "snyk_test" => /\bsnyk\s+test\b/,
+      "license_scanning" => /\blicense[- ]scanning\b/
+    }.freeze
+    IMAGE_SCAN_TOOL_PATTERNS = {
+      "container_scanning" => /\bcontainer[- ]scanning\b/,
+      "trivy_image" => /\btrivy\s+image\b/,
+      "grype" => /\bgrype\b/,
+      "docker_scan" => /\bdocker\s+scan\b/,
+      "snyk_container" => /\bsnyk\s+container\b/,
+      "anchore" => /\banchore\b/
+    }.freeze
+    SECRET_MANAGEMENT_PATTERNS = {
+      "vault" => /\bvault\b/,
+      "aws_secretsmanager" => /\baws\s+secretsmanager\b/,
+      "azure_keyvault" => /\baz\s+keyvault\b|\bazure\s+key\s+vault\b/,
+      "gcp_secret_manager" => /\bgcloud\s+secrets\b|\bsecretmanager\b/,
+      "onepassword" => /\bop\s+read\b|\b1password\b/,
+      "doppler" => /\bdoppler\b/,
+      "sops" => /\bsops\b/
+    }.freeze
+    DEPLOY_INTEGRITY_PATTERNS = {
+      "cosign_verify" => /\bcosign\s+verify(?:-attestation)?\b/,
+      "notation_verify" => /\bnotation\s+verify\b/,
+      "slsa_verifier" => /\bslsa-verifier\b/,
+      "checksum_verify" => /\bsha256sum\s+-c\b|\bshasum\s+-a\s+256\s+-c\b/,
+      "gpg_verify" => /\bgpg\s+--verify\b/,
+      "helm_verify" => /\bhelm\s+verify\b/
+    }.freeze
+    REPORT_ARTIFACT_PATTERNS = {
+      "junit" => /\bjunit\b|surefire-reports\/.*\.xml|test-results\/.*\.xml/,
+      "coverage_report" => /jacoco(?:\.exec|\.xml)?|site\/jacoco|jacoco\/.*\.xml|cobertura(?:-coverage)?\.xml|lcov\.info|coverage\/.*\.(xml|exec|info)/,
+      "sast_report" => /\bgl-sast-report\.json\b|\bsast.*\.sarif\b|\bcodeql.*\.sarif\b|\bsemgrep.*\.sarif\b|\bsarif\b/,
+      "dependency_scanning_report" => /\bgl-dependency-scanning-report\.json\b|\bdependency[-_ ]scanning.*\.json\b|\bdependency-check-report\.(json|xml|html)\b|\bcyclonedx.*\.(json|xml)\b|\bsbom\b/,
+      "container_scanning_report" => /\bgl-container-scanning-report\.json\b|\bcontainer[-_ ]scanning.*\.json\b|\btrivy.*\.json\b|\bgrype.*\.json\b/
+    }.freeze
+    DEFAULT_STACK_SAST_REQUIREMENTS = {
+      "dotnet" => {
+        "label" => ".NET",
+        "accepted_families" => %w[semgrep codeql sonar_scanner dotnet_sonarscanner security_code_scan snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "node_js" => {
+        "label" => "Node / JS",
+        "accepted_families" => %w[semgrep codeql sonar_scanner njsscan nodejsscan snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "java" => {
+        "label" => "Java",
+        "accepted_families" => %w[semgrep codeql sonar_scanner spotbugs findsecbugs snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "python" => {
+        "label" => "Python",
+        "accepted_families" => %w[semgrep codeql sonar_scanner bandit snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "go" => {
+        "label" => "Go",
+        "accepted_families" => %w[semgrep codeql gosec snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "ruby" => {
+        "label" => "Ruby",
+        "accepted_families" => %w[semgrep codeql brakeman snyk_code horusec fortify coverity checkmarx veracode]
+      },
+      "php" => {
+        "label" => "PHP",
+        "accepted_families" => %w[semgrep codeql psalm_taint progpilot snyk_code horusec fortify coverity checkmarx veracode]
+      }
+    }.freeze
+    OWASP_SAMM_REFERENCES = {
+      "secure_build" => "https://owaspsamm.org/model/implementation/secure-build/",
+      "secure_deployment" => "https://owaspsamm.org/model/implementation/secure-deployment/",
+      "defect_management" => "https://owaspsamm.org/model/implementation/defect-management/"
+    }.freeze
 
     class ScenarioBuilder
       BASE_BRANCHES = [
@@ -348,6 +491,7 @@ module GitlabCiAuditor
       maintainability = maintainability_findings
       coverage = coverage_summary(active_scenarios)
       categories = build_categories(active_scenarios, coverage, security_findings, maintainability)
+      benchmarks = build_benchmarks(active_scenarios, coverage, security_findings)
       overall_score = categories.sum { |category| category[:score] }
       strengths = strengths(active_scenarios, security_findings, maintainability)
       recommendations = recommendations(coverage, security_findings, maintainability, inactive_scenarios)
@@ -379,6 +523,7 @@ module GitlabCiAuditor
           policy_source: policy_meta[:source]
         },
         categories: categories,
+        benchmarks: benchmarks,
         graph: graph,
         scenarios: active_scenarios + inactive_scenarios,
         ssdlc_findings: ssdlc_findings,
@@ -392,6 +537,8 @@ module GitlabCiAuditor
           resolved_local_includes: pipeline_files.flat_map { |pipeline| pipeline.include_metadata[:resolved_local_includes] }.uniq,
           unresolved_includes: pipeline_files.flat_map { |pipeline| pipeline.include_metadata[:unresolved_includes] }.uniq,
           resolved_downstream_pipelines: resolved_downstreams,
+          detected_stacks: detected_stack_labels,
+          detected_security_tools: detected_security_tools,
           unresolved_downstream_pipelines: unresolved_downstreams.map do |reference|
             {
               trigger_job_name: reference.trigger_job_name,
@@ -408,8 +555,9 @@ module GitlabCiAuditor
 
     def analyze_scenario(scenario)
       active_jobs = analyze_pipeline_scenario(@pipeline, scenario)
+      sast_stack_coverage = scenario_sast_stack_coverage(active_jobs)
 
-      controls = scenario_controls(active_jobs)
+      controls = scenario_controls(active_jobs, sast_stack_coverage)
       {
         id: scenario[:id],
         label: scenario[:label],
@@ -421,6 +569,7 @@ module GitlabCiAuditor
         status: scenario_status(controls),
         jobs: active_jobs,
         downstream_warnings: active_jobs.flat_map { |job| Array(job[:downstream_warnings]) }.uniq,
+        sast_stack_coverage: sast_stack_coverage,
         controls: controls
       }
     end
@@ -468,6 +617,7 @@ module GitlabCiAuditor
       image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])
       artifact_strings = collect_artifact_strings(job["artifacts"])
       classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name)
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
       inherited_manual = inherited_gate[:manual] == true
       inherited_allow_failure = inherited_gate[:allow_failure] == true
 
@@ -482,6 +632,10 @@ module GitlabCiAuditor
         artifacts: artifact_strings,
         script_lines: script_lines,
         classifications: classifications,
+        sast_tools: detect_sast_tools(text),
+        artifact_scan_tools: detect_artifact_scan_tools(text),
+        image_scan_tools: detect_image_scan_tools(text),
+        report_families: detect_report_families(artifact_strings),
         pipeline_path: pipeline.path,
         pipeline_label: relative_pipeline_path(pipeline.path),
         trigger_chain: trigger_chain,
@@ -519,7 +673,21 @@ module GitlabCiAuditor
     end
 
     def classify_job(job_name, job, script_lines, artifact_strings, environment_name)
-      text = [
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+
+      classifications = []
+      classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
+      classifications << "coverage_report" if coverage_report_job?(artifact_strings)
+      classifications << "sast" if sast_job?(text)
+      classifications << "artifact_scan" if artifact_scan_job?(text)
+      classifications << "image_scan" if image_scan_job?(text)
+      classifications << "deploy_test" if deploy_test_job?(text, environment_name)
+      classifications << "deploy_prod" if deploy_production_job?(environment_name)
+      classifications
+    end
+
+    def classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+      [
         job_name,
         job["stage"],
         environment_name,
@@ -527,16 +695,6 @@ module GitlabCiAuditor
         artifact_strings.join("\n"),
         script_lines.join("\n")
       ].compact.join("\n").downcase
-
-      classifications = []
-      classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
-      classifications << "coverage_report" if coverage_report_job?(artifact_strings)
-      classifications << "sast" if sast_job?(text, script_lines)
-      classifications << "artifact_scan" if artifact_scan_job?(text)
-      classifications << "image_scan" if image_scan_job?(text)
-      classifications << "deploy_test" if deploy_test_job?(text, environment_name)
-      classifications << "deploy_prod" if deploy_production_job?(environment_name)
-      classifications
     end
 
     def unit_test_job?(script_lines, artifact_strings, text)
@@ -555,21 +713,16 @@ module GitlabCiAuditor
       end
     end
 
-    def sast_job?(text, script_lines)
-      return true if text.match?(/\b(sast|semgrep|sonarqube|sonar-scanner|sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe|bandit|brakeman|gosec|spotbugs|findsecbugs|security[- ]code[- ]scan|checkov|kics|codeql|horusec|fortify|coverity|checkmarx|veracode|njsscan|nodejsscan|progpilot)\b/)
-      return true if text.match?(/\bsnyk\s+code\s+test\b/)
-      return true if script_lines.any? { |line| line.to_s.downcase.match?(/\b(dotnet\s+sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe|snyk\s+code\s+test|njsscan|nodejsscan|security[- ]code[- ]scan|findsecbugs|spotbugs|bandit|brakeman|gosec|semgrep|codeql|horusec|progpilot)\b/) }
-      return true if script_lines.any? { |line| line.to_s.downcase.include?("psalm") && line.to_s.downcase.include?("taint-analysis") }
-
-      false
+    def sast_job?(text)
+      detect_sast_tools(text).any?
     end
 
     def artifact_scan_job?(text)
-      text.match?(/\b(dependency[- ]scanning|dependency-check|owasp|trivy fs|grype|artifact scan|license[- ]scanning|snyk test)\b/)
+      detect_artifact_scan_tools(text).any?
     end
 
     def image_scan_job?(text)
-      text.match?(/\b(container[- ]scanning|trivy image|grype|docker scan|snyk container|anchore)\b/)
+      detect_image_scan_tools(text).any?
     end
 
     def deploy_test_job?(text, environment_name)
@@ -582,11 +735,11 @@ module GitlabCiAuditor
       environment_name.to_s.match?(environment_pattern(@policy["production_environments"]))
     end
 
-    def scenario_controls(active_jobs)
+    def scenario_controls(active_jobs, sast_stack_coverage = nil)
       controls = {
         unit_tests: control_required?(:unit_tests) ? control_state_for(active_jobs, "unit_tests") : disabled_control("Disabled by the selected policy pack"),
         coverage_report: control_required?(:coverage_report) ? control_state_for(active_jobs, "coverage_report") : disabled_control("Disabled by the selected policy pack"),
-        sast: control_required?(:sast) ? control_state_for(active_jobs, "sast") : disabled_control("Disabled by the selected policy pack"),
+        sast: control_required?(:sast) ? sast_control_state(active_jobs, sast_stack_coverage || scenario_sast_stack_coverage(active_jobs)) : disabled_control("Disabled by the selected policy pack"),
         scan: control_required?(:scan) ? scan_control_state(active_jobs) : disabled_control("Disabled by the selected policy pack"),
         deploy_test: control_required?(:deploy_test) ? control_state_for(active_jobs, "deploy_test") : disabled_control("Disabled by the selected policy pack")
       }
@@ -604,6 +757,20 @@ module GitlabCiAuditor
       else
         warn_control(matching.map { |job| "#{job[:name]} is present but not enforcing" })
       end
+    end
+
+    def sast_control_state(active_jobs, stack_coverage)
+      matching = active_jobs.select { |job| job[:classifications].include?("sast") }
+      return missing_control if matching.empty?
+
+      enforced = matching.reject { |job| job[:manual] || job[:allow_failure] }
+      evidence = (enforced.any? ? enforced : matching).map { |job| "#{job[:name]} (#{job[:stage]})" }
+      evidence.concat(sast_gap_messages(stack_coverage)) if stack_coverage[:missing_stacks].any?
+
+      return warn_control(evidence.uniq) if enforced.empty?
+      return warn_control(evidence.uniq) if stack_coverage[:missing_stacks].any?
+
+      pass_control(evidence.uniq)
     end
 
     def scan_control_state(active_jobs)
@@ -1019,6 +1186,109 @@ module GitlabCiAuditor
       end
     end
 
+    def detect_tool_families(patterns, text)
+      patterns.each_with_object([]) do |(family, pattern), detected|
+        detected << family if pattern.match?(text)
+      end
+    end
+
+    def detect_sast_tools(text)
+      detect_tool_families(SAST_TOOL_PATTERNS, text)
+    end
+
+    def detect_artifact_scan_tools(text)
+      detect_tool_families(ARTIFACT_SCAN_TOOL_PATTERNS, text)
+    end
+
+    def detect_image_scan_tools(text)
+      detect_tool_families(IMAGE_SCAN_TOOL_PATTERNS, text)
+    end
+
+    def detect_secret_management_tools(text)
+      detect_tool_families(SECRET_MANAGEMENT_PATTERNS, text)
+    end
+
+    def detect_integrity_verification_tools(text)
+      detect_tool_families(DEPLOY_INTEGRITY_PATTERNS, text)
+    end
+
+    def detect_report_families(artifact_strings)
+      text = artifact_strings.join("\n").downcase
+      detect_tool_families(REPORT_ARTIFACT_PATTERNS, text)
+    end
+
+    def normalized_stack_sast_requirements
+      @normalized_stack_sast_requirements ||= DEFAULT_STACK_SAST_REQUIREMENTS.each_with_object({}) do |(stack_key, defaults), requirements|
+        override = @policy.fetch("stack_sast_requirements", {}).fetch(stack_key, {})
+        accepted_families = Array(override["accepted_families"])
+        requirements[stack_key] = {
+          "label" => override["label"] || defaults["label"] || STACK_LABELS.fetch(stack_key, stack_key),
+          "accepted_families" => accepted_families.empty? ? defaults["accepted_families"] : accepted_families
+        }
+      end
+    end
+
+    def scenario_sast_stack_coverage(active_jobs)
+      active_tools = active_jobs.flat_map { |job| Array(job[:sast_tools]) }.uniq
+      covered_stacks = []
+      missing_stacks = []
+      matched_tools = {}
+
+      @detected_stacks.each do |stack_key|
+        requirement = normalized_stack_sast_requirements[stack_key]
+        next unless requirement
+
+        matches = active_tools & Array(requirement["accepted_families"])
+        if matches.any?
+          covered_stacks << stack_key
+          matched_tools[stack_key] = matches
+        else
+          missing_stacks << stack_key
+        end
+      end
+
+      {
+        active_tools: active_tools,
+        covered_stacks: covered_stacks,
+        missing_stacks: missing_stacks,
+        matched_tools: matched_tools
+      }
+    end
+
+    def sast_gap_messages(stack_coverage)
+      stack_coverage[:missing_stacks].map do |stack_key|
+        requirement = normalized_stack_sast_requirements[stack_key]
+        accepted = Array(requirement["accepted_families"]).map { |family| tool_family_label(family) }
+        "Detected #{requirement['label']} but no accepted stack-specific SAST tool is active. Accepted families: #{accepted.join(', ')}"
+      end
+    end
+
+    def detected_security_tools
+      jobs = all_pipelines.flat_map do |pipeline|
+        pipeline.jobs.map do |job_name, job|
+          script_lines = collect_script_lines(pipeline, job)
+          artifact_strings = collect_artifact_strings(job["artifacts"])
+          environment_name = extract_environment_name(job)
+          text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+          {
+            sast: detect_sast_tools(text),
+            artifact_scan: detect_artifact_scan_tools(text),
+            image_scan: detect_image_scan_tools(text),
+            secret_management: detect_secret_management_tools(text),
+            integrity_verification: detect_integrity_verification_tools(text)
+          }
+        end
+      end
+
+      {
+        sast: jobs.flat_map { |job| job[:sast] }.uniq.map { |family| tool_family_label(family) },
+        artifact_scan: jobs.flat_map { |job| job[:artifact_scan] }.uniq.map { |family| tool_family_label(family) },
+        image_scan: jobs.flat_map { |job| job[:image_scan] }.uniq.map { |family| tool_family_label(family) },
+        secret_management: jobs.flat_map { |job| job[:secret_management] }.uniq.map { |family| tool_family_label(family) },
+        integrity_verification: jobs.flat_map { |job| job[:integrity_verification] }.uniq.map { |family| tool_family_label(family) }
+      }
+    end
+
     def jacoco_artifacts?(artifact_strings)
       coverage_report_job?(artifact_strings)
     end
@@ -1081,6 +1351,217 @@ module GitlabCiAuditor
       items.uniq
     end
 
+    def build_benchmarks(active_scenarios, coverage, security_findings)
+      {
+        owasp_samm_v2: build_owasp_samm_v2_benchmark(active_scenarios, coverage, security_findings)
+      }
+    end
+
+    def build_owasp_samm_v2_benchmark(active_scenarios, coverage, security_findings)
+      jobs = unique_active_jobs(active_scenarios)
+      practices = [
+        samm_secure_build(jobs, coverage, security_findings),
+        samm_secure_deployment(jobs, coverage, security_findings),
+        samm_defect_management(jobs, coverage, security_findings)
+      ]
+
+      {
+        framework: "OWASP SAMM v2",
+        scope: "Implementation",
+        note: "Pipeline-derived estimate based on static CI/CD evidence. Organizational process evidence outside YAML may increase or decrease the real SAMM maturity.",
+        references: OWASP_SAMM_REFERENCES.map do |key, url|
+          { key: key, url: url }
+        end,
+        practices: practices
+      }
+    end
+
+    def unique_active_jobs(active_scenarios)
+      index = {}
+      active_scenarios.each do |scenario|
+        scenario[:jobs].each do |job|
+          index[[job[:pipeline_path], job[:name]]] ||= job
+        end
+      end
+      index.values
+    end
+
+    def samm_secure_build(jobs, coverage, security_findings)
+      unit_ratio = ratio_for(coverage[:unit_tests])
+      coverage_ratio = ratio_for(coverage[:coverage_report])
+      sast_ratio = ratio_for(coverage[:sast])
+      scan_ratio = ratio_for(coverage[:scan])
+      workflow_governed = all_pipelines.none? { |pipeline| pipeline.workflow.empty? }
+      gated = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
+      good_signals = []
+      gaps = []
+
+      good_signals << "Build flow uses explicit stages" if effective_stages.any?
+      good_signals << "Unit tests are part of active build paths" if unit_ratio >= 0.45
+      good_signals << "Coverage evidence is published" if coverage_ratio >= 0.45
+      good_signals << "SAST is embedded into the build path" if sast_ratio >= 0.45
+      good_signals << "Dependency or image scanning is embedded into the build path" if scan_ratio >= 0.45
+      good_signals << "Quality and security gates are blocking" if gated
+      good_signals << "workflow:rules governs pipeline creation" if workflow_governed
+
+      gaps << "Unit tests are not consistently enforced across active scenarios" if unit_ratio < 0.45
+      gaps << "Coverage artifacts are not consistently published" if coverage_ratio < 0.45
+      gaps << "SAST is missing or does not meet the detected stack policy" if sast_ratio < 0.85
+      gaps << "Artifact or image scanning is missing on part of the build path" if scan_ratio < 0.45
+      gaps << "Some pipelines still rely on job-level rules without workflow governance" unless workflow_governed
+      gaps << "At least one quality or security job is optional because allow_failure is enabled" unless gated
+
+      score = 0
+      score += 10 if effective_stages.any?
+      score += 10 if workflow_governed
+      score += (unit_ratio * 20).round
+      score += (coverage_ratio * 10).round
+      score += (sast_ratio * 25).round
+      score += (scan_ratio * 15).round
+      score += 10 if gated
+      score = [score, 100].min
+
+      benchmark_practice(
+        "secure_build",
+        "Secure Build",
+        score,
+        estimate_samm_level(score, level_three: score >= 85 && unit_ratio >= 0.85 && sast_ratio >= 0.85 && scan_ratio >= 0.85 && gated, level_two: score >= 55 && unit_ratio >= 0.45 && sast_ratio >= 0.45),
+        "high",
+        "Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.",
+        good_signals,
+        gaps
+      )
+    end
+
+    def samm_secure_deployment(jobs, coverage, security_findings)
+      deploy_ratio = ratio_for(coverage[:deploy_test])
+      environment_count = jobs.map { |job| job[:environment] }.compact.uniq.size
+      deploy_jobs = jobs.select { |job| deployment_job?(job) }
+      production_present = jobs.any? { |job| job[:classifications].include?("deploy_prod") }
+      secret_tools = jobs.flat_map { |job| detect_secret_management_tools(job[:script_lines].join("\n").downcase) }.uniq
+      integrity_tools = jobs.flat_map { |job| detect_integrity_verification_tools(job[:script_lines].join("\n").downcase) }.uniq
+      gating = ratio_for(coverage[:unit_tests]) >= 0.45 && ratio_for(coverage[:sast]) >= 0.45 && ratio_for(coverage[:scan]) >= 0.45
+      deploy_hygiene = security_findings.none? do |finding|
+        finding[:title].include?("Sensitive variable") || finding[:title].include?("Host key verification") || finding[:title].include?("Remote script download")
+      end
+      good_signals = []
+      gaps = []
+
+      good_signals << "Deployment jobs declare explicit environments" if environment_count.positive?
+      good_signals << "Test deployment is automated on the happy path" if deploy_ratio >= 0.45
+      good_signals << "Deployment runs after quality and security gates" if gating
+      good_signals << "External secret management is referenced in deployment automation" if secret_tools.any?
+      good_signals << "Artifact integrity verification is present before deployment" if integrity_tools.any?
+      good_signals << "A production deployment path is defined" if production_present
+      good_signals << "No deployment hygiene policy violations were detected" if deploy_hygiene
+
+      gaps << "No deployment jobs with explicit environments were detected" if deploy_jobs.empty?
+      gaps << "Test deployment is missing or manual in part of the supported paths" if deploy_ratio < 0.45
+      gaps << "Deployment is not clearly gated by tests and security scans" unless gating
+      gaps << "No external secret manager signal was detected in deployment automation" if secret_tools.empty?
+      gaps << "No signature or checksum verification was detected before deployment" if integrity_tools.empty?
+      gaps << "No production deployment path was detected" unless production_present
+      gaps << "Deployment hygiene findings reduce confidence in secure deployment" unless deploy_hygiene
+
+      score = 0
+      score += 15 if environment_count.positive?
+      score += (deploy_ratio * 30).round
+      score += 15 if gating
+      score += 15 if secret_tools.any?
+      score += 15 if integrity_tools.any?
+      score += 5 if production_present
+      score += 5 if deploy_hygiene
+      score = [score, 100].min
+
+      benchmark_practice(
+        "secure_deployment",
+        "Secure Deployment",
+        score,
+        estimate_samm_level(score, level_three: score >= 85 && deploy_ratio >= 0.85 && secret_tools.any? && integrity_tools.any?, level_two: score >= 55 && deploy_ratio >= 0.45 && gating),
+        "medium",
+        "Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.",
+        good_signals,
+        gaps
+      )
+    end
+
+    def samm_defect_management(jobs, coverage, security_findings)
+      unit_ratio = ratio_for(coverage[:unit_tests])
+      sast_ratio = ratio_for(coverage[:sast])
+      scan_ratio = ratio_for(coverage[:scan])
+      deploy_ratio = ratio_for(coverage[:deploy_test])
+      report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
+      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
+      structured_reporting = report_families.include?("junit") || report_families.include?("coverage_report")
+      blocking_gates = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
+      flow_influenced = deploy_ratio >= 0.45 && unit_ratio >= 0.45 && sast_ratio >= 0.45 && scan_ratio >= 0.45
+      cross_component = @pipeline.downstream_references.any? || all_pipelines.size > 1
+      good_signals = []
+      gaps = []
+
+      good_signals << "Structured test reports are published" if structured_reporting
+      good_signals << "Security defect reports are exported as machine-readable artifacts" if security_reports.any?
+      good_signals << "Tests and scans act as blocking defect gates" if blocking_gates && unit_ratio >= 0.45 && (sast_ratio >= 0.45 || scan_ratio >= 0.45)
+      good_signals << "Deployment is influenced by quality and security findings" if flow_influenced
+      good_signals << "Multiple pipeline components are analyzed together" if cross_component
+
+      gaps << "No structured test reporting was detected" unless structured_reporting
+      gaps << "No machine-readable SAST or scan report artifacts were detected" if security_reports.empty?
+      gaps << "Quality or security findings do not consistently block the flow" unless blocking_gates && unit_ratio >= 0.45 && (sast_ratio >= 0.45 || scan_ratio >= 0.45)
+      gaps << "Deployment is not clearly influenced by earlier defect signals" unless flow_influenced
+      gaps << "The current YAML view does not show cross-component defect feedback loops" unless cross_component
+
+      score = 0
+      score += (unit_ratio * 20).round
+      score += (sast_ratio * 20).round
+      score += (scan_ratio * 15).round
+      score += 15 if structured_reporting
+      score += 10 if security_reports.any?
+      score += 10 if blocking_gates
+      score += 5 if flow_influenced
+      score += 5 if cross_component
+      score = [score, 100].min
+
+      benchmark_practice(
+        "defect_management",
+        "Defect Management",
+        score,
+        estimate_samm_level(score, level_three: score >= 85 && structured_reporting && security_reports.any? && flow_influenced && cross_component, level_two: score >= 55 && structured_reporting && blocking_gates),
+        "medium",
+        "Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.",
+        good_signals,
+        gaps
+      )
+    end
+
+    def benchmark_practice(key, title, score, estimated_level, confidence, rationale, good_signals, gaps)
+      {
+        key: key,
+        title: title,
+        alignment_score: score,
+        estimated_level: estimated_level,
+        max_level: 3,
+        status: score_status(score.to_f / 100.0),
+        confidence: confidence,
+        rationale: rationale,
+        good_signals: good_signals,
+        gaps: gaps,
+        reference_url: OWASP_SAMM_REFERENCES.fetch(key)
+      }
+    end
+
+    def estimate_samm_level(score, level_three:, level_two:)
+      return 3 if level_three
+      return 2 if level_two
+      return 1 if score >= 25
+
+      0
+    end
+
+    def deployment_job?(job)
+      job[:classifications].include?("deploy_test") || job[:classifications].include?("deploy_prod") || job[:stage].to_s.downcase.include?("deploy")
+    end
+
     def effective_stages
       stages = all_pipelines.flat_map(&:stages).uniq
       stages.any? ? stages : %w[build test deploy]
@@ -1129,13 +1610,25 @@ module GitlabCiAuditor
         evidence = scenario[:controls][control_key][:evidence]
         evidence.any? ? "#{scenario[:label]} -> #{evidence.join(', ')}" : scenario[:label]
       end
+      recommendation = resolve_guidance_value(guidance[:recommendation], status_counts, active_scenarios.size)
+      how_to_fix = resolve_guidance_value(guidance[:how_to_fix], status_counts, active_scenarios.size)
+
+      if control_key == :sast
+        missing_stack_keys = failing_scenarios.flat_map do |scenario|
+          scenario.fetch(:sast_stack_coverage, {}).fetch(:missing_stacks, [])
+        end.uniq
+        if missing_stack_keys.any?
+          recommendation = sast_recommendation_for_stacks(missing_stack_keys)
+          how_to_fix = sast_how_to_fix(missing_stack_keys)
+        end
+      end
 
       [{
         severity: status == "fail" ? "high" : "medium",
         title: guidance[:title],
         issue: guidance[:issue].call(status_counts, active_scenarios.size),
-        recommendation: resolve_guidance_value(guidance[:recommendation], status_counts, active_scenarios.size),
-        how_to_fix: resolve_guidance_value(guidance[:how_to_fix], status_counts, active_scenarios.size),
+        recommendation: recommendation,
+        how_to_fix: how_to_fix,
         evidence: failing_evidence
       }]
     end
@@ -1192,14 +1685,8 @@ module GitlabCiAuditor
           issue: lambda { |counts, total|
             "#{counts[:missing]}/#{total} scenarios have no SAST, and #{counts[:warn]} scenarios run SAST in a non-enforcing mode."
           },
-          recommendation: lambda {
-            recommendation = "Add a mandatory SAST stage for every supported branch and merge request path."
-            if @detected_stacks.any?
-              recommendation += " Align the tooling with the detected stack: #{detected_stack_labels.join(', ')}."
-            end
-            recommendation
-          },
-          how_to_fix: lambda { sast_how_to_fix }
+          recommendation: lambda { sast_recommendation_for_stacks(@detected_stacks) },
+          how_to_fix: lambda { sast_how_to_fix(@detected_stacks) }
         },
         scan: {
           title: "Artifact or image scanning is not complete",
@@ -1389,6 +1876,12 @@ module GitlabCiAuditor
     def graph_job_notes(job, artifact_strings, script_lines)
       notes = []
       notes << "Artifacts: #{artifact_strings.first(4).join(', ')}" if artifact_strings.any?
+      report_families = detect_report_families(artifact_strings)
+      notes << "Reports: #{report_families.map { |family| tool_family_label(family) }.join(', ')}" if report_families.any?
+      secret_tools = detect_secret_management_tools(script_lines.join("\n").downcase)
+      notes << "Secret management: #{secret_tools.map { |family| tool_family_label(family) }.join(', ')}" if secret_tools.any?
+      integrity_tools = detect_integrity_verification_tools(script_lines.join("\n").downcase)
+      notes << "Integrity checks: #{integrity_tools.map { |family| tool_family_label(family) }.join(', ')}" if integrity_tools.any?
       notes << "Environment: #{extract_environment_name(job)}" if extract_environment_name(job)
       notes << "Script lines: #{script_lines.size}"
       notes
@@ -1452,6 +1945,10 @@ module GitlabCiAuditor
       @detected_stacks.map { |stack_key| STACK_LABELS.fetch(stack_key) }
     end
 
+    def stack_labels_for(stack_keys)
+      Array(stack_keys).uniq.map { |stack_key| STACK_LABELS.fetch(stack_key, stack_key) }
+    end
+
     def stack_signal_pattern(stack_key)
       case stack_key
       when "dotnet"
@@ -1473,9 +1970,16 @@ module GitlabCiAuditor
       end
     end
 
-    def sast_how_to_fix
+    def sast_recommendation_for_stacks(stack_keys)
+      recommendation = "Add a mandatory SAST stage for every supported branch and merge request path."
+      labels = stack_labels_for(stack_keys)
+      recommendation += " Align the tooling with the detected stack: #{labels.join(', ')}." if labels.any?
+      recommendation
+    end
+
+    def sast_how_to_fix(stack_keys = @detected_stacks)
       generic = "The simplest baseline is `include: - template: Jobs/SAST.gitlab-ci.yml`, or add an enforcing scanner job and remove `allow_failure`."
-      stack_guidance = @detected_stacks.map { |stack_key| sast_guidance_for_stack(stack_key) }.compact
+      stack_guidance = Array(stack_keys).uniq.map { |stack_key| sast_guidance_for_stack(stack_key) }.compact
       return generic if stack_guidance.empty?
 
       [generic, stack_guidance.join(" ")].join(" ")
@@ -1498,6 +2002,10 @@ module GitlabCiAuditor
       when "php"
         "For PHP, prefer `psalm --taint-analysis`, `progpilot`, `semgrep`, or `codeql`."
       end
+    end
+
+    def tool_family_label(family)
+      TOOL_LABELS.fetch(family, family.to_s.tr("_", " "))
     end
 
     def job_reference(job_name, pipeline)

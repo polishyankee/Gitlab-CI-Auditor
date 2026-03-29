@@ -14,6 +14,7 @@ class ReportRendererTest < Minitest::Test
     assert_includes text, "Policy Pack:"
     assert_includes text, "Scope:"
     assert_includes text, "Categories:"
+    assert_includes text, "OWASP SAMM v2:"
   end
 
   def test_render_json_bundle_contains_report_and_exporter_meta
@@ -28,6 +29,8 @@ class ReportRendererTest < Minitest::Test
     html = @renderer.render_html
 
     assert_includes html, 'class="section tab-panel graph-panel"'
+    assert_includes html, 'data-tab="benchmark"'
+    assert_includes html, "OWASP SAMM v2 Benchmark"
     assert_includes html, "pipeline_short_label"
     assert_includes html, "minmax(320px, 1fr)"
   end

@@ -8,6 +8,8 @@ class PolicyLoaderTest < Minitest::Test
     assert_equal "Strict Platform", policy.dig("meta", "label")
     assert_equal true, policy.dig("required_controls", "coverage_report")
     assert_equal true, policy.dig("security_policies", "forbid_unpinned_images")
+    assert_includes policy.dig("stack_sast_requirements", "dotnet", "accepted_families"), "dotnet_sonarscanner"
+    assert_includes policy.dig("stack_sast_requirements", "node_js", "accepted_families"), "njsscan"
   end
 
   def test_loads_custom_policy_file_and_adds_meta_defaults

@@ -121,6 +121,12 @@ module GitlabCiAuditor
         lines << "  - #{category[:title]}: #{category[:score]}/#{category[:max_score]} [#{category[:status]}] #{category[:summary]}"
       end
       lines << ""
+      lines << "OWASP SAMM v2:"
+      @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:practices, []).each do |practice|
+        lines << "  - #{practice[:title]}: level #{practice[:estimated_level]}/#{practice[:max_level]} [#{practice[:status]}] alignment=#{practice[:alignment_score]}/100 confidence=#{practice[:confidence]}"
+        lines << "    rationale: #{practice[:rationale]}"
+      end
+      lines << ""
       lines << "Scenario Results:"
       @report[:scenarios].each do |scenario|
         if scenario[:status] == "skipped"
@@ -168,6 +174,10 @@ module GitlabCiAuditor
 
         @report[:categories].each do |category|
           csv << ["category", "categories", category[:key], category[:title], category[:status], nil, category[:score], category[:max_score], category[:summary], nil, nil, nil, nil]
+        end
+
+        @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:practices, []).each do |practice|
+          csv << ["benchmark", "owasp_samm_v2", practice[:key], practice[:title], practice[:status], nil, practice[:alignment_score], 100, "level=#{practice[:estimated_level]}/#{practice[:max_level]}; confidence=#{practice[:confidence]}; reference=#{practice[:reference_url]}", practice[:rationale], Array(practice[:good_signals]).join(" | "), Array(practice[:gaps]).join(" | "), nil]
         end
 
         @report[:scenarios].each do |scenario|
