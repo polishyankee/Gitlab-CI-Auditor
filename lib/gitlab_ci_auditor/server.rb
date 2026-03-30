@@ -4,8 +4,13 @@ rescue LoadError
   raise LoadError, "The GUI server requires the `webrick` gem on modern Ruby releases. Install it with `gem install webrick` or use the Docker image."
 end
 
+require "fileutils"
+require "tmpdir"
+
 module GitlabCiAuditor
   class Server
+    ROOT_PIPELINE_FILENAMES = [".gitlab-ci.yml", ".gitlab-ci.yaml", "gitlab-ci.yml", "gitlab-ci.yaml"].freeze
+
     def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil)
       @host = host
       @port = port
@@ -66,13 +71,10 @@ module GitlabCiAuditor
       if req.query["pipeline_path"] && !req.query["pipeline_path"].to_s.strip.empty?
         pipeline_path = File.expand_path(req.query["pipeline_path"].to_s.strip)
         pipeline = PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
-      elsif req.query["pipeline_file"]
-        file = req.query["pipeline_file"]
-        temp_path = File.join(Dir.tmpdir, ".gitlab-ci-upload-#{Process.pid}-#{Time.now.to_i}.yml")
-        File.write(temp_path, file.to_s)
-        pipeline = PipelineLoader.new(snapshot_file: snapshot_file).load(temp_path)
+      elsif uploaded_pipeline_bundle_present?(req)
+        pipeline = load_uploaded_pipeline(req, snapshot_file)
       else
-        raise ArgumentError, "Provide a pipeline path or upload a `.gitlab-ci.yml` file"
+        raise ArgumentError, "Provide a pipeline path, upload a root `.gitlab-ci.yml`, or upload a pipeline directory bundle"
       end
 
       policy = load_policy(req.query["policy_pack"])
@@ -89,6 +91,159 @@ module GitlabCiAuditor
       return PolicyLoader.load(path: @policy_path) if @policy_path
 
       PolicyLoader.load(pack: requested_pack.to_s.strip.empty? ? @policy_pack : requested_pack)
+    end
+
+    def uploaded_pipeline_bundle_present?(req)
+      %w[pipeline_file pipeline_support_files pipeline_directory_files].any? do |key|
+        !normalized_upload_entries(req.query[key]).empty?
+      end
+    end
+
+    def load_uploaded_pipeline(req, snapshot_file)
+      with_uploaded_pipeline_workspace(req) do |pipeline_path|
+        PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
+      end
+    rescue ArgumentError => error
+      raise rewrite_upload_error(error)
+    end
+
+    def with_uploaded_pipeline_workspace(req)
+      root_uploads = normalized_upload_entries(req.query["pipeline_file"])
+      support_uploads = normalized_upload_entries(req.query["pipeline_support_files"])
+      directory_uploads = normalized_upload_entries(req.query["pipeline_directory_files"])
+      directory_paths = normalized_string_entries(req.query["pipeline_directory_paths"])
+
+      Dir.mktmpdir(".gitlab-ci-upload-") do |workspace|
+        root_pipeline_path = nil
+
+        root_uploads.each_with_index do |upload, index|
+          relative_path = sanitized_upload_relative_path(uploaded_relative_path(upload), index.zero? ? ".gitlab-ci.yml" : "pipeline_#{index}.yml")
+          absolute_path = persist_uploaded_file(workspace, relative_path, upload)
+          root_pipeline_path ||= absolute_path
+        end
+
+        support_uploads.each_with_index do |upload, index|
+          relative_path = sanitized_upload_relative_path(uploaded_relative_path(upload), "support_#{index}.yml")
+          persist_uploaded_file(workspace, relative_path, upload)
+        end
+
+        directory_uploads.each_with_index do |upload, index|
+          relative_hint = directory_paths[index]
+          relative_path = sanitized_upload_relative_path(relative_hint || uploaded_relative_path(upload), "bundle_#{index}.yml")
+          persist_uploaded_file(workspace, relative_path, upload)
+        end
+
+        explicit_root = req.query["pipeline_bundle_root"].to_s.strip
+        root_pipeline_path = resolve_uploaded_root_pipeline_path(workspace, explicit_root, root_pipeline_path)
+        yield(root_pipeline_path)
+      end
+    end
+
+    def normalized_upload_entries(value)
+      values = value.is_a?(Array) ? value.flatten : [value]
+      values.compact.reject do |entry|
+        upload_blank?(entry)
+      end
+    end
+
+    def normalized_string_entries(value)
+      values = value.is_a?(Array) ? value.flatten : [value]
+      values.compact.map(&:to_s)
+    end
+
+    def upload_blank?(entry)
+      return true if entry.nil?
+
+      filename = entry.respond_to?(:filename) ? entry.filename.to_s : ""
+      filename.empty? && entry.to_s.empty?
+    end
+
+    def uploaded_relative_path(upload)
+      return "" unless upload.respond_to?(:filename)
+
+      upload.filename.to_s
+    end
+
+    def sanitized_upload_relative_path(raw_path, fallback_name)
+      candidate = raw_path.to_s.strip
+      candidate = fallback_name if candidate.empty?
+      candidate = candidate.tr("\\", "/").sub(%r{\A/+}, "")
+
+      parts = candidate.split("/").each_with_object([]) do |part, segments|
+        next if part.empty? || part == "."
+
+        raise ArgumentError, "Unsafe uploaded file path #{raw_path.inspect}" if part == ".."
+
+        segments << part
+      end
+
+      return fallback_name if parts.empty?
+
+      File.join(parts)
+    end
+
+    def persist_uploaded_file(workspace, relative_path, upload)
+      absolute_path = File.expand_path(relative_path, workspace)
+      workspace_prefix = "#{workspace}#{File::SEPARATOR}"
+      unless absolute_path == workspace || absolute_path.start_with?(workspace_prefix)
+        raise ArgumentError, "Unsafe uploaded file path #{relative_path.inspect}"
+      end
+
+      FileUtils.mkdir_p(File.dirname(absolute_path))
+      File.binwrite(absolute_path, uploaded_content(upload))
+      absolute_path
+    end
+
+    def uploaded_content(upload)
+      if upload.respond_to?(:tempfile) && upload.tempfile
+        upload.tempfile.rewind if upload.tempfile.respond_to?(:rewind)
+        upload.tempfile.read
+      else
+        upload.to_s
+      end
+    end
+
+    def resolve_uploaded_root_pipeline_path(workspace, explicit_root, root_upload_path)
+      return root_upload_path if root_upload_path && explicit_root.empty?
+
+      if !explicit_root.empty?
+        relative_path = sanitized_upload_relative_path(explicit_root, ".gitlab-ci.yml")
+        absolute_path = File.expand_path(relative_path, workspace)
+        raise ArgumentError, "Uploaded bundle does not contain root pipeline #{explicit_root.inspect}" unless File.file?(absolute_path)
+
+        return absolute_path
+      end
+
+      candidates = Dir.glob(File.join(workspace, "**", "*"), File::FNM_DOTMATCH).select do |path|
+        File.file?(path) && ROOT_PIPELINE_FILENAMES.include?(File.basename(path))
+      end.sort_by do |path|
+        relative_path = path.delete_prefix("#{workspace}/")
+        [relative_path.count("/"), relative_path]
+      end
+
+      if candidates.empty?
+        raise ArgumentError, "Could not determine the root pipeline inside the uploaded bundle. Upload the root `.gitlab-ci.yml` separately or set `Root pipeline path inside uploaded bundle`."
+      end
+
+      top_level_candidates = candidates.select { |path| File.dirname(path) == workspace }
+      return top_level_candidates.first if top_level_candidates.size == 1
+      return candidates.first if candidates.size == 1
+
+      preferred_top_level = top_level_candidates.find { |path| File.basename(path).start_with?(".gitlab-ci.") }
+      return preferred_top_level if preferred_top_level
+
+      listed_candidates = candidates.first(5).map { |path| path.delete_prefix("#{workspace}/") }
+      raise ArgumentError, "Uploaded bundle contains multiple root pipeline candidates (#{listed_candidates.join(', ')}). Set `Root pipeline path inside uploaded bundle` to choose one."
+    end
+
+    def rewrite_upload_error(error)
+      message = error.message.to_s
+      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, or upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`."
+      if message.include?("extends unknown template") || message.include?("Pipeline file not found")
+        ArgumentError.new("#{message}. #{guidance}")
+      else
+        error
+      end
     end
   end
 end

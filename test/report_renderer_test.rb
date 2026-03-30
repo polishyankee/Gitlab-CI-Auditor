@@ -31,6 +31,7 @@ class ReportRendererTest < Minitest::Test
     html = @renderer.render_html
 
     assert_includes html, 'class="section tab-panel graph-panel"'
+    assert_includes html, 'class="section tab-panel benchmark-panel"'
     assert_includes html, 'data-tab="benchmark"'
     assert_includes html, "OWASP SAMM v2 Benchmark"
     assert_includes html, "Analysis Scope"
@@ -38,6 +39,8 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, "OWASP SAMM rules:"
     assert_includes html, "Upstream question mapping:"
     assert_includes html, "Observability:"
+    assert_includes html, "grid-template-columns: 1fr"
+    assert_includes html, "benchmark-link"
     assert_includes html, "pipeline_short_label"
     assert_includes html, "minmax(320px, 1fr)"
   end
