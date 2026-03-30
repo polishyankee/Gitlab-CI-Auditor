@@ -37,6 +37,11 @@ class ExamplesSmokeTest < Minitest::Test
         path: example_path("pipelines/upload_bundle_demo/.gitlab-ci.yml"),
         policy_pack: "balanced",
         expected_grade: "A"
+      },
+      {
+        path: example_path("pipelines/argocd_release_root.gitlab-ci.yml"),
+        policy_pack: "balanced",
+        expected_grade: "A"
       }
     ]
   end

@@ -1,0 +1,24 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - security
+
+build_and_test:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17
+  script:
+    - mvn -B clean verify
+  artifacts:
+    paths:
+      - target/site/jacoco/jacoco.xml
+
+sonarqube_scan:
+  stage: security
+  image: maven:3.9.6-eclipse-temurin-17
+  needs: ["build_and_test"]
+  script:
+    - mvn -B sonar:sonar -Dsonar.host.url=https://sonarqube.example.internal
+

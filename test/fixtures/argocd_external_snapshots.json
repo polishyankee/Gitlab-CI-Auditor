@@ -1,0 +1,12 @@
+{
+  "snapshots": [
+    {
+      "kind": "external_project",
+      "project": "platform/argocd-deploy",
+      "file": "deploy.gitlab-ci.yml",
+      "ref": "main",
+      "snapshot": "argocd_deploy_child.yml"
+    }
+  ]
+}
+

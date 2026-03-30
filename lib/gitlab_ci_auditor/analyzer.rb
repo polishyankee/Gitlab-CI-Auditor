@@ -14,7 +14,7 @@ module GitlabCiAuditor
     TOOL_LABELS = {
       "semgrep" => "semgrep",
       "codeql" => "CodeQL",
-      "sonar_scanner" => "sonar-scanner",
+      "sonar_scanner" => "SonarQube / sonar-scanner",
       "dotnet_sonarscanner" => "dotnet sonarscanner",
       "security_code_scan" => "Security Code Scan",
       "snyk_code" => "snyk code test",
@@ -64,7 +64,7 @@ module GitlabCiAuditor
     SAST_TOOL_PATTERNS = {
       "semgrep" => /\bsemgrep\b/,
       "codeql" => /\bcodeql\b/,
-      "sonar_scanner" => /\b(sonarqube|sonar-scanner|sonarscanner)\b/,
+      "sonar_scanner" => /\b(sonarqube|sonar-scanner|sonarscanner|sonarcloud)\b|\bsonar:sonar\b/,
       "dotnet_sonarscanner" => /\b(dotnet\s+sonarscanner|dotnet-sonarscanner|sonarscanner\.msbuild\.exe)\b/,
       "security_code_scan" => /\bsecurity[- ]code[- ]scan\b/,
       "snyk_code" => /\bsnyk\s+code\s+test\b/,
@@ -129,6 +129,10 @@ module GitlabCiAuditor
       "dependency_scanning_report" => /\bgl-dependency-scanning-report\.json\b|\bdependency[-_ ]scanning.*\.json\b|\bdependency-check-report\.(json|xml|html)\b|\bcyclonedx.*\.(json|xml)\b|\bsbom\b/,
       "container_scanning_report" => /\bgl-container-scanning-report\.json\b|\bcontainer[-_ ]scanning.*\.json\b|\btrivy.*\.json\b|\bgrype.*\.json\b/
     }.freeze
+    SHELL_SCRIPT_EXTENSIONS = %w[.sh .bash .zsh .ksh].freeze
+    SHELL_SCRIPT_COMMANDS = %w[bash sh source .].freeze
+    MAX_SCRIPT_EVIDENCE_FILES = 12
+    MAX_SCRIPT_EVIDENCE_DEPTH = 4
     DEFAULT_STACK_SAST_REQUIREMENTS = {
       "dotnet" => {
         "label" => ".NET",
@@ -626,11 +630,12 @@ module GitlabCiAuditor
 
     def describe_job(pipeline, job_name, job, evaluation, inherited_gate = {}, trigger_chain = [])
       script_lines = collect_script_lines(pipeline, job)
+      script_evidence = expand_local_script_evidence(pipeline, script_lines)
       environment_name = extract_environment_name(job)
       image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])
       artifact_strings = collect_artifact_strings(job["artifacts"])
-      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name)
-      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
       inherited_manual = inherited_gate[:manual] == true
       inherited_allow_failure = inherited_gate[:allow_failure] == true
 
@@ -644,6 +649,7 @@ module GitlabCiAuditor
         environment: environment_name,
         artifacts: artifact_strings,
         script_lines: script_lines,
+        script_evidence_files: script_evidence[:files],
         classifications: classifications,
         sast_tools: detect_sast_tools(text),
         artifact_scan_tools: detect_artifact_scan_tools(text),
@@ -669,6 +675,103 @@ module GitlabCiAuditor
       lines.map(&:strip).reject(&:empty?)
     end
 
+    def expand_local_script_evidence(pipeline, script_lines, origin_path = nil, depth = 0, visited = {})
+      return { lines: [], files: [] } if depth >= MAX_SCRIPT_EVIDENCE_DEPTH
+
+      base_dir = origin_path ? File.dirname(origin_path) : pipeline.base_dir
+      files = []
+      lines = []
+
+      extract_local_script_paths(script_lines, pipeline, base_dir).each do |script_path|
+        next unless script_path
+        next if visited[script_path]
+        next unless File.file?(script_path)
+
+        visited[script_path] = true
+        files << relative_pipeline_asset_path(script_path, pipeline)
+
+        content_lines = File.readlines(script_path, chomp: true).map(&:strip).reject(&:empty?)
+        lines.concat(content_lines)
+
+        nested = expand_local_script_evidence(pipeline, content_lines, script_path, depth + 1, visited)
+        files.concat(nested[:files])
+        lines.concat(nested[:lines])
+        break if visited.size >= MAX_SCRIPT_EVIDENCE_FILES
+      end
+
+      {
+        lines: lines.uniq,
+        files: files.uniq
+      }
+    end
+
+    def extract_local_script_paths(script_lines, pipeline, base_dir)
+      Array(script_lines).flat_map do |line|
+        extract_local_script_candidates(line).map do |candidate|
+          resolve_local_script_path(candidate, pipeline, base_dir)
+        end
+      end.compact.uniq
+    end
+
+    def extract_local_script_candidates(line)
+      line.to_s.split(/&&|\|\||;/).flat_map do |segment|
+        tokens = Shellwords.split(segment.to_s)
+        next [] if tokens.empty?
+
+        if SHELL_SCRIPT_COMMANDS.include?(tokens[0]) && tokens[1]
+          [tokens[1]]
+        elsif local_script_token?(tokens[0])
+          [tokens[0]]
+        else
+          []
+        end
+      rescue ArgumentError
+        []
+      end
+    end
+
+    def local_script_token?(token)
+      value = token.to_s.strip
+      return false if value.empty? || value.include?("$") || value.include?("://")
+
+      extension = File.extname(value).downcase
+      SHELL_SCRIPT_EXTENSIONS.include?(extension)
+    end
+
+    def resolve_local_script_path(candidate, pipeline, base_dir)
+      value = candidate.to_s.strip.delete_prefix("'").delete_prefix('"').delete_suffix("'").delete_suffix('"')
+      return nil if value.empty? || value.include?("$")
+
+      if value.start_with?("/")
+        return value if File.file?(value)
+        return nil
+      end
+
+      search_dir = base_dir.to_s.empty? ? pipeline.base_dir : base_dir
+      loop do
+        resolved = File.expand_path(value, search_dir)
+        return resolved if File.file?(resolved)
+
+        parent = File.dirname(search_dir)
+        break if parent == search_dir
+
+        search_dir = parent
+      end
+
+      nil
+    end
+
+    def relative_pipeline_asset_path(path, pipeline)
+      relative_to_workspace = relative_pipeline_path(path)
+      return relative_to_workspace unless relative_to_workspace == path.to_s
+
+      base_dir = File.expand_path(pipeline.base_dir.to_s)
+      expanded = File.expand_path(path.to_s)
+      return expanded unless expanded.start_with?("#{base_dir}/")
+
+      expanded.delete_prefix("#{base_dir}/")
+    end
+
     def extract_environment_name(job)
       environment = job["environment"]
       return environment["name"].to_s if environment.is_a?(Hash) && environment["name"]
@@ -688,8 +791,8 @@ module GitlabCiAuditor
       end
     end
 
-    def classify_job(job_name, job, script_lines, artifact_strings, environment_name)
-      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+    def classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil)
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
 
       classifications = []
       classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
@@ -702,14 +805,17 @@ module GitlabCiAuditor
       classifications
     end
 
-    def classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+    def classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil)
+      evidence = script_evidence || expand_local_script_evidence(@pipeline, script_lines)
       [
         job_name,
         job["stage"],
         environment_name,
         extract_image_name(job["image"]),
         artifact_strings.join("\n"),
-        script_lines.join("\n")
+        script_lines.join("\n"),
+        evidence[:files].join("\n"),
+        evidence[:lines].join("\n")
       ].compact.join("\n").downcase
     end
 
@@ -742,7 +848,7 @@ module GitlabCiAuditor
     end
 
     def deploy_test_job?(text, environment_name)
-      deployment_like = text.match?(/\b(deploy|kubectl apply|helm upgrade|ansible-playbook|terraform apply|oc apply|scp |rsync )\b/)
+      deployment_like = text.match?(/\b(deploy|kubectl apply|helm upgrade|ansible-playbook|terraform apply|oc apply|scp |rsync |argocd app (?:sync|wait|create|set|rollback)|argocd appset|argocd app delete)\b/)
       non_prod_env = environment_name.to_s.match?(environment_pattern(@policy["test_environments"]))
       deployment_like && non_prod_env
     end
@@ -1028,7 +1134,8 @@ module GitlabCiAuditor
             job,
             script_lines,
             collect_artifact_strings(job["artifacts"]),
-            extract_environment_name(job)
+            extract_environment_name(job),
+            expand_local_script_evidence(pipeline, script_lines)
           )
           if @policy.dig("security_policies", "forbid_allow_failure_on_security") &&
               job["allow_failure"] == true && (classifications & %w[unit_tests sast artifact_scan image_scan]).any?
@@ -1289,7 +1396,14 @@ module GitlabCiAuditor
           script_lines = collect_script_lines(pipeline, job)
           artifact_strings = collect_artifact_strings(job["artifacts"])
           environment_name = extract_environment_name(job)
-          text = classification_text(job_name, job, script_lines, artifact_strings, environment_name)
+          text = classification_text(
+            job_name,
+            job,
+            script_lines,
+            artifact_strings,
+            environment_name,
+            expand_local_script_evidence(pipeline, script_lines)
+          )
           {
             sast: detect_sast_tools(text),
             artifact_scan: detect_artifact_scan_tools(text),
@@ -1360,6 +1474,7 @@ module GitlabCiAuditor
       items << "Add enforced SAST without allow_failure, ideally through a GitLab template or a dedicated scanner job" if control_required?(:sast) && (coverage[:sast][:missing].positive? || coverage[:sast][:warn].positive?)
       items << "Add artifact scanning or image scanning based on the build type and treat the result as a gate" if control_required?(:scan) && (coverage[:scan][:missing].positive? || coverage[:scan][:warn].positive?)
       items << "Automate deployment to a test environment and declare it explicitly in the environment section" if control_required?(:deploy_test) && (coverage[:deploy_test][:missing].positive? || coverage[:deploy_test][:warn].positive?)
+      items << "If deployment is executed from a separate ArgoCD or delivery repository, analyze that repository too through a downstream snapshot or a separate auditor run" if control_required?(:deploy_test) && coverage[:deploy_test][:missing].positive?
       items << "Add workflow:rules to control centrally when a pipeline should exist" if all_pipelines.any? { |pipeline| pipeline.workflow.empty? }
       items << "Remove allow_failure from critical test and scan jobs" if security_findings.any? { |finding| finding[:title].include?("allow_failure") }
       items << "Remove StrictHostKeyChecking no and replace it with controlled known_hosts management" if security_findings.any? { |finding| finding[:title].include?("Host key verification") || finding[:title].include?("host key") }
@@ -2313,9 +2428,10 @@ module GitlabCiAuditor
 
     def build_graph_node(pipeline, pipeline_idx, job_name, job, stage_index)
       script_lines = collect_script_lines(pipeline, job)
+      script_evidence = expand_local_script_evidence(pipeline, script_lines)
       artifact_strings = collect_artifact_strings(job["artifacts"])
       environment_name = extract_environment_name(job)
-      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name)
+      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
       trigger_refs = pipeline.downstream_references.select { |reference| reference.trigger_job_name == job_name }
       strengths = graph_job_strengths(pipeline, job_name, job, script_lines, artifact_strings, environment_name, classifications, trigger_refs)
       weaknesses = graph_job_weaknesses(pipeline, job_name, job, script_lines, artifact_strings, environment_name, classifications, trigger_refs)
@@ -2340,7 +2456,7 @@ module GitlabCiAuditor
         needs: job_needs(job),
         has_trigger: trigger_refs.any?,
         unresolved_downstream: trigger_refs.any? { |reference| reference.pipeline.nil? },
-        notes: graph_job_notes(job, artifact_strings, script_lines)
+        notes: graph_job_notes(pipeline, job, artifact_strings, script_lines)
       }
     end
 
@@ -2422,14 +2538,17 @@ module GitlabCiAuditor
       return "neutral"
     end
 
-    def graph_job_notes(job, artifact_strings, script_lines)
+    def graph_job_notes(pipeline, job, artifact_strings, script_lines)
+      script_evidence = expand_local_script_evidence(pipeline, script_lines)
+      script_text = (script_lines + script_evidence[:lines]).join("\n").downcase
       notes = []
       notes << "Artifacts: #{artifact_strings.first(4).join(', ')}" if artifact_strings.any?
       report_families = detect_report_families(artifact_strings)
       notes << "Reports: #{report_families.map { |family| tool_family_label(family) }.join(', ')}" if report_families.any?
-      secret_tools = detect_secret_management_tools(script_lines.join("\n").downcase)
+      notes << "Local script evidence: #{script_evidence[:files].join(', ')}" if script_evidence[:files].any?
+      secret_tools = detect_secret_management_tools(script_text)
       notes << "Secret management: #{secret_tools.map { |family| tool_family_label(family) }.join(', ')}" if secret_tools.any?
-      integrity_tools = detect_integrity_verification_tools(script_lines.join("\n").downcase)
+      integrity_tools = detect_integrity_verification_tools(script_text)
       notes << "Integrity checks: #{integrity_tools.map { |family| tool_family_label(family) }.join(', ')}" if integrity_tools.any?
       notes << "Environment: #{extract_environment_name(job)}" if extract_environment_name(job)
       notes << "Script lines: #{script_lines.size}"
@@ -2476,10 +2595,13 @@ module GitlabCiAuditor
         items.concat(pipeline.global_after_script)
 
         pipeline.jobs.each do |job_name, job|
+          script_lines = collect_script_lines(pipeline, job)
+          script_evidence = expand_local_script_evidence(pipeline, script_lines)
           items << job_name
           items << job["stage"]
           items << extract_image_name(job["image"])
-          items.concat(collect_script_lines(pipeline, job))
+          items.concat(script_lines)
+          items.concat(script_evidence[:lines])
           items.concat(collect_artifact_strings(job["artifacts"]))
         end
         items
