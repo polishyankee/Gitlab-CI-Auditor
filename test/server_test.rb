@@ -125,6 +125,33 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_analyze_request_supports_uploaded_zip_bundle_with_project_include_snapshot
+    skip "zip command is unavailable" unless zip_available?
+
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_archive" => uploaded_zip_bundle_with_project_include_snapshot,
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal 1, report[:metadata][:resolved_local_includes].size
+    assert report[:metadata][:resolved_local_includes].first.end_with?("templates/templates_dependency-policy.yml")
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_rewrites_incomplete_upload_bundle_errors
     GitlabCiAuditor.require_server!
 
@@ -273,6 +300,50 @@ class ServerTest < Minitest::Test
     end
 
     UploadStub.new("pipeline-bundle.zip", archive_body)
+  end
+
+  def uploaded_zip_bundle_with_project_include_snapshot
+    archive_body = nil
+
+    Dir.mktmpdir("gitlab-ci-auditor-project-zip") do |dir|
+      bundle_root = File.join(dir, "bundle")
+      FileUtils.mkdir_p(File.join(bundle_root, "templates"))
+      File.write(File.join(bundle_root, "gitlab-ci.yml"), root_pipeline_with_project_include_snapshot)
+      File.write(File.join(bundle_root, "templates/templates_dependency-policy.yml"), dependency_policy_template_snapshot)
+
+      archive_path = File.join(dir, "bundle.zip")
+      Dir.chdir(dir) do
+        success = system("zip", "-qr", archive_path, "bundle", out: File::NULL, err: File::NULL)
+        raise "Failed to build test ZIP fixture" unless success
+      end
+
+      archive_body = File.binread(archive_path)
+    end
+
+    UploadStub.new("pipeline-project-bundle.zip", archive_body)
+  end
+
+  def root_pipeline_with_project_include_snapshot
+    <<~YAML
+      include:
+        - project: "assecoars/gitlab-ci"
+          ref: main
+          file: "templates/templates_dependency-policy.yml"
+
+      prepare_dependency_policy:
+        extends: .prepare_dependency_policy_template
+        rules:
+          - when: always
+    YAML
+  end
+
+  def dependency_policy_template_snapshot
+    <<~YAML
+      .prepare_dependency_policy_template:
+        stage: prepare
+        script:
+          - echo preparing dependency policy
+    YAML
   end
 
   def zip_available?

@@ -79,6 +79,7 @@ module GitlabCiAuditor
       warnings = []
       include_metadata = {
         resolved_local_includes: [],
+        resolved_project_includes: [],
         template_includes: [],
         unresolved_includes: []
       }
@@ -92,7 +93,11 @@ module GitlabCiAuditor
           if entry["local"]
             merge_local_include(entry["local"], path, stack, merged_includes, include_metadata, warnings)
           elsif entry["file"] && !entry["project"]
-            merge_local_include(entry["file"], path, stack, merged_includes, include_metadata, warnings)
+            normalize_include_entries(entry["file"]).each do |file_entry|
+              merge_local_include(file_entry, path, stack, merged_includes, include_metadata, warnings)
+            end
+          elsif entry["project"] && entry["file"]
+            merge_project_include_snapshot(entry, path, stack, merged_includes, include_metadata, warnings)
           elsif entry["template"]
             include_metadata[:template_includes] << entry["template"].to_s
           else
@@ -400,13 +405,57 @@ module GitlabCiAuditor
         return
       end
 
+      merge_included_config(include_path, current_path, stack, merged_includes, include_metadata, warnings)
+      include_metadata[:resolved_local_includes] << include_path
+    end
+
+    def merge_project_include_snapshot(entry, current_path, stack, merged_includes, include_metadata, warnings)
+      normalize_include_entries(entry["file"]).each do |file_entry|
+        include_path = find_project_include_snapshot_path(file_entry, current_path)
+        unless include_path
+          unresolved_entry = GitlabCiAuditor.deep_copy(entry).merge("file" => file_entry)
+          include_metadata[:unresolved_includes] << unresolved_entry
+          warnings << "Skipped external project include #{entry.inspect} in #{current_path} because no local snapshot file matched #{file_entry.inspect}"
+          next
+        end
+
+        merge_included_config(include_path, current_path, stack, merged_includes, include_metadata, warnings)
+        include_metadata[:resolved_project_includes] << {
+          "project" => entry["project"].to_s,
+          "ref" => entry["ref"].to_s,
+          "file" => file_entry.to_s,
+          "path" => include_path
+        }
+        include_metadata[:resolved_local_includes] << include_path
+      end
+    end
+
+    def merge_included_config(include_path, current_path, stack, merged_includes, include_metadata, warnings)
       included_config, nested_metadata, nested_warnings = load_with_includes(include_path, stack + [current_path])
       merged_includes.replace(GitlabCiAuditor.deep_merge(merged_includes, included_config))
-      include_metadata[:resolved_local_includes] << include_path
       include_metadata[:resolved_local_includes].concat(nested_metadata[:resolved_local_includes])
+      include_metadata[:resolved_project_includes].concat(Array(nested_metadata[:resolved_project_includes]))
       include_metadata[:template_includes].concat(nested_metadata[:template_includes])
       include_metadata[:unresolved_includes].concat(nested_metadata[:unresolved_includes])
       warnings.concat(nested_warnings)
+    end
+
+    def find_project_include_snapshot_path(relative_path, current_path)
+      candidate_value = relative_path.to_s
+      return nil if candidate_value.strip.empty?
+
+      search_dir = File.dirname(current_path)
+      loop do
+        candidate = File.expand_path(candidate_value, search_dir)
+        return candidate if File.exist?(candidate)
+
+        parent = File.dirname(search_dir)
+        break if parent == search_dir
+
+        search_dir = parent
+      end
+
+      nil
     end
 
     def normalize_include_entries(entries)

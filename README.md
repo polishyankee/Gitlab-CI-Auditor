@@ -197,6 +197,8 @@ The GUI supports three input modes:
 
 For multi-file pipelines, ZIP is now the recommended format because it preserves nested paths and hidden directories such as `.gitlab/`.
 
+When an uploaded bundle contains files that match `include:project` entries, the auditor now treats them as local snapshot includes. For example, if the root pipeline references `file: templates/templates_dependency-policy.yml` from another project and the uploaded ZIP contains `templates/templates_dependency-policy.yml`, that file is merged into the analysis graph.
+
 For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
 
 If you use root-file upload plus additional support files, the GUI now shows editable bundle-relative paths for those support files. Set them to the repository-relative locations used by `include`, for example `.gitlab/ci/templates/build.yml`.
