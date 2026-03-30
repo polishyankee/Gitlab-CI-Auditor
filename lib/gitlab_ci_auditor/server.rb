@@ -5,11 +5,20 @@ rescue LoadError
 end
 
 require "fileutils"
+require "open3"
 require "tmpdir"
 
 module GitlabCiAuditor
   class Server
-    ROOT_PIPELINE_FILENAMES = [".gitlab-ci.yml", ".gitlab-ci.yaml", "gitlab-ci.yml", "gitlab-ci.yaml"].freeze
+    ROOT_PIPELINE_FILENAMES = [
+      ".gitlab-ci.yml",
+      ".gitlab-ci.yaml",
+      "gitlab-ci.yml",
+      "gitlab-ci.yaml",
+      "root.gitlabci.yml",
+      "root.gitlab-ci.yml",
+      "root.gitlab-ci.yaml"
+    ].freeze
 
     def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil)
       @host = host
@@ -94,7 +103,7 @@ module GitlabCiAuditor
     end
 
     def uploaded_pipeline_bundle_present?(req)
-      %w[pipeline_file pipeline_support_files pipeline_directory_files].any? do |key|
+      %w[pipeline_archive pipeline_file pipeline_support_files pipeline_directory_files].any? do |key|
         !normalized_upload_entries(req.query[key]).empty?
       end
     end
@@ -108,6 +117,7 @@ module GitlabCiAuditor
     end
 
     def with_uploaded_pipeline_workspace(req)
+      archive_uploads = normalized_upload_entries(req.query["pipeline_archive"])
       root_uploads = normalized_upload_entries(req.query["pipeline_file"])
       support_uploads = normalized_upload_entries(req.query["pipeline_support_files"])
       support_paths = normalized_string_entries(req.query["pipeline_support_paths"])
@@ -116,6 +126,10 @@ module GitlabCiAuditor
 
       Dir.mktmpdir(".gitlab-ci-upload-") do |workspace|
         root_pipeline_path = nil
+
+        archive_uploads.each_with_index do |upload, index|
+          extract_uploaded_archive(workspace, upload, index)
+        end
 
         root_uploads.each_with_index do |upload, index|
           relative_path = sanitized_upload_relative_path(uploaded_relative_path(upload), index.zero? ? ".gitlab-ci.yml" : "pipeline_#{index}.yml")
@@ -231,12 +245,45 @@ module GitlabCiAuditor
       absolute_path
     end
 
+    def extract_uploaded_archive(workspace, upload, index)
+      ensure_unzip_available!
+
+      archive_name = uploaded_relative_path(upload)
+      unless archive_name.downcase.end_with?(".zip")
+        raise ArgumentError, "Unsupported pipeline archive #{archive_name.inspect}. Upload a `.zip` archive."
+      end
+
+      archive_path = File.join(workspace, ".pipeline-bundle-#{index}.zip")
+      File.binwrite(archive_path, uploaded_content(upload))
+      validate_archive_entries(archive_path)
+
+      success = system("unzip", "-qq", archive_path, "-d", workspace, out: File::NULL, err: File::NULL)
+      raise ArgumentError, "Failed to extract uploaded archive #{archive_name.inspect}" unless success
+    end
+
     def uploaded_content(upload)
       if upload.respond_to?(:tempfile) && upload.tempfile
         upload.tempfile.rewind if upload.tempfile.respond_to?(:rewind)
         upload.tempfile.read
       else
         upload.to_s
+      end
+    end
+
+    def ensure_unzip_available!
+      return if system("unzip", "-v", out: File::NULL, err: File::NULL)
+
+      raise ArgumentError, "ZIP upload requires the `unzip` command to be available on the server."
+    end
+
+    def validate_archive_entries(archive_path)
+      listing, status = Open3.capture2("unzip", "-Z1", archive_path)
+      raise ArgumentError, "Failed to inspect uploaded archive contents" unless status.success?
+
+      listing.lines.map(&:strip).reject(&:empty?).each do |entry|
+        next if entry.end_with?("/")
+
+        sanitized_upload_relative_path(entry, "archive-entry.yml")
       end
     end
 
@@ -276,7 +323,7 @@ module GitlabCiAuditor
 
     def rewrite_upload_error(error)
       message = error.message.to_s
-      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, or upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`. For nested support files, provide bundle-relative paths that match the original repository layout."
+      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`, or upload a `.zip` archive that contains `.gitlab-ci.yml` or `root.gitlabci.yml`. For nested support files, provide bundle-relative paths that match the original repository layout."
       if message.include?("extends unknown template") || message.include?("Pipeline file not found")
         ArgumentError.new("#{message}. #{guidance}")
       else

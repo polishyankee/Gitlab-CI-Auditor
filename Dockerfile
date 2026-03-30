@@ -28,7 +28,7 @@ LABEL org.opencontainers.image.title="GitLab CI SSDLC Auditor" \
 WORKDIR ${APP_HOME}
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata unzip \
     && gem install --no-document webrick \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 app \

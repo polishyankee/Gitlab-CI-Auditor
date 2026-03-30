@@ -382,7 +382,7 @@
           <div class="workspace-head">
             <div>
               <h2>Open Audit Session</h2>
-              <p>Provide a file path or upload a file. The HTML report and GUI use the same analysis engine.</p>
+              <p>Provide a file path, upload a single root file, or upload a ZIP bundle. The HTML report and GUI use the same analysis engine.</p>
             </div>
 
             <div class="brand-stack">
@@ -422,9 +422,15 @@
             </label>
 
             <label>
+              Recommended: pipeline ZIP bundle
+              <input type="file" name="pipeline_archive" accept=".zip,application/zip">
+              <span class="field-note">Best option for multi-file pipelines, especially when local includes live under hidden paths such as <code>.gitlab/</code>. The archive should contain <code>.gitlab-ci.yml</code> or <code>root.gitlabci.yml</code>.</span>
+            </label>
+
+            <label>
               Root pipeline file
               <input type="file" name="pipeline_file" accept=".yml,.yaml">
-              <span class="field-note">Upload the main `.gitlab-ci.yml` here when you want the GUI to anchor the analysis to a specific root file.</span>
+              <span class="field-note">Fallback for simpler cases. Upload the main <code>.gitlab-ci.yml</code> here when you want the GUI to anchor the analysis to a specific root file.</span>
             </label>
 
             <div class="field-block">
@@ -439,7 +445,7 @@
             <label>
               Or upload a pipeline directory
               <input id="pipeline-directory-files" type="file" name="pipeline_directory_files" accept=".yml,.yaml" webkitdirectory directory multiple>
-              <span class="field-note">Recommended for complex repositories. The server rebuilds a temporary workspace from the uploaded directory so local `include` and `extends` chains can be resolved.</span>
+              <span class="field-note">Fallback for direct folder uploads. Some browsers can still be inconsistent with hidden folders, so ZIP remains the safer option for complex repositories.</span>
             </label>
 
             <label>
