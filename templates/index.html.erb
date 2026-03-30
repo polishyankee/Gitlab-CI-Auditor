@@ -218,6 +218,11 @@
         gap: 16px;
       }
 
+      .field-block {
+        display: grid;
+        gap: 8px;
+      }
+
       label {
         display: grid;
         gap: 8px;
@@ -242,6 +247,27 @@
         font-weight: 400;
         font-size: 0.88rem;
         line-height: 1.5;
+      }
+
+      .generated-path-list {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid rgba(48, 54, 61, 0.9);
+        border-radius: 12px;
+        background: rgba(1, 4, 9, 0.35);
+      }
+
+      .generated-path-item {
+        display: grid;
+        gap: 6px;
+      }
+
+      .generated-path-source {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+        word-break: break-all;
       }
 
       input::file-selector-button {
@@ -401,11 +427,14 @@
               <span class="field-note">Upload the main `.gitlab-ci.yml` here when you want the GUI to anchor the analysis to a specific root file.</span>
             </label>
 
-            <label>
-              Additional include or template files
-              <input type="file" name="pipeline_support_files" accept=".yml,.yaml" multiple>
-              <span class="field-note">Use this when the root pipeline depends on a few local include files. Relative folder structure is best preserved through directory upload below.</span>
-            </label>
+            <div class="field-block">
+              <label>
+                Additional include or template files
+                <input id="pipeline-support-files" type="file" name="pipeline_support_files" accept=".yml,.yaml" multiple>
+                <span class="field-note">Use this when the root pipeline depends on a limited set of local files. If nested include paths matter, edit the bundle-relative paths below or prefer directory upload.</span>
+              </label>
+              <div id="pipeline-support-paths" class="generated-path-list" hidden></div>
+            </div>
 
             <label>
               Or upload a pipeline directory
@@ -513,10 +542,49 @@
       document.addEventListener("DOMContentLoaded", function() {
         var form = document.getElementById("analysis-form");
         var directoryInput = document.getElementById("pipeline-directory-files");
+        var supportInput = document.getElementById("pipeline-support-files");
+        var supportPaths = document.getElementById("pipeline-support-paths");
 
-        if (!form || !directoryInput) {
+        if (!form || !directoryInput || !supportInput || !supportPaths) {
           return;
         }
+
+        function renderSupportPathEditors() {
+          supportPaths.innerHTML = "";
+
+          var files = Array.prototype.slice.call(supportInput.files || []);
+          supportPaths.hidden = files.length === 0;
+          if (files.length === 0) {
+            return;
+          }
+
+          var intro = document.createElement("span");
+          intro.className = "field-note";
+          intro.textContent = "Bundle-relative paths for the selected support files. Edit these when the original repository layout uses nested directories such as .gitlab/ci/templates/job.yml.";
+          supportPaths.appendChild(intro);
+
+          files.forEach(function(file) {
+            var item = document.createElement("div");
+            item.className = "generated-path-item";
+
+            var source = document.createElement("span");
+            source.className = "generated-path-source";
+            source.textContent = "Selected file: " + file.name;
+            item.appendChild(source);
+
+            var input = document.createElement("input");
+            input.type = "text";
+            input.name = "pipeline_support_paths";
+            input.value = file.webkitRelativePath || file.name;
+            input.placeholder = ".gitlab/ci/templates/job.yml";
+            item.appendChild(input);
+
+            supportPaths.appendChild(item);
+          });
+        }
+
+        supportInput.addEventListener("change", renderSupportPathEditors);
+        renderSupportPathEditors();
 
         form.addEventListener("submit", function() {
           form.querySelectorAll("input[data-generated-path='true']").forEach(function(node) {
