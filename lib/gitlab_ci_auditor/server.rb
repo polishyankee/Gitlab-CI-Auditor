@@ -10,6 +10,16 @@ require "tmpdir"
 
 module GitlabCiAuditor
   class Server
+    UploadDiagnostics = Struct.new(
+      :selected_root,
+      :root_candidates,
+      :workspace_files,
+      :template_definitions,
+      :alias_definitions,
+      :alias_references,
+      keyword_init: true
+    )
+
     ROOT_PIPELINE_FILENAMES = [
       ".gitlab-ci.yml",
       ".gitlab-ci.yaml",
@@ -55,15 +65,7 @@ module GitlabCiAuditor
         rescue StandardError => error
           res.status = 422
           res["Content-Type"] = "text/html; charset=utf-8"
-          res.body = <<~HTML
-            <html>
-              <body style="font-family: sans-serif; padding: 2rem">
-                <h1>Analysis failed</h1>
-                <p>#{ERB::Util.html_escape(error.message)}</p>
-                <p><a href="/">Back</a></p>
-              </body>
-            </html>
-          HTML
+          res.body = render_error_page(error)
         end
       end
 
@@ -109,11 +111,14 @@ module GitlabCiAuditor
     end
 
     def load_uploaded_pipeline(req, snapshot_file)
-      with_uploaded_pipeline_workspace(req) do |pipeline_path|
+      diagnostics = nil
+
+      with_uploaded_pipeline_workspace(req) do |pipeline_path, workspace|
+        diagnostics = build_upload_diagnostics(workspace, pipeline_path)
         PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
       end
     rescue ArgumentError => error
-      raise rewrite_upload_error(error)
+      raise rewrite_upload_error(error, diagnostics)
     end
 
     def with_uploaded_pipeline_workspace(req)
@@ -151,7 +156,7 @@ module GitlabCiAuditor
 
         explicit_root = req.query["pipeline_bundle_root"].to_s.strip
         root_pipeline_path = resolve_uploaded_root_pipeline_path(workspace, explicit_root, root_pipeline_path)
-        yield(root_pipeline_path)
+        yield(root_pipeline_path, workspace)
       end
     end
 
@@ -321,14 +326,34 @@ module GitlabCiAuditor
       raise ArgumentError, "Uploaded bundle contains multiple root pipeline candidates (#{listed_candidates.join(', ')}). Set `Root pipeline path inside uploaded bundle` to choose one."
     end
 
-    def rewrite_upload_error(error)
+    def rewrite_upload_error(error, diagnostics = nil)
       message = error.message.to_s
       guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`, or upload a `.zip` archive that contains `.gitlab-ci.yml` or `root.gitlabci.yml`. For nested support files, provide bundle-relative paths that match the original repository layout."
-      if message.include?("extends unknown template") || message.include?("Pipeline file not found")
-        ArgumentError.new("#{message}. #{guidance}")
-      else
-        error
+      diagnostics_lines = upload_diagnostics_lines(diagnostics)
+
+      if message.include?("Unknown YAML alias `")
+        return ArgumentError.new(([message] + diagnostics_lines).join("\n"))
       end
+
+      if message.include?("extends unknown template")
+        missing_template = message[/extends unknown template\s+(.+)$/, 1]
+        template_hint =
+          if diagnostics && missing_template && diagnostics.template_definitions.include?(missing_template)
+            "Template `#{missing_template}` was found in the selected upload bundle. This usually means the visible `extends` error is secondary and the real cause is an earlier YAML issue or the wrong root pipeline selection."
+          elsif diagnostics && !diagnostics.template_definitions.empty?
+            "Hidden templates found in the selected upload bundle: #{diagnostics.template_definitions.join(', ')}"
+          else
+            nil
+          end
+
+        return ArgumentError.new(([message, template_hint] + diagnostics_lines + [guidance]).compact.join("\n"))
+      end
+
+      if message.include?("Pipeline file not found")
+        return ArgumentError.new(([message] + diagnostics_lines + [guidance]).join("\n"))
+      end
+
+      error
     end
 
     def uploaded_root_candidates(workspace)
@@ -338,6 +363,61 @@ module GitlabCiAuditor
         relative_path = path.delete_prefix("#{workspace}/")
         [relative_path.count("/"), relative_path]
       end
+    end
+
+    def build_upload_diagnostics(workspace, selected_root_path)
+      workspace_files = Dir.glob(File.join(workspace, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }
+      yaml_files = workspace_files.select { |path| %w[.yml .yaml].include?(File.extname(path)) }
+
+      UploadDiagnostics.new(
+        selected_root: relative_to_workspace(workspace, selected_root_path),
+        root_candidates: uploaded_root_candidates(workspace).map { |path| relative_to_workspace(workspace, path) },
+        workspace_files: yaml_files.map { |path| relative_to_workspace(workspace, path) }.sort.first(12),
+        template_definitions: yaml_files.flat_map { |path| extract_template_definitions(File.read(path)) }.uniq.sort.first(20),
+        alias_definitions: yaml_files.flat_map { |path| extract_anchor_definitions(File.read(path)) }.uniq.sort.first(20),
+        alias_references: yaml_files.flat_map { |path| extract_anchor_references(File.read(path)) }.uniq.sort.first(20)
+      )
+    end
+
+    def relative_to_workspace(workspace, path)
+      path.to_s.delete_prefix("#{workspace}/")
+    end
+
+    def extract_template_definitions(content)
+      content.scan(/^(\.[A-Za-z0-9_.:-]+):(?:\s*(?:$|#))/).flatten
+    end
+
+    def extract_anchor_definitions(content)
+      content.scan(/&([A-Za-z0-9_-]+)/).flatten
+    end
+
+    def extract_anchor_references(content)
+      content.scan(/\*([A-Za-z0-9_-]+)/).flatten
+    end
+
+    def upload_diagnostics_lines(diagnostics)
+      return [] unless diagnostics
+
+      lines = []
+      lines << "Selected root pipeline: #{diagnostics.selected_root}" if diagnostics.selected_root
+      lines << "Root candidates detected in upload: #{diagnostics.root_candidates.join(', ')}" if diagnostics.root_candidates.any?
+      lines << "YAML files detected in upload: #{diagnostics.workspace_files.join(', ')}" if diagnostics.workspace_files.any?
+      lines << "Hidden templates detected: #{diagnostics.template_definitions.join(', ')}" if diagnostics.template_definitions.any?
+      lines << "Anchor definitions detected: #{diagnostics.alias_definitions.join(', ')}" if diagnostics.alias_definitions.any?
+      lines << "Alias references detected: #{diagnostics.alias_references.join(', ')}" if diagnostics.alias_references.any?
+      lines
+    end
+
+    def render_error_page(error)
+      <<~HTML
+        <html>
+          <body style="font-family: sans-serif; padding: 2rem">
+            <h1>Analysis failed</h1>
+            <pre style="white-space: pre-wrap; line-height: 1.55; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 12px; padding: 1rem;">#{ERB::Util.html_escape(error.message)}</pre>
+            <p><a href="/">Back</a></p>
+          </body>
+        </html>
+      HTML
     end
   end
 end

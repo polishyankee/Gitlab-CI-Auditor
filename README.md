@@ -201,6 +201,13 @@ For complex include trees, prefer directory upload. The server now strips the se
 
 If you use root-file upload plus additional support files, the GUI now shows editable bundle-relative paths for those support files. Set them to the repository-relative locations used by `include`, for example `.gitlab/ci/templates/build.yml`.
 
+When GUI analysis fails during upload-based parsing, the error panel now shows extra diagnostics:
+
+- the root pipeline file that was actually selected
+- the detected root candidates inside the uploaded bundle
+- the hidden templates found in the uploaded YAML files
+- YAML anchor definitions and alias references, so alias problems are separated from missing-template problems
+
 Example bundle for regression testing:
 
 ```bash
