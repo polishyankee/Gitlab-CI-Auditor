@@ -188,6 +188,14 @@ gem install webrick
 
 If you only use `scan` and report export modes, `webrick` is not required.
 
+The GUI supports three input modes:
+
+- direct filesystem path to the root pipeline
+- root `.gitlab-ci.yml` upload plus a few additional include or template files
+- whole-directory upload for repositories that split CI logic across many local `include` files
+
+For complex include trees, prefer directory upload and set `Root pipeline path inside uploaded bundle` when the root file is not the top-level `.gitlab-ci.yml`.
+
 ## Docker
 
 Build the image:

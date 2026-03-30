@@ -389,15 +389,34 @@
             </div>
           </div>
 
-          <form action="/analyze" method="post" enctype="multipart/form-data">
+          <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
             <label>
               Pipeline file path
               <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
             </label>
 
             <label>
-              Or upload a file
+              Root pipeline file
               <input type="file" name="pipeline_file" accept=".yml,.yaml">
+              <span class="field-note">Upload the main `.gitlab-ci.yml` here when you want the GUI to anchor the analysis to a specific root file.</span>
+            </label>
+
+            <label>
+              Additional include or template files
+              <input type="file" name="pipeline_support_files" accept=".yml,.yaml" multiple>
+              <span class="field-note">Use this when the root pipeline depends on a few local include files. Relative folder structure is best preserved through directory upload below.</span>
+            </label>
+
+            <label>
+              Or upload a pipeline directory
+              <input id="pipeline-directory-files" type="file" name="pipeline_directory_files" accept=".yml,.yaml" webkitdirectory directory multiple>
+              <span class="field-note">Recommended for complex repositories. The server rebuilds a temporary workspace from the uploaded directory so local `include` and `extends` chains can be resolved.</span>
+            </label>
+
+            <label>
+              Root pipeline path inside uploaded bundle
+              <input type="text" name="pipeline_bundle_root" placeholder=".gitlab-ci.yml or .gitlab/ci/root.yml">
+              <span class="field-note">Optional. Use this when you upload a whole folder and the root pipeline is not the top-level `.gitlab-ci.yml`, or when multiple root candidates exist.</span>
             </label>
 
             <label>
@@ -490,5 +509,30 @@
         </article>
       </section>
     </main>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var form = document.getElementById("analysis-form");
+        var directoryInput = document.getElementById("pipeline-directory-files");
+
+        if (!form || !directoryInput) {
+          return;
+        }
+
+        form.addEventListener("submit", function() {
+          form.querySelectorAll("input[data-generated-path='true']").forEach(function(node) {
+            node.remove();
+          });
+
+          Array.prototype.forEach.call(directoryInput.files || [], function(file) {
+            var hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = "pipeline_directory_paths";
+            hidden.value = file.webkitRelativePath || file.name;
+            hidden.setAttribute("data-generated-path", "true");
+            form.appendChild(hidden);
+          });
+        });
+      });
+    </script>
   </body>
 </html>
