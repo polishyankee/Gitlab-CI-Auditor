@@ -61,4 +61,42 @@ class PipelineLoaderTest < Minitest::Test
       assert_equal "templates/templates_dependency-policy.yml", pipeline.include_metadata[:resolved_project_includes].first["file"]
     end
   end
+
+  def test_resolves_include_project_snapshots_from_flattened_uploaded_filenames
+    Dir.mktmpdir("gitlab-ci-project-include-flat") do |dir|
+      File.write(
+        File.join(dir, ".gitlab-ci.yml"),
+        <<~YAML
+          include:
+            - project: "assecoars/gitlab-ci"
+              ref: main
+              file: "templates/templates_dependency-policy.yml"
+
+          prepare_dependency_policy:
+            extends: .prepare_dependency_policy_template
+            rules:
+              - when: always
+        YAML
+      )
+
+      File.write(
+        File.join(dir, "templates_dependency-policy.yml"),
+        <<~YAML
+          .prepare_dependency_policy_template:
+            stage: prepare
+            script:
+              - echo preparing dependency policy
+        YAML
+      )
+
+      loader = GitlabCiAuditor::PipelineLoader.new
+      pipeline = loader.load(File.join(dir, ".gitlab-ci.yml"))
+
+      assert_includes pipeline.jobs.keys, "prepare_dependency_policy"
+      assert_includes pipeline.templates.keys, ".prepare_dependency_policy_template"
+      assert_equal "prepare", pipeline.jobs["prepare_dependency_policy"]["stage"]
+      assert_equal 1, pipeline.include_metadata[:resolved_project_includes].size
+      assert pipeline.include_metadata[:resolved_project_includes].first["path"].end_with?("templates_dependency-policy.yml")
+    end
+  end
 end

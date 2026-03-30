@@ -203,6 +203,8 @@ For multi-file pipelines, ZIP is now the recommended format because it preserves
 
 When an uploaded bundle contains files that match `include:project` entries, the auditor now treats them as local snapshot includes. For example, if the root pipeline references `file: templates/templates_dependency-policy.yml` from another project and the uploaded ZIP contains `templates/templates_dependency-policy.yml`, that file is merged into the analysis graph.
 
+For root-file uploads with only a few support files, the analyzer can also fall back to a unique basename match. That means an uploaded support file named `templates_dependency-policy.yml` can still satisfy `file: templates/templates_dependency-policy.yml` as long as that basename is unique inside the selected bundle.
+
 The same principle applies to local shell scripts referenced by jobs. If the uploaded bundle contains `ci/trivy.sh` or `scripts/argocd-sync.sh`, the analyzer can use those files as evidence for scanner and deployment detection.
 
 For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
