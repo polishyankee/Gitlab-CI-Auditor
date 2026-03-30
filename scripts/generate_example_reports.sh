@@ -25,3 +25,6 @@ mkdir -p "$REPORT_DIR"
 
 "$BIN" scan "$PIPELINE_DIR/samm_question_gaps.gitlab-ci.yml" --policy-pack strict --format html --output "$REPORT_DIR/samm_question_gaps.html"
 "$BIN" scan "$PIPELINE_DIR/samm_question_gaps.gitlab-ci.yml" --policy-pack strict --format text --output "$REPORT_DIR/samm_question_gaps.txt"
+
+"$BIN" scan "$PIPELINE_DIR/upload_bundle_demo/.gitlab-ci.yml" --policy-pack balanced --format html --output "$REPORT_DIR/upload_bundle_demo.html"
+"$BIN" scan "$PIPELINE_DIR/upload_bundle_demo/.gitlab-ci.yml" --policy-pack balanced --format text --output "$REPORT_DIR/upload_bundle_demo.txt"

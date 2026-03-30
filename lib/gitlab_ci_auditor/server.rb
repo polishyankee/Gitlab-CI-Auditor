@@ -110,8 +110,9 @@ module GitlabCiAuditor
     def with_uploaded_pipeline_workspace(req)
       root_uploads = normalized_upload_entries(req.query["pipeline_file"])
       support_uploads = normalized_upload_entries(req.query["pipeline_support_files"])
+      support_paths = normalized_string_entries(req.query["pipeline_support_paths"])
       directory_uploads = normalized_upload_entries(req.query["pipeline_directory_files"])
-      directory_paths = normalized_string_entries(req.query["pipeline_directory_paths"])
+      directory_paths = rebased_bundle_paths(normalized_string_entries(req.query["pipeline_directory_paths"]))
 
       Dir.mktmpdir(".gitlab-ci-upload-") do |workspace|
         root_pipeline_path = nil
@@ -123,7 +124,8 @@ module GitlabCiAuditor
         end
 
         support_uploads.each_with_index do |upload, index|
-          relative_path = sanitized_upload_relative_path(uploaded_relative_path(upload), "support_#{index}.yml")
+          relative_hint = support_paths[index]
+          relative_path = sanitized_upload_relative_path(relative_hint || uploaded_relative_path(upload), "support_#{index}.yml")
           persist_uploaded_file(workspace, relative_path, upload)
         end
 
@@ -151,6 +153,19 @@ module GitlabCiAuditor
       values.compact.map(&:to_s)
     end
 
+    def rebased_bundle_paths(paths)
+      return [] if paths.empty?
+
+      segment_sets = paths.map { |path| normalized_relative_segments(path) }
+      common_prefix = common_path_prefix(segment_sets)
+      return segment_sets.map { |segments| File.join(segments) } if common_prefix.empty?
+
+      segment_sets.map do |segments|
+        trimmed_segments = segments[common_prefix.length..] || []
+        File.join(*(trimmed_segments.empty? ? segments : trimmed_segments))
+      end
+    end
+
     def upload_blank?(entry)
       return true if entry.nil?
 
@@ -164,18 +179,40 @@ module GitlabCiAuditor
       upload.filename.to_s
     end
 
-    def sanitized_upload_relative_path(raw_path, fallback_name)
-      candidate = raw_path.to_s.strip
-      candidate = fallback_name if candidate.empty?
-      candidate = candidate.tr("\\", "/").sub(%r{\A/+}, "")
+    def normalized_relative_segments(raw_path)
+      candidate = raw_path.to_s.strip.tr("\\", "/").sub(%r{\A/+}, "")
+      raise ArgumentError, "Unsafe uploaded file path #{raw_path.inspect}" if candidate.empty?
 
-      parts = candidate.split("/").each_with_object([]) do |part, segments|
+      segments = candidate.split("/").each_with_object([]) do |part, memo|
         next if part.empty? || part == "."
 
         raise ArgumentError, "Unsafe uploaded file path #{raw_path.inspect}" if part == ".."
 
-        segments << part
+        memo << part
       end
+
+      raise ArgumentError, "Unsafe uploaded file path #{raw_path.inspect}" if segments.empty?
+
+      segments
+    end
+
+    def common_path_prefix(segment_sets)
+      prefix = []
+      shortest_length = segment_sets.map(&:length).min.to_i
+
+      shortest_length.times do |index|
+        candidate = segment_sets.first[index]
+        break unless segment_sets.all? { |segments| segments[index] == candidate }
+
+        prefix << candidate
+      end
+
+      prefix
+    end
+
+    def sanitized_upload_relative_path(raw_path, fallback_name)
+      candidate = raw_path.to_s.strip
+      parts = candidate.empty? ? [fallback_name] : normalized_relative_segments(candidate)
 
       return fallback_name if parts.empty?
 
@@ -206,19 +243,20 @@ module GitlabCiAuditor
     def resolve_uploaded_root_pipeline_path(workspace, explicit_root, root_upload_path)
       return root_upload_path if root_upload_path && explicit_root.empty?
 
+      candidates = uploaded_root_candidates(workspace)
+
       if !explicit_root.empty?
         relative_path = sanitized_upload_relative_path(explicit_root, ".gitlab-ci.yml")
         absolute_path = File.expand_path(relative_path, workspace)
-        raise ArgumentError, "Uploaded bundle does not contain root pipeline #{explicit_root.inspect}" unless File.file?(absolute_path)
+        return absolute_path if File.file?(absolute_path)
 
-        return absolute_path
-      end
+        suffix_matches = candidates.select do |path|
+          relative_candidate = path.delete_prefix("#{workspace}/")
+          relative_candidate == relative_path || relative_candidate.end_with?("/#{relative_path}")
+        end
+        return suffix_matches.first if suffix_matches.size == 1
 
-      candidates = Dir.glob(File.join(workspace, "**", "*"), File::FNM_DOTMATCH).select do |path|
-        File.file?(path) && ROOT_PIPELINE_FILENAMES.include?(File.basename(path))
-      end.sort_by do |path|
-        relative_path = path.delete_prefix("#{workspace}/")
-        [relative_path.count("/"), relative_path]
+        raise ArgumentError, "Uploaded bundle does not contain root pipeline #{explicit_root.inspect}"
       end
 
       if candidates.empty?
@@ -238,11 +276,20 @@ module GitlabCiAuditor
 
     def rewrite_upload_error(error)
       message = error.message.to_s
-      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, or upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`."
+      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, or upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`. For nested support files, provide bundle-relative paths that match the original repository layout."
       if message.include?("extends unknown template") || message.include?("Pipeline file not found")
         ArgumentError.new("#{message}. #{guidance}")
       else
         error
+      end
+    end
+
+    def uploaded_root_candidates(workspace)
+      Dir.glob(File.join(workspace, "**", "*"), File::FNM_DOTMATCH).select do |path|
+        File.file?(path) && ROOT_PIPELINE_FILENAMES.include?(File.basename(path))
+      end.sort_by do |path|
+        relative_path = path.delete_prefix("#{workspace}/")
+        [relative_path.count("/"), relative_path]
       end
     end
   end

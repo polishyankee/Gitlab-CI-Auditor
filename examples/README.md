@@ -10,6 +10,7 @@ This directory contains ready-to-scan `.gitlab-ci.yml` examples that illustrate 
 - [`pipelines/snapshot_root.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/snapshot_root.gitlab-ci.yml): root pipeline that imports an external child pipeline through a local snapshot manifest
 - [`pipelines/samm_question_rich.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/samm_question_rich.gitlab-ci.yml): implementation-heavy example with richer OWASP SAMM question coverage
 - [`pipelines/samm_question_gaps.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/samm_question_gaps.gitlab-ci.yml): intentionally weak example that leaves many OWASP SAMM implementation questions on `fail` or `review`
+- [`pipelines/upload_bundle_demo/.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/upload_bundle_demo/.gitlab-ci.yml): nested local-include example meant to validate GUI directory upload and root-plus-support-file upload flows
 
 ## Generated Reports
 
@@ -25,6 +26,8 @@ This directory contains ready-to-scan `.gitlab-ci.yml` examples that illustrate 
 - [`reports/samm_question_rich.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_rich.txt)
 - [`reports/samm_question_gaps.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_gaps.html)
 - [`reports/samm_question_gaps.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_gaps.txt)
+- [`reports/upload_bundle_demo.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/upload_bundle_demo.html)
+- [`reports/upload_bundle_demo.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/upload_bundle_demo.txt)
 
 ## Regenerate
 

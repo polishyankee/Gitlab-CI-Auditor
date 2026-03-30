@@ -1,0 +1,14 @@
+.prepare_template:
+  stage: prep
+  script:
+    - bundle install --jobs 4 --retry 3
+
+unit_tests:
+  stage: test
+  script:
+    - bundle exec rspec
+  artifacts:
+    paths:
+      - coverage/jacoco.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'

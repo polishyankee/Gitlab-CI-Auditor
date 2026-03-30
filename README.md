@@ -194,7 +194,17 @@ The GUI supports three input modes:
 - root `.gitlab-ci.yml` upload plus a few additional include or template files
 - whole-directory upload for repositories that split CI logic across many local `include` files
 
-For complex include trees, prefer directory upload and set `Root pipeline path inside uploaded bundle` when the root file is not the top-level `.gitlab-ci.yml`.
+For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
+
+If you use root-file upload plus additional support files, the GUI now shows editable bundle-relative paths for those support files. Set them to the repository-relative locations used by `include`, for example `.gitlab/ci/templates/build.yml`.
+
+Example bundle for regression testing:
+
+```bash
+./bin/gitlab-ci-auditor scan examples/pipelines/upload_bundle_demo/.gitlab-ci.yml --policy-pack balanced
+```
+
+The same example can be used in the GUI by uploading the whole `examples/pipelines/upload_bundle_demo/` directory and keeping `Root pipeline path inside uploaded bundle` set to `.gitlab-ci.yml`.
 
 ## Docker
 
