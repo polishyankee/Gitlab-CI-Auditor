@@ -146,7 +146,37 @@ class ServerTest < Minitest::Test
     end
 
     assert_includes error.message, "extends unknown template"
+    assert_includes error.message, "Selected root pipeline: .gitlab-ci.yml"
+    assert_includes error.message, "YAML files detected in upload: .gitlab-ci.yml"
     assert_includes error.message, "upload the whole pipeline directory"
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_analyze_request_surfaces_yaml_alias_diagnostics
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    error = assert_raises(ArgumentError) do
+      server.send(
+        :analyze_request,
+        RequestStub.new(
+          {
+            "pipeline_file" => UploadStub.new(".gitlab-ci.yml", root_pipeline_with_missing_alias),
+            "policy_pack" => "balanced"
+          }
+        )
+      )
+    end
+
+    assert_includes error.message, "Unknown YAML alias `dependency_policy_rules`"
+    assert_includes error.message, "Selected root pipeline: .gitlab-ci.yml"
+    assert_includes error.message, "Hidden templates detected: .prepare_dependency_policy_template"
+    assert_includes error.message, "Alias references detected: dependency_policy_rules"
   rescue LoadError => error
     skip(error.message)
   end
@@ -208,6 +238,19 @@ class ServerTest < Minitest::Test
         stage: prep
         script:
           - echo preparing
+    YAML
+  end
+
+  def root_pipeline_with_missing_alias
+    <<~YAML
+      prepare_dependency_policy:
+        extends: .prepare_dependency_policy_template
+        rules: *dependency_policy_rules
+
+      .prepare_dependency_policy_template:
+        stage: prepare
+        script:
+          - echo preparing dependency policy
     YAML
   end
 

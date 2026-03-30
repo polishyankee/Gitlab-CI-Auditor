@@ -423,6 +423,9 @@ module GitlabCiAuditor
     def parse_yaml(content, path)
       sanitized = content.gsub(/!reference\s+\[[^\]\n]+\]/, '"__gitlab_reference__"')
       YAML.safe_load(sanitized, aliases: true) || {}
+    rescue Psych::BadAlias => error
+      alias_name = error.message.to_s[/Unknown alias:\s+(.+)$/, 1] || "unknown"
+      raise ArgumentError, "Failed to parse #{path}: Unknown YAML alias `#{alias_name}`. YAML anchors and aliases must be defined in the same file. If this alias comes from an included file, replace it with `!reference`, `extends`, or move the anchor definition into the selected root file."
     rescue Psych::Exception => error
       raise ArgumentError, "Failed to parse #{path}: #{error.message}"
     end
