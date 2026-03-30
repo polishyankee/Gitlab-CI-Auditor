@@ -191,8 +191,11 @@ If you only use `scan` and report export modes, `webrick` is not required.
 The GUI supports three input modes:
 
 - direct filesystem path to the root pipeline
+- ZIP bundle upload containing `.gitlab-ci.yml` or `root.gitlabci.yml`
 - root `.gitlab-ci.yml` upload plus a few additional include or template files
 - whole-directory upload for repositories that split CI logic across many local `include` files
+
+For multi-file pipelines, ZIP is now the recommended format because it preserves nested paths and hidden directories such as `.gitlab/`.
 
 For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
 
@@ -205,6 +208,15 @@ Example bundle for regression testing:
 ```
 
 The same example can be used in the GUI by uploading the whole `examples/pipelines/upload_bundle_demo/` directory and keeping `Root pipeline path inside uploaded bundle` set to `.gitlab-ci.yml`.
+
+ZIP example:
+
+```bash
+cd examples/pipelines/upload_bundle_demo
+zip -qr /tmp/upload_bundle_demo.zip .
+```
+
+Then upload `/tmp/upload_bundle_demo.zip` in the GUI. If the archive root file is named `.gitlab-ci.yml` or `root.gitlabci.yml`, the auditor can resolve it automatically.
 
 ## Docker
 
