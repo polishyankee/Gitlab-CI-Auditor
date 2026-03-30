@@ -239,6 +239,13 @@
         margin-left: calc(-50vw + 16px);
       }
 
+      .benchmark-panel {
+        position: relative;
+        left: 50%;
+        width: calc(100vw - 32px);
+        margin-left: calc(-50vw + 16px);
+      }
+
       .tabbar {
         margin-top: 22px;
         display: flex;
@@ -276,7 +283,7 @@
         margin-top: 16px;
         display: grid;
         gap: 16px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
 
       .meter {
@@ -322,10 +329,61 @@
         margin-top: 10px;
         color: var(--muted);
         line-height: 1.65;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .finding-copy strong {
         color: var(--ink);
+      }
+
+      .benchmark-card {
+        max-width: 100%;
+      }
+
+      .benchmark-card h3,
+      .benchmark-card strong,
+      .benchmark-card a {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .benchmark-head,
+      .benchmark-subhead {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .benchmark-head .badge,
+      .benchmark-subhead .badge {
+        flex-shrink: 0;
+      }
+
+      .benchmark-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.35;
+      }
+
+      .benchmark-card > strong {
+        font-size: 1.2rem;
+        line-height: 1.3;
+      }
+
+      .benchmark-card .list-item strong {
+        font-size: 0.98rem;
+        line-height: 1.45;
+        margin: 0;
+      }
+
+      .benchmark-link {
+        color: #79c0ff;
+        display: inline-block;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       details {
@@ -638,7 +696,7 @@
           </span>
           <h1>SSDLC report for <code>compliant_service.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-03-29T20:25:34Z. Active scenarios:
+            Analysis generated 2026-03-30T16:08:46Z. Active scenarios:
             <strong>8</strong>,
             skipped:
             <strong>1</strong>,
@@ -848,7 +906,7 @@
         </div>
       </section>
 
-      <section class="section tab-panel" data-panel="benchmark" hidden>
+      <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
         <h2>OWASP SAMM v2 Benchmark</h2>
         <div class="finding-copy">
           Pipeline-derived estimate based on static CI/CD evidence. Organizational process evidence outside YAML may increase or decrease the real SAMM maturity.
@@ -960,8 +1018,8 @@
 
         <div class="benchmark-grid">
           
-            <article class="card">
-              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <article class="card benchmark-card">
+              <div class="benchmark-head">
                 <h3>Secure Build</h3>
                 <span class="badge pass">pass</span>
               </div>
@@ -977,7 +1035,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Repeatable build orchestration is visible</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -985,7 +1043,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Unit tests execute across supported build paths</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -993,7 +1051,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Coverage evidence is published for build outputs</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1001,7 +1059,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Stack-aware SAST is enforced in the build flow</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1009,7 +1067,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Artifact or image scanning is enforced on the build path</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1017,7 +1075,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Critical quality and security gates block progression</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1033,7 +1091,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-1-A · Is your full build process formally described?</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1043,12 +1101,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Build documentation freshness, accessibility, and build-tool hardening still require evidence outside CI/CD YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-1-B · Do you have solid knowledge about dependencies you're relying on?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1060,12 +1118,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Historical review cadence and CVE triage recency cannot be proven from the pipeline definition alone.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-1-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-2-A · Is the build process fully automated?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1077,12 +1135,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Tool hardening and least-privilege access for build secrets require platform or IAM evidence beyond YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-2-B · Do you handle 3rd party dependency risk by a formal process?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1094,12 +1152,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Approved dependency lists, legal review, and unmaintained-package governance are usually stored outside the pipeline.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-2-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-3-A · Do you enforce automated security checks in your build processes?</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1109,12 +1167,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Severity thresholds and yearly reassessment of tool configuration may require evidence from scanner policy systems.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SB-3-B · Do you prevent build of software if it's affected by vulnerabilities in dependencies?</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1124,19 +1182,19 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Responsible disclosure workflows and explicit risk acceptance usually live outside CI/CD YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SB-3-B.yml</a>
                     </div>
                   </div>
                 
               </div>
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Reference:</strong>
-                <a href="https://owaspsamm.org/model/implementation/secure-build/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/secure-build/</a>
+                <a class="benchmark-link" href="https://owaspsamm.org/model/implementation/secure-build/" target="_blank" rel="noreferrer">https://owaspsamm.org/model/implementation/secure-build/</a>
               </div>
             </article>
           
-            <article class="card">
-              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <article class="card benchmark-card">
+              <div class="benchmark-head">
                 <h3>Secure Deployment</h3>
                 <span class="badge warn">warn</span>
               </div>
@@ -1152,7 +1210,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Deployment jobs declare explicit environments</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1160,7 +1218,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>A test environment deployment is automated</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1168,7 +1226,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Deployment is gated by tests and security scans</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1176,7 +1234,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>External secret management is referenced in deployment automation</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1184,7 +1242,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Artifact integrity is verified before deployment</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1192,7 +1250,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>A production deployment path is visible</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1200,7 +1258,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Deployment hygiene remains policy-compliant</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1216,7 +1274,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-1-A · Do you use repeatable deployment processes?</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1226,12 +1284,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Personnel authorization models and deployment tool hardening require evidence beyond the pipeline file.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-1-B · Do you limit access to application secrets according to the least privilege principle?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1243,12 +1301,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Developer access to production secrets and environment separation must be validated in the secret platform or IAM layer.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-1-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-2-A · Are deployment processes automated and employing security checks?</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1258,12 +1316,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Alert routing and long-term deployment log retention usually require evidence from observability or ticketing systems.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-2-B · Do you inject production secrets into configuration files during deployment?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1275,12 +1333,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Human break-glass access patterns and abnormal secret-access alerting require secret-platform evidence.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-2-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-3-A · Do you consistently validate the integrity of deployed artifacts?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1292,12 +1350,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Rollback behavior and compensating controls for externally built software may need runtime or release-management evidence.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-SD-3-B · Do you practice proper lifecycle management for application secrets?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1309,19 +1367,19 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Rotation cadence, uniqueness per instance, and synchronization guarantees usually require secret-store policy evidence.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-SD-3-B.yml</a>
                     </div>
                   </div>
                 
               </div>
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Reference:</strong>
-                <a href="https://owaspsamm.org/model/implementation/secure-deployment/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/secure-deployment/</a>
+                <a class="benchmark-link" href="https://owaspsamm.org/model/implementation/secure-deployment/" target="_blank" rel="noreferrer">https://owaspsamm.org/model/implementation/secure-deployment/</a>
               </div>
             </article>
           
-            <article class="card">
-              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+            <article class="card benchmark-card">
+              <div class="benchmark-head">
                 <h3>Defect Management</h3>
                 <span class="badge pass">pass</span>
               </div>
@@ -1337,7 +1395,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Structured test reporting is published</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1345,7 +1403,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Machine-readable security defect reports are exported</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1353,7 +1411,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Tests and scans act as blocking defect gates</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1361,7 +1419,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Deployment is influenced by earlier defect signals</strong>
                       <span class="badge pass">pass</span>
                     </div>
@@ -1369,7 +1427,7 @@
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>Cross-component defect visibility is represented</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1385,7 +1443,7 @@
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-1-A · Do you track all known security defects in accessible locations?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1397,12 +1455,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Defect-system accessibility, duplicate handling, and false-positive workflows require evidence from tracking systems.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-1-B · Do you use basic metrics about recorded security defects to carry out quick win improvement activities?</strong>
                       <span class="badge warn">warn</span>
                     </div>
@@ -1414,12 +1472,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Time-based metric review and resulting improvement activities usually require issue-tracker or reporting evidence.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-1-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-2-A · Do you keep an overview of the state of security defects across the organization?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1431,12 +1489,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Organization-wide severity schemes, SLAs, and compliance reporting are normally managed outside individual pipeline definitions.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-2-B · Do you improve your security assurance program upon standardized metrics?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1448,12 +1506,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Management reporting and improvement planning are governance activities that cannot be proven from CI/CD YAML alone.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-2-B.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-3-A · Do you enforce SLAs for fixing security defects?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1465,12 +1523,12 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> SLA clocks, breach alerts, and risk-transfer workflows require data from defect management and risk systems.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-A.yml</a>
                     </div>
                   </div>
                 
                   <div class="list-item">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                    <div class="benchmark-subhead">
                       <strong>I-DM-3-B · Do you regularly evaluate the effectiveness of your security metrics so that the input helps drive your security strategy?</strong>
                       <span class="badge fail">fail</span>
                     </div>
@@ -1482,14 +1540,14 @@
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Strategy changes, metric validation, and cross-program aggregation require evidence outside the pipeline definition.</div>
                     <div class="finding-copy" style="margin-top:8px;">
                       <strong>Source:</strong>
-                      <a href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml</a>
+                      <a class="benchmark-link" href="https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml" target="_blank" rel="noreferrer">https://github.com/owaspsamm/core/blob/develop/model/questions/I-DM-3-B.yml</a>
                     </div>
                   </div>
                 
               </div>
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Reference:</strong>
-                <a href="https://owaspsamm.org/model/implementation/defect-management/" target="_blank" rel="noreferrer" style="color:#79c0ff;">https://owaspsamm.org/model/implementation/defect-management/</a>
+                <a class="benchmark-link" href="https://owaspsamm.org/model/implementation/defect-management/" target="_blank" rel="noreferrer">https://owaspsamm.org/model/implementation/defect-management/</a>
               </div>
             </article>
           

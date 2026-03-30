@@ -1,0 +1,17 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - security
+
+trivy_dependency:
+  stage: security
+  image: aquasec/trivy:0.52.2
+  script:
+    - bash ci/trivy.sh
+  artifacts:
+    paths:
+      - gl-dependency-scanning-report.json
+      - sbom.cyclonedx.json
+

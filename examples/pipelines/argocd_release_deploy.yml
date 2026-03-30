@@ -1,0 +1,11 @@
+stages:
+  - deploy
+
+deploy_test:
+  stage: deploy
+  image: argoproj/argocd:v2.11.3
+  environment:
+    name: test
+  script:
+    - bash scripts/argocd-sync.sh
+

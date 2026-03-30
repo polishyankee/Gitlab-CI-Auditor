@@ -1,0 +1,43 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - build
+  - security
+  - orchestrate
+
+build_and_test:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17
+  script:
+    - mvn -B clean verify
+  artifacts:
+    paths:
+      - target/site/jacoco/jacoco.xml
+
+sonarqube_scan:
+  stage: security
+  image: maven:3.9.6-eclipse-temurin-17
+  needs: ["build_and_test"]
+  script:
+    - mvn -B sonar:sonar -Dsonar.host.url=https://sonarqube.example.internal
+
+trivy_dependency:
+  stage: security
+  image: aquasec/trivy:0.52.2
+  needs: ["build_and_test"]
+  script:
+    - bash ci/trivy.sh
+  artifacts:
+    paths:
+      - gl-dependency-scanning-report.json
+      - sbom.cyclonedx.json
+
+deploy_via_argocd:
+  stage: orchestrate
+  trigger:
+    project: platform/argocd-deploy
+    file: deploy.gitlab-ci.yml
+    branch: main
+

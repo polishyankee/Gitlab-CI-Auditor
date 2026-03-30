@@ -31,9 +31,13 @@ module GitlabCiAuditor
       @snapshot_file = snapshot_file
       @snapshot_catalog = []
       @snapshot_manifest_path = nil
+      @workspace_root_dir = nil
+      @workspace_file_index = nil
     end
 
     def load(path)
+      @workspace_root_dir = File.dirname(File.expand_path(path))
+      @workspace_file_index = nil
       prepare_snapshot_catalog(path)
       load_internal(path, [])
     end
@@ -455,7 +459,37 @@ module GitlabCiAuditor
         search_dir = parent
       end
 
+      basename_match = unique_workspace_match_for(File.basename(candidate_value))
+      return basename_match if basename_match
+
+      flattened_match = unique_workspace_match_for(flattened_snapshot_filename(candidate_value))
+      return flattened_match if flattened_match
+
       nil
+    end
+
+    def unique_workspace_match_for(filename)
+      return nil if filename.to_s.strip.empty?
+
+      matches = workspace_file_index.fetch(filename.to_s, [])
+      return matches.first if matches.size == 1
+
+      nil
+    end
+
+    def workspace_file_index
+      @workspace_file_index ||= begin
+        base_dir = @workspace_root_dir || Dir.pwd
+        Dir.glob(File.join(base_dir, "**", "*"), File::FNM_DOTMATCH).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |path, index|
+          next unless File.file?(path)
+
+          index[File.basename(path)] << path
+        end
+      end
+    end
+
+    def flattened_snapshot_filename(path)
+      path.to_s.strip.tr("\\/", "_").gsub(/_+/, "_").sub(/\A_+/, "")
     end
 
     def normalize_include_entries(entries)

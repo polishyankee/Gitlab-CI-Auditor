@@ -47,15 +47,17 @@ Coverage reporting is tracked separately from plain test execution. The auditor 
 
 The SAST control recognizes both GitLab SAST templates and common stack-specific scanners. The current heuristics cover:
 
-- Java: `spotbugs`, `findsecbugs`, `sonar-scanner`, `semgrep`, `codeql`
+- Java: `spotbugs`, `findsecbugs`, `SonarQube` via `sonar-scanner` or `mvn sonar:sonar`, `semgrep`, `codeql`
 - .NET: `dotnet sonarscanner`, `SonarScanner.MSBuild.exe`, `Security Code Scan`, `semgrep`, `snyk code test`
-- Node / JS: `semgrep`, `njsscan`, `nodejsscan`, `sonar-scanner`, `snyk code test`
+- Node / JS: `semgrep`, `njsscan`, `nodejsscan`, `SonarQube` via `sonar-scanner`, `snyk code test`
 - Python: `bandit`, `semgrep`, `codeql`
 - Go: `gosec`, `semgrep`, `codeql`
 - Ruby: `brakeman`, `semgrep`, `codeql`
 - PHP: `psalm --taint-analysis`, `progpilot`, `semgrep`, `codeql`
 
 When SAST is missing, remediation guidance is adapted to the stacks detected from the pipeline definition.
+
+The auditor now also expands local shell scripts referenced by jobs. If a job only runs `bash ci/trivy.sh` or `bash scripts/sonar.sh`, the analyzer reads the local script file from the selected repository bundle and uses its contents as evidence for SAST, scanning, secret-management, integrity verification, and deployment heuristics.
 
 Bundled policy packs also define `stack_sast_requirements`, so a generic SAST job is no longer enough when the detected stack expects different tooling. For example:
 
@@ -88,6 +90,8 @@ Accepted container or image scan signals:
 - `anchore`
 
 The report metadata also lists which scanner families were detected so you can see what the auditor actually recognized.
+
+This matters for wrapper jobs such as `trivy_dependency` that delegate the actual scanning logic into `trivy.sh`. If the script is present in the analyzed repository or uploaded bundle, the auditor now inspects it instead of relying only on the job name.
 
 In the GUI and exported reports, the detected security tooling is broken out into:
 
@@ -199,6 +203,10 @@ For multi-file pipelines, ZIP is now the recommended format because it preserves
 
 When an uploaded bundle contains files that match `include:project` entries, the auditor now treats them as local snapshot includes. For example, if the root pipeline references `file: templates/templates_dependency-policy.yml` from another project and the uploaded ZIP contains `templates/templates_dependency-policy.yml`, that file is merged into the analysis graph.
 
+For root-file uploads with only a few support files, the analyzer can also fall back to a unique basename match. That means an uploaded support file named `templates_dependency-policy.yml` can still satisfy `file: templates/templates_dependency-policy.yml` as long as that basename is unique inside the selected bundle.
+
+The same principle applies to local shell scripts referenced by jobs. If the uploaded bundle contains `ci/trivy.sh` or `scripts/argocd-sync.sh`, the analyzer can use those files as evidence for scanner and deployment detection.
+
 For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
 
 If you use root-file upload plus additional support files, the GUI now shows editable bundle-relative paths for those support files. Set them to the repository-relative locations used by `include`, for example `.gitlab/ci/templates/build.yml`.
@@ -308,6 +316,26 @@ Use imported downstream snapshots:
 ```bash
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --snapshot-file .gitlab-ci-downstream-snapshots.json
 ```
+
+If deployment lives in a separate ArgoCD repository, provide that deployment pipeline through the snapshot manifest as well. A single application repository often cannot prove automated deployment on its own when the actual `argocd app sync` job runs elsewhere.
+
+For example, the root repository can trigger a deployment project:
+
+```json
+{
+  "snapshots": [
+    {
+      "kind": "external_project",
+      "project": "platform/argocd-deploy",
+      "file": "deploy.gitlab-ci.yml",
+      "ref": "main",
+      "snapshot": "argocd_release_deploy.yml"
+    }
+  ]
+}
+```
+
+That allows the auditor to evaluate the application build pipeline together with the external deployment flow and count deployment evidence from commands such as `argocd app sync` or `argocd app wait`.
 
 Or provide a custom JSON policy file:
 

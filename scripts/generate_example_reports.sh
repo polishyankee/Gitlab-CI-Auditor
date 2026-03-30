@@ -20,6 +20,9 @@ mkdir -p "$REPORT_DIR"
 "$BIN" scan "$PIPELINE_DIR/snapshot_root.gitlab-ci.yml" --policy-pack balanced --format html --output "$REPORT_DIR/snapshot_root.html"
 "$BIN" scan "$PIPELINE_DIR/snapshot_root.gitlab-ci.yml" --policy-pack balanced --format text --output "$REPORT_DIR/snapshot_root.txt"
 
+"$BIN" scan "$PIPELINE_DIR/argocd_release_root.gitlab-ci.yml" --policy-pack balanced --format html --output "$REPORT_DIR/argocd_release_root.html"
+"$BIN" scan "$PIPELINE_DIR/argocd_release_root.gitlab-ci.yml" --policy-pack balanced --format text --output "$REPORT_DIR/argocd_release_root.txt"
+
 "$BIN" scan "$PIPELINE_DIR/samm_question_rich.gitlab-ci.yml" --policy-pack balanced --format html --output "$REPORT_DIR/samm_question_rich.html"
 "$BIN" scan "$PIPELINE_DIR/samm_question_rich.gitlab-ci.yml" --policy-pack balanced --format text --output "$REPORT_DIR/samm_question_rich.txt"
 

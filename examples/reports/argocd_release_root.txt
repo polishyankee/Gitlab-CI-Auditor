@@ -1,0 +1,120 @@
+GitLab CI SSDLC Audit
+Pipeline: examples/pipelines/argocd_release_root.gitlab-ci.yml
+Score: 98/100 (A)
+Status: strong
+Policy Pack: Balanced Baseline (policy_pack)
+Scope: complete (pipeline_files=2, downstream_resolved=1, downstream_unresolved=0)
+
+Categories:
+  - Execution Path Coverage: 20/20 [pass] 8/8 active scenarios satisfy the selected SSDLC policy pack
+  - Unit Test Execution: 10/10 [pass] 8 pass, 0 warn, 0 missing
+  - Coverage Reporting: 5/5 [pass] 8 pass, 0 warn, 0 missing
+  - SAST: 15/15 [pass] 8 pass, 0 warn, 0 missing
+  - Artifact/Image Scanning: 15/15 [pass] 8 pass, 0 warn, 0 missing
+  - Automated Test Deployment: 15/15 [pass] 8 pass, 0 warn, 0 missing
+  - Security Policies: 10/10 [pass] No material policy violations detected
+  - Maintainability and Complexity: 8/10 [warn] 1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules
+
+OWASP SAMM v2:
+  observed Analysis Scope: Analysis scope: complete | Pipeline files analyzed: 2 | Active scenarios analyzed: 8 | Unique active jobs mapped into the benchmark: 5 | Resolved downstream pipelines: 1 | No unresolved downstream pipelines detected
+  observed Technology and Flow Signals: Detected stacks: Java | Stage model: build, security, orchestrate, deploy | At least one analyzed pipeline file has no workflow:rules | Declared environments: test
+  observed Controls and Gates: Unit test execution: 8 pass, 0 warn, 0 missing across 8 active scenarios | Coverage reporting: 8 pass, 0 warn, 0 missing across 8 active scenarios | SAST coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios | Artifact or image scanning: 8 pass, 0 warn, 0 missing across 8 active scenarios | Automated test deployment: 8 pass, 0 warn, 0 missing across 8 active scenarios | Critical quality and security jobs are blocking
+  observed Security Tooling: SAST families: SonarQube / sonar-scanner | Artifact scan families: GitLab Dependency Scanning, trivy fs | Image scan families: none detected | Secret-management signals: none detected | Integrity-verification signals: none detected
+  observed Reports and Feedback Loops: Report artifacts: coverage report, dependency scanning report | Security report artifacts: dependency scanning report | No policy findings reduced benchmark confidence on the analyzed YAML | Cross-component scope detected: 2 pipeline files analyzed together
+  observed Upstream Question Mapping: Mapped implementation questions: 18 | Question status counts: 6 pass, 5 warn, 2 fail, 9 review | Questions that require manual or process evidence: 4 | Some SAMM questions remain review-oriented because CI/CD YAML cannot prove organizational process maturity on its own
+  - Secure Build: level 3/3 [pass] alignment=90/100 confidence=high
+    rationale: Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.
+    rule [warn]: Repeatable build orchestration is visible - An explicit stage model exists, but at least one analyzed pipeline file still lacks workflow governance.
+    rule [pass]: Unit tests execute across supported build paths - 8 pass, 0 warn, 0 missing across active scenarios.
+    rule [pass]: Coverage evidence is published for build outputs - 8 pass, 0 warn, 0 missing across active scenarios.
+    rule [pass]: Stack-aware SAST is enforced in the build flow - 8 pass, 0 warn, 0 missing across active scenarios.
+    rule [pass]: Artifact or image scanning is enforced on the build path - 8 pass, 0 warn, 0 missing across active scenarios.
+    rule [pass]: Critical quality and security gates block progression - No `allow_failure` exception was detected on critical quality or security jobs.
+    questions: 3 pass, 3 warn, 0 fail, 0 review
+    question [warn] I-SB-1-A (partial): Is your full build process formally described?
+      detail: Build logic exists in CI/CD YAML, but explicit stages or workflow governance are incomplete.
+      recommendation: Keep the build as code in version control with explicit stages and `workflow:rules` for repeatability.
+    question [pass] I-SB-1-B (partial): Do you have solid knowledge about dependencies you're relying on?
+      detail: Dependency scanning reports and SBOM-style artifacts are published using GitLab Dependency Scanning, trivy fs.
+    question [warn] I-SB-2-A (partial): Is the build process fully automated?
+      detail: The build path appears automated, but no external secret-management signal was detected for build tooling.
+      recommendation: Use a managed secret source for build credentials and keep the build path fully non-interactive.
+    question [warn] I-SB-2-B (partial): Do you handle 3rd party dependency risk by a formal process?
+      detail: Dependency-risk checks are present via GitLab Dependency Scanning, trivy fs, but the pipeline does not show the fuller process expected for approvals, license, and package hygiene.
+      recommendation: Add enforced dependency scanning together with SBOM or license evidence and treat findings as a release gate.
+    question [pass] I-SB-3-A (direct): Do you enforce automated security checks in your build processes?
+      detail: Build security checks are automated and blocking across supported scenarios.
+    question [pass] I-SB-3-B (partial): Do you prevent build of software if it's affected by vulnerabilities in dependencies?
+      detail: Dependency scanning via GitLab Dependency Scanning, trivy fs is enforced without optional gate behavior on the build path.
+  - Secure Deployment: level 2/3 [warn] alignment=65/100 confidence=medium
+    rationale: Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.
+    rule [pass]: Deployment jobs declare explicit environments - Detected 1 explicit environment declaration(s).
+    rule [pass]: A test environment deployment is automated - 8 pass, 0 warn, 0 missing across active scenarios.
+    rule [pass]: Deployment is gated by tests and security scans - Unit tests, SAST, and artifact or image scanning all appear on the supported path before deployment.
+    rule [fail]: External secret management is referenced in deployment automation - No external secret-management signal was detected in deployment automation.
+    rule [fail]: Artifact integrity is verified before deployment - No signature or checksum verification was detected before deployment.
+    rule [warn]: A production deployment path is visible - No production deployment path was detected in the analyzed YAML.
+    rule [pass]: Deployment hygiene remains policy-compliant - No high-risk deployment hygiene violations were detected.
+    questions: 2 pass, 2 warn, 2 fail, 0 review
+    question [pass] I-SD-1-A (partial): Do you use repeatable deployment processes?
+      detail: Deployment is codified with explicit environments and no manual steps on the supported deployment path.
+    question [warn] I-SD-1-B (partial): Do you limit access to application secrets according to the least privilege principle?
+      detail: Deployment exists, but no managed secret-access signal was detected.
+      recommendation: Use an external secret manager so deployments do not rely on broad variable exposure.
+    question [pass] I-SD-2-A (partial): Are deployment processes automated and employing security checks?
+      detail: Deployment is automated and follows earlier quality and security checks on supported scenarios.
+    question [warn] I-SD-2-B (partial): Do you inject production secrets into configuration files during deployment?
+      detail: Deployment exists, but no dynamic production-secret injection signal was detected.
+      recommendation: Inject secrets during deployment from a managed secret source rather than embedding them in repository files or static variables.
+    question [fail] I-SD-3-A (partial): Do you consistently validate the integrity of deployed artifacts?
+      detail: No deployment-time integrity verification was detected.
+      recommendation: Verify signatures or checksums before deployment and fail or roll back on integrity mismatches.
+    question [fail] I-SD-3-B (partial): Do you practice proper lifecycle management for application secrets?
+      detail: No managed secret-lifecycle signal was detected for deployment automation.
+      recommendation: Adopt a managed secret platform with rotation and instance-specific secret handling.
+  - Defect Management: level 3/3 [pass] alignment=100/100 confidence=medium
+    rationale: Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.
+    rule [pass]: Structured test reporting is published - Detected structured test or coverage report artifacts in the analyzed jobs.
+    rule [pass]: Machine-readable security defect reports are exported - Detected dependency scanning report artifacts.
+    rule [pass]: Tests and scans act as blocking defect gates - Unit test, SAST, and scan coverage is able to influence the flow without `allow_failure` on critical jobs.
+    rule [pass]: Deployment is influenced by earlier defect signals - Deployment follows earlier quality and security controls on the analyzed path.
+    rule [pass]: Cross-component defect visibility is represented - Multiple pipeline components are analyzed together, so cross-component feedback is visible.
+    questions: 1 pass, 0 warn, 0 fail, 9 review
+    question [pass] I-DM-1-A (partial): Do you track all known security defects in accessible locations?
+      detail: Machine-readable security reports and structured test or coverage reporting are exported from the pipeline.
+    question [review] I-DM-1-B (partial): Do you use basic metrics about recorded security defects to carry out quick win improvement activities?
+      detail: The pipeline exports structured defect data that could feed quick-win metrics, but the review and improvement loop must be confirmed outside CI/CD.
+      recommendation: Verify that exported findings are aggregated and used for recurring improvement actions.
+    question [review] I-DM-2-A (review): Do you keep an overview of the state of security defects across the organization?
+      detail: Cross-component pipeline evidence exists, but organization-wide severity schemes, SLAs, and roll-up dashboards require external defect-management systems.
+      recommendation: Review whether defect data from multiple pipelines is normalized into a central view with shared severities and SLAs.
+    question [review] I-DM-2-B (review): Do you improve your security assurance program upon standardized metrics?
+      detail: Standardizable defect data exists, but management reporting and program improvements cannot be proven from YAML alone.
+      recommendation: Verify that exported metrics are standardized and regularly reviewed by both engineering and leadership.
+    question [review] I-DM-3-A (review): Do you enforce SLAs for fixing security defects?
+      detail: Blocking security signals exist, but SLA tracking, breach alerts, and risk transfers require external defect-management workflow evidence.
+      recommendation: Review ticketing and risk-management integrations to confirm SLA enforcement for security findings.
+    question [review] I-DM-3-B (review): Do you regularly evaluate the effectiveness of your security metrics so that the input helps drive your security strategy?
+      detail: The pipeline emits metric-ready data, but metric validation and strategy impact must be verified in reporting and governance systems.
+      recommendation: Review whether exported metrics are checked for accuracy and used to drive security strategy.
+
+Scenario Results:
+  - push -> main: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> master: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> develop: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> feature/audit-coverage: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> release/1.0.0: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> hotfix/urgent-fix: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - push -> test: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - merge_request_event feature/merge-request -> main: pass [unit_tests=pass, coverage_report=pass, sast=pass, scan=pass, deploy_test=pass]
+  - tag v1.0.0: skipped (workflow rules prevented pipeline creation)
+
+SSDLC Findings:
+  - [low] Some scenarios are blocked by workflow rules
+    issue: 1 scenarios do not create a pipeline because of `workflow:rules` or inherited control rules.
+    recommendation: Verify whether this behavior is intentional and whether it hides SSDLC blind spots.
+    how_to_fix: If a branch or source should be supported, add explicit `workflow:rules` and matching quality or security job rules.
+
+Recommendations:
+  - Add workflow:rules to control centrally when a pipeline should exist
+  - Review scenarios blocked by workflow rules if they should remain business-supported paths

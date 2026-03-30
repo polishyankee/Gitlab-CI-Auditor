@@ -6,6 +6,13 @@
       "file": "child.gitlab-ci.yml",
       "ref": "main",
       "snapshot": "snapshot_external_child.yml"
+    },
+    {
+      "kind": "external_project",
+      "project": "platform/argocd-deploy",
+      "file": "deploy.gitlab-ci.yml",
+      "ref": "main",
+      "snapshot": "argocd_release_deploy.yml"
     }
   ]
 }

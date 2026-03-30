@@ -152,6 +152,34 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_analyze_request_supports_root_upload_with_flattened_project_include_snapshot_name
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_file" => UploadStub.new(".gitlab-ci.yml", root_pipeline_with_project_include_snapshot),
+          "pipeline_support_files" => [
+            UploadStub.new("templates_dependency-policy.yml", dependency_policy_template_snapshot)
+          ],
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal 1, report[:metadata][:resolved_local_includes].size
+    assert report[:metadata][:resolved_local_includes].first.end_with?("templates_dependency-policy.yml")
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_rewrites_incomplete_upload_bundle_errors
     GitlabCiAuditor.require_server!
 

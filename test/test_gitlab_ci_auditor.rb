@@ -74,6 +74,37 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_includes sast_jobs, "node_source_review"
   end
 
+  def test_sonarqube_commands_are_recognized_as_sast
+    pipeline = @loader.load(fixture("sonarqube_job.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    sast = report[:categories].find { |category| category[:key] == "sast" }
+    scenario = report[:scenarios].find { |item| item[:status] != "skipped" }
+    sonarqube_job = scenario[:jobs].find { |job| job[:name] == "sonarqube_scan" }
+
+    assert_equal "pass", sast[:status]
+    refute_nil sonarqube_job
+    assert_includes sonarqube_job[:classifications], "sast"
+    assert_includes sonarqube_job[:sast_tools], "sonar_scanner"
+    assert_includes report.dig(:metadata, :detected_security_tools, :sast), "SonarQube / sonar-scanner"
+  end
+
+  def test_local_shell_script_content_is_used_for_trivy_scan_detection
+    pipeline = @loader.load(fixture("script_backed_trivy.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    scan = report[:categories].find { |category| category[:key] == "scan" }
+    scenario = report[:scenarios].find { |item| item[:status] != "skipped" }
+    trivy_job = scenario[:jobs].find { |job| job[:name] == "trivy_dependency" }
+
+    assert_equal "pass", scan[:status]
+    refute_nil trivy_job
+    assert_includes trivy_job[:classifications], "artifact_scan"
+    assert_includes trivy_job[:artifact_scan_tools], "trivy_fs"
+    assert_includes trivy_job[:script_evidence_files].join(" "), "test/fixtures/ci/trivy.sh"
+    assert_includes report.dig(:metadata, :detected_security_tools, :artifact_scan), "trivy fs"
+  end
+
   def test_sast_guidance_is_adapted_to_detected_dotnet_and_node_stacks
     pipeline = @loader.load(fixture("polyglot_without_sast.yml"))
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
@@ -206,6 +237,23 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_equal "complete", report[:summary][:analysis_scope]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "unit_tests" }[:status]
     assert_equal "pass", report[:categories].find { |category| category[:key] == "coverage_report" }[:status]
+  end
+
+  def test_argocd_deployment_repo_can_satisfy_test_deploy_control_via_snapshot
+    loader = GitlabCiAuditor::PipelineLoader.new(snapshot_file: fixture("argocd_external_snapshots.json"))
+    pipeline = loader.load(fixture("argocd_root.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    deploy_test = report[:categories].find { |category| category[:key] == "deploy_test" }
+    scenario = report[:scenarios].find { |item| item[:status] != "skipped" }
+    deploy_job = scenario[:jobs].find { |job| job[:name] == "deploy_test" }
+
+    assert_equal "pass", deploy_test[:status]
+    refute_nil deploy_job
+    assert_includes deploy_job[:classifications], "deploy_test"
+    assert_includes deploy_job[:script_evidence_files].join(" "), "test/fixtures/scripts/argocd-sync.sh"
+    assert_equal 2, report[:summary][:total_pipeline_files]
+    assert_equal "complete", report[:summary][:analysis_scope]
   end
 
   def test_library_policy_pack_can_disable_test_deploy_requirement
