@@ -58,6 +58,22 @@ container_scan:
     paths:
       - gl-container-scanning-report.json
 
+secret_detection:
+  stage: security
+  script:
+    - gitleaks detect --no-git --exit-code 1 --report-format json --report-path gl-secret-detection-report.json .
+  artifacts:
+    paths:
+      - gl-secret-detection-report.json
+
+iac_policy:
+  stage: security
+  script:
+    - checkov -d k8s --framework kubernetes --output json > checkov-report.json
+  artifacts:
+    paths:
+      - checkov-report.json
+
 deploy_test:
   stage: deploy
   environment:
@@ -68,10 +84,24 @@ deploy_test:
     - dependency_scan
     - license_scan
     - container_scan
+    - secret_detection
+    - iac_policy
   script:
     - vault kv get -field=config secret/app/test > config.yaml
     - cosign verify --key cosign.pub registry.example.com/app:$CI_COMMIT_SHA
     - kubectl apply -f k8s/test.yaml
+
+dast:
+  stage: deploy
+  environment:
+    name: test
+  needs:
+    - deploy_test
+  script:
+    - zap-baseline.py -t https://test.example.internal -J gl-dast-report.json
+  artifacts:
+    paths:
+      - gl-dast-report.json
 
 deploy_prod:
   stage: deploy

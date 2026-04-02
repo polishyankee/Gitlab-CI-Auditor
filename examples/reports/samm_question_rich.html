@@ -632,6 +632,13 @@
         stroke-dasharray: 6 5;
       }
 
+      .edge-context {
+        stroke: rgba(88, 166, 255, 0.72);
+        stroke-width: 2;
+        fill: none;
+        stroke-dasharray: 2 8;
+      }
+
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.93em;
@@ -696,7 +703,7 @@
           </span>
           <h1>SSDLC report for <code>samm_question_rich.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-03-30T16:08:47Z. Active scenarios:
+            Analysis generated 2026-04-01T19:15:20Z. Active scenarios:
             <strong>8</strong>,
             skipped:
             <strong>1</strong>,
@@ -720,7 +727,7 @@
           <div class="stat-grid">
             <article class="card">
               <span class="muted">Jobs</span>
-              <strong>7</strong>
+              <strong>10</strong>
               <div class="muted">Across all discovered pipeline files</div>
             </article>
             <article class="card">
@@ -748,7 +755,7 @@
 
         <aside class="score">
           <span class="muted">Overall Score</span>
-          <strong>100/100</strong>
+          <strong>120/120</strong>
           <div class="badge pass" style="margin-top: 14px; width: fit-content;">
             Grade A
           </div>
@@ -762,6 +769,7 @@
 
       <div class="tabbar" role="tablist" aria-label="Report views">
         <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="trends">Trends</button>
         <button class="tab-btn" data-tab="benchmark">OWASP SAMM</button>
         <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
         <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
@@ -781,7 +789,7 @@
               <div class="meter">
                 <span style="width: 100%"></span>
               </div>
-              <strong>20/20</strong>
+              <strong>15/15</strong>
               <div class="muted">8/8 active scenarios satisfy the selected SSDLC policy pack</div>
             </article>
           
@@ -817,7 +825,7 @@
               <div class="meter">
                 <span style="width: 100%"></span>
               </div>
-              <strong>15/15</strong>
+              <strong>12/12</strong>
               <div class="muted">8 pass, 0 warn, 0 missing</div>
             </article>
           
@@ -829,7 +837,55 @@
               <div class="meter">
                 <span style="width: 100%"></span>
               </div>
-              <strong>15/15</strong>
+              <strong>12/12</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>SBOM Evidence</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>8/8</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Secret Detection</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>IaC Policy Scanning</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>8/8</strong>
+              <div class="muted">8 pass, 0 warn, 0 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>DAST</h3>
+                <span class="badge pass">pass</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>10/10</strong>
               <div class="muted">8 pass, 0 warn, 0 missing</div>
             </article>
           
@@ -841,7 +897,7 @@
               <div class="meter">
                 <span style="width: 100%"></span>
               </div>
-              <strong>15/15</strong>
+              <strong>10/10</strong>
               <div class="muted">8 pass, 0 warn, 0 missing</div>
             </article>
           
@@ -877,6 +933,8 @@
             
               <div class="job-pills" style="margin-top:12px;">
                 
+                  <span class="mini-pill">If build, deploy, or security evidence lives in multiple repositories, provide a context manifest so the graph can join them into one audit scope</span>
+                
                   <span class="mini-pill">Review scenarios blocked by workflow rules if they should remain business-supported paths</span>
                 
               </div>
@@ -898,12 +956,41 @@
                 
                   <span class="mini-pill">Coverage artifacts are published for supported scenarios</span>
                 
+                  <span class="mini-pill">SBOM artifacts are produced for supported build outputs</span>
+                
+                  <span class="mini-pill">Secret-detection tooling is present on supported paths</span>
+                
+                  <span class="mini-pill">IaC or policy scans protect deployment configuration</span>
+                
+                  <span class="mini-pill">DAST is exercised against a deployable environment</span>
+                
                   <span class="mini-pill">Pipeline complexity remains under control</span>
                 
               </div>
             
           </div>
+
+          <div class="list-item">
+            <strong>Analysis Context</strong>
+            <div class="finding-copy"><strong>Detected stacks:</strong> Java</div>
+            <div class="finding-copy"><strong>Template includes:</strong> none detected</div>
+            
+            
+            
+          </div>
         </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="trends" hidden>
+        <h2>Historical Trend Dashboard</h2>
+        
+        
+          <div class="list">
+            <div class="list-item">
+              Historical trends are disabled for this report. Start the scan with a history store file to persist results and render score drift over time.
+            </div>
+          </div>
+        
       </section>
 
       <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
@@ -924,11 +1011,13 @@
                 
                   <span class="mini-pill">Active scenarios analyzed: 8</span>
                 
-                  <span class="mini-pill">Unique active jobs mapped into the benchmark: 7</span>
+                  <span class="mini-pill">Unique active jobs mapped into the benchmark: 10</span>
                 
                   <span class="mini-pill">Resolved downstream pipelines: 0</span>
                 
                   <span class="mini-pill">No unresolved downstream pipelines detected</span>
+                
+                  <span class="mini-pill">No explicit multi-project context manifest was supplied</span>
                 
               </div>
             </div>
@@ -960,6 +1049,14 @@
                 
                   <span class="mini-pill">Artifact or image scanning: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
                 
+                  <span class="mini-pill">SBOM coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">Secret-detection coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">IaC policy coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
+                  <span class="mini-pill">DAST coverage: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
+                
                   <span class="mini-pill">Automated test deployment: 8 pass, 0 warn, 0 missing across 8 active scenarios</span>
                 
                   <span class="mini-pill">Critical quality and security jobs are blocking</span>
@@ -977,6 +1074,14 @@
                 
                   <span class="mini-pill">Image scan families: GitLab Container Scanning, trivy image</span>
                 
+                  <span class="mini-pill">SBOM families: CycloneDX CLI</span>
+                
+                  <span class="mini-pill">Secret-detection families: GitLab Secret Detection, gitleaks</span>
+                
+                  <span class="mini-pill">IaC families: checkov</span>
+                
+                  <span class="mini-pill">DAST families: GitLab DAST, OWASP ZAP</span>
+                
                   <span class="mini-pill">Secret-management signals: HashiCorp Vault</span>
                 
                   <span class="mini-pill">Integrity-verification signals: cosign verify</span>
@@ -988,7 +1093,7 @@
               <strong>Reports and Feedback Loops</strong>
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">Report artifacts: junit, coverage report, dependency scanning report, sast report, container scanning report</span>
+                  <span class="mini-pill">Report artifacts: junit, coverage report, dependency scanning report, sbom report, sast report, container scanning report, secret detection report, iac report, dast report</span>
                 
                   <span class="mini-pill">Security report artifacts: dependency scanning report, sast report, container scanning report</span>
                 
@@ -1029,7 +1134,7 @@
               <strong>Level 3/3</strong>
               <div class="muted">Alignment 100/100 · Confidence high</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Unit tests are part of active build paths | Coverage evidence is published | SAST is embedded into the build path | Dependency or image scanning is embedded into the build path | Quality and security gates are blocking | workflow:rules governs pipeline creation</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Unit tests are part of active build paths | Coverage evidence is published | SAST is embedded into the build path | Dependency or image scanning is embedded into the build path | SBOM evidence is attached to build outputs | Quality and security gates are blocking | workflow:rules governs pipeline creation</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No significant gaps detected from the pipeline definition</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
@@ -1069,6 +1174,14 @@
                   <div class="list-item">
                     <div class="benchmark-subhead">
                       <strong>Artifact or image scanning is enforced on the build path</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>SBOM evidence accompanies supported build outputs</strong>
                       <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
@@ -1200,7 +1313,7 @@
               <strong>Level 3/3</strong>
               <div class="muted">Alignment 100/100 · Confidence medium</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment jobs declare explicit environments | Test deployment is automated on the happy path | Deployment runs after quality and security gates | External secret management is referenced in deployment automation | Artifact integrity verification is present before deployment | A production deployment path is defined | No deployment hygiene policy violations were detected</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment jobs declare explicit environments | Test deployment is automated on the happy path | Deployment runs after quality and security gates | External secret management is referenced in deployment automation | Artifact integrity verification is present before deployment | Infrastructure or deployment manifests are policy-scanned | DAST validates the deployed surface | A production deployment path is defined | No deployment hygiene policy violations were detected</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No significant gaps detected from the pipeline definition</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
@@ -1243,6 +1356,22 @@
                       <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;">Detected cosign verify before deployment.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>Infrastructure or deployment policy is validated as code</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>DAST validates the deployed attack surface</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">8 pass, 0 warn, 0 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1397,7 +1526,7 @@
                       <strong>Machine-readable security defect reports are exported</strong>
                       <span class="badge pass">pass</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">Detected dependency scanning report, sast report, container scanning report artifacts.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Detected dependency scanning report, sast report, container scanning report, secret detection report, iac report, dast report artifacts.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1554,6 +1683,7 @@
           <span class="mini-pill">yellow: mixed</span>
           <span class="mini-pill">red: weak spot</span>
           <span class="mini-pill">violet: trigger/downstream</span>
+          <span class="mini-pill">blue dashed: multi-project context link</span>
         </div>
 
         <div class="graph-shell">
@@ -1636,10 +1766,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -1659,7 +1821,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                     <span class="job-pill">deploy_prod / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
@@ -1711,10 +1879,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -1734,7 +1934,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1784,10 +1990,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -1807,7 +2045,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1857,10 +2101,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -1880,7 +2156,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1930,10 +2212,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -1953,7 +2267,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2003,10 +2323,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -2026,7 +2378,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2076,10 +2434,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -2099,7 +2489,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2149,10 +2545,42 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">secret_detection (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">iac_policy (security)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">dast (deploy)</p>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy)</p>
+                        <p class="muted" style="margin:10px 0 0;">deploy_test (deploy), dast (deploy)</p>
                       
                     </div>
                   
@@ -2172,7 +2600,13 @@
                   
                     <span class="job-pill">container_scan / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
+                    <span class="job-pill">secret_detection / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">iac_policy / security / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
                     <span class="job-pill">deploy_test / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
+                  
+                    <span class="job-pill">dast / deploy / examples/pipelines/samm_question_rich.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2211,7 +2645,7 @@
       </section>
     </main>
 
-    <script id="graph-data" type="application/json">{"stages":["build","security","deploy"],"pipelines":[{"label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","label":"build_app","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: build/libs/app.jar, build/libs/app.jar.sha256, build/libs/app.jar.sig, build/reports/bom.cyclonedx.json","Reports: junit, coverage report, dependency scanning report","Script lines: 3"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","label":"container_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["image_scan"],"strengths":["Scans container images","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-container-scanning-report.json","Reports: container scanning report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","label":"dependency_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan"],"strengths":["Scans artifacts or dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dependency-scanning-report.json","Reports: dependency scanning report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","label":"license_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan"],"strengths":["Scans artifacts or dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-license-scanning-report.json","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","label":"semgrep_sast","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-sast-report.json","Reports: sast report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","label":"deploy_prod","stage":"deploy","stage_index":2,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_prod"],"strengths":["Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":["Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":"production","needs":["build_app","semgrep_sast","dependency_scan","license_scan","container_scan"],"has_trigger":false,"unresolved_downstream":false,"notes":["Secret management: HashiCorp Vault","Integrity checks: cosign verify","Environment: production","Script lines: 3"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":2,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_test"],"strengths":["Deploys automatically to a test environment","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":"test","needs":["build_app","semgrep_sast","dependency_scan","license_scan","container_scan"],"has_trigger":false,"unresolved_downstream":false,"notes":["Secret management: HashiCorp Vault","Integrity checks: cosign verify","Environment: test","Script lines: 3"]}],"edges":[{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"}]}</script>
+    <script id="graph-data" type="application/json">{"stages":["build","security","deploy"],"pipelines":[{"label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","label":"build_app","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report","sbom"],"strengths":["Runs unit tests","Publishes coverage evidence","Publishes SBOM evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: build/libs/app.jar, build/libs/app.jar.sha256, build/libs/app.jar.sig, build/reports/bom.cyclonedx.json","Reports: junit, coverage report, dependency scanning report, sbom report","Script lines: 3"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","label":"container_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["image_scan"],"strengths":["Scans container images","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-container-scanning-report.json","Reports: container scanning report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","label":"dependency_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan"],"strengths":["Scans artifacts or dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dependency-scanning-report.json","Reports: dependency scanning report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::iac_policy","label":"iac_policy","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["iac"],"strengths":["Validates IaC or deployment policy","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: checkov-report.json","Reports: iac report","IaC policy checks: checkov","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","label":"license_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan"],"strengths":["Scans artifacts or dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-license-scanning-report.json","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::secret_detection","label":"secret_detection","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["secret_detection"],"strengths":["Scans repository content for secrets","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-secret-detection-report.json","Reports: secret detection report","Secret detection: GitLab Secret Detection, gitleaks","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","label":"semgrep_sast","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-sast-report.json","Reports: sast report","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dast","label":"dast","stage":"deploy","stage_index":2,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["dast","deploy_test"],"strengths":["Runs DAST against a deployed surface","Deploys automatically to a test environment","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":"test","needs":["deploy_test"],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dast-report.json","Reports: dast report","DAST tooling: GitLab DAST, OWASP ZAP","Environment: test","Script lines: 1"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","label":"deploy_prod","stage":"deploy","stage_index":2,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_prod"],"strengths":["Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":["Does not contribute a direct SSDLC control"],"variant":"mixed","when":"on_success","manual":false,"allow_failure":false,"environment":"production","needs":["build_app","semgrep_sast","dependency_scan","license_scan","container_scan"],"has_trigger":false,"unresolved_downstream":false,"notes":["Secret management: HashiCorp Vault","Integrity checks: cosign verify","Environment: production","Script lines: 3"]},{"id":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":2,"pipeline_label":"examples/pipelines/samm_question_rich.gitlab-ci.yml","pipeline_short_label":".../pipelines/samm_question_rich.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_test"],"strengths":["Deploys automatically to a test environment","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":"test","needs":["build_app","semgrep_sast","dependency_scan","license_scan","container_scan","secret_detection","iac_policy"],"has_trigger":false,"unresolved_downstream":false,"notes":["Secret management: HashiCorp Vault","Integrity checks: cosign verify","Environment: test","Script lines: 3"]}],"edges":[{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::secret_detection","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::iac_policy","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_test","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dast","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::build_app","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::semgrep_sast","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::dependency_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::license_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"},{"from":"examples/pipelines/samm_question_rich.gitlab-ci.yml::container_scan","to":"examples/pipelines/samm_question_rich.gitlab-ci.yml::deploy_prod","type":"needs"}]}</script>
     <script>
       (function () {
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
@@ -2417,7 +2851,13 @@
             var curve = Math.max(50, Math.abs(endX - startX) * 0.35);
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", "M " + startX + " " + startY + " C " + (startX + curve) + " " + startY + ", " + (endX - curve) + " " + endY + ", " + endX + " " + endY);
-            path.setAttribute("class", edge.type === "trigger" ? "edge-trigger" : "edge-needs");
+            var edgeClass = "edge-needs";
+            if (edge.type === "trigger") {
+              edgeClass = "edge-trigger";
+            } else if (edge.type === "context") {
+              edgeClass = "edge-context";
+            }
+            path.setAttribute("class", edgeClass);
             svg.appendChild(path);
           });
         }

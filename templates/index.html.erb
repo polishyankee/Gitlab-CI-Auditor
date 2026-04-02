@@ -6,19 +6,22 @@
     <title>GitLab CI SSDLC Auditor</title>
     <style>
       :root {
-        --bg: #0d1117;
-        --bg-accent: #010409;
-        --panel: #161b22;
-        --panel-soft: #0f1720;
-        --border: #30363d;
-        --border-strong: #3d444d;
-        --ink: #c9d1d9;
-        --muted: #8b949e;
-        --green: #2ea043;
-        --blue: #58a6ff;
+        --bg: #0e1016;
+        --bg-accent: #05070d;
+        --panel: #151821;
+        --panel-soft: #10131b;
+        --border: #2f3442;
+        --border-strong: #444d60;
+        --ink: #dce3ea;
+        --muted: #99a4b3;
+        --orange: #fc6d26;
+        --orange-strong: #e24329;
+        --orange-soft: rgba(252, 109, 38, 0.16);
+        --orange-soft-strong: rgba(252, 109, 38, 0.28);
+        --amber: #fca326;
         --red: #f85149;
-        --yellow: #d29922;
-        --shadow: 0 28px 80px rgba(1, 4, 9, 0.55);
+        --yellow: #d7a33e;
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
       }
 
       * {
@@ -30,9 +33,9 @@
         min-height: 100vh;
         color: var(--ink);
         background:
-          radial-gradient(circle at top left, rgba(88, 166, 255, 0.14), transparent 26%),
-          radial-gradient(circle at top right, rgba(248, 81, 73, 0.12), transparent 24%),
-          linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(13, 17, 23, 1)),
+          radial-gradient(circle at top left, rgba(252, 109, 38, 0.18), transparent 24%),
+          radial-gradient(circle at top right, rgba(226, 67, 41, 0.16), transparent 28%),
+          linear-gradient(180deg, rgba(21, 24, 33, 0.94), rgba(14, 16, 22, 1)),
           var(--bg);
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -42,16 +45,16 @@
         top: 0;
         z-index: 10;
         backdrop-filter: blur(18px);
-        background: rgba(13, 17, 23, 0.84);
-        border-bottom: 1px solid rgba(48, 54, 61, 0.8);
+        background: rgba(14, 16, 22, 0.88);
+        border-bottom: 1px solid rgba(68, 77, 96, 0.5);
       }
 
       .topbar-inner,
       main {
-        max-width: 1220px;
+        max-width: 1260px;
         margin: 0 auto;
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-left: 24px;
+        padding-right: 24px;
       }
 
       .topbar-inner {
@@ -65,13 +68,29 @@
       .repo-mark {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         font-weight: 700;
       }
 
+      .repo-logo {
+        width: 38px;
+        height: 38px;
+        flex: none;
+      }
+
+      .repo-mark-copy {
+        display: grid;
+        gap: 2px;
+      }
+
+      .repo-mark-title {
+        color: #f8fafc;
+        font-size: 0.98rem;
+      }
+
       .repo-mark code {
-        color: var(--blue);
-        font-size: 0.95rem;
+        color: #ffb088;
+        font-size: 0.82rem;
       }
 
       .pill {
@@ -80,67 +99,95 @@
         gap: 8px;
         padding: 7px 12px;
         border-radius: 999px;
-        border: 1px solid var(--border);
-        background: rgba(110, 118, 129, 0.08);
-        color: var(--muted);
+        border: 1px solid var(--orange-soft-strong);
+        background: var(--orange-soft);
+        color: #ffd7bf;
         font-size: 0.82rem;
       }
 
       main {
-        padding-top: 38px;
-        padding-bottom: 72px;
+        padding-top: 34px;
+        padding-bottom: 88px;
+        display: grid;
+        gap: 24px;
       }
 
       .hero {
         display: grid;
         gap: 24px;
-        grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.9fr);
-        align-items: stretch;
       }
 
       .panel {
         background:
-          linear-gradient(180deg, rgba(22, 27, 34, 0.94), rgba(13, 17, 23, 0.98));
+          linear-gradient(180deg, rgba(21, 24, 33, 0.96), rgba(9, 11, 16, 0.98));
         border: 1px solid var(--border);
-        border-radius: 20px;
+        border-radius: 28px;
         box-shadow: var(--shadow);
       }
 
       .hero-copy {
-        padding: 28px;
+        padding: 36px;
+      }
+
+      .hero-brand {
+        display: grid;
+        gap: 22px;
+      }
+
+      .hero-mark {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .hero-logo {
+        width: 104px;
+        height: 104px;
+        flex: none;
+        filter: drop-shadow(0 14px 26px rgba(252, 109, 38, 0.2));
+      }
+
+      .hero-copy h1,
+      .section-head h2 {
+        color: #f8fafc;
       }
 
       .hero-copy h1 {
         margin: 0 0 14px;
-        font-size: clamp(2.8rem, 5vw, 4.8rem);
-        line-height: 0.92;
+        font-size: clamp(3rem, 5vw, 5rem);
+        line-height: 0.9;
         letter-spacing: -0.04em;
       }
 
       .hero-copy p {
         margin: 0;
-        max-width: 62ch;
+        max-width: 76ch;
         color: var(--muted);
-        font-size: 1.02rem;
-        line-height: 1.7;
+        font-size: 1.05rem;
+        line-height: 1.8;
       }
 
       .hero-grid {
-        margin-top: 22px;
+        margin-top: 28px;
         display: grid;
-        gap: 14px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
       .hero-card,
       .meta-card {
         border: 1px solid var(--border);
-        border-radius: 16px;
-        background: rgba(110, 118, 129, 0.07);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.07), rgba(255, 255, 255, 0.02));
       }
 
       .hero-card {
-        padding: 16px;
+        padding: 18px;
+      }
+
+      .hero-card strong {
+        color: #fff3eb;
       }
 
       .hero-card strong,
@@ -159,63 +206,60 @@
       }
 
       .workspace {
-        padding: 24px;
+        padding: 32px;
         display: grid;
-        gap: 18px;
+        gap: 22px;
       }
 
       .workspace-head {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: flex-start;
+        display: grid;
+        gap: 12px;
       }
 
       .workspace-head h2 {
         margin: 0 0 8px;
-        font-size: 1.28rem;
+        font-size: 1.45rem;
       }
 
       .workspace-head p {
         margin: 0;
         color: var(--muted);
-        line-height: 1.6;
+        line-height: 1.7;
       }
 
-      .brand-stack {
-        display: flex;
-        gap: 12px;
-        align-items: stretch;
-        flex-wrap: wrap;
-      }
-
-      .brand-card {
-        min-width: 132px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        border: 1px solid var(--border);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+      .section-panel {
+        padding: 30px 32px;
         display: grid;
-        gap: 10px;
-        justify-items: start;
+        gap: 22px;
       }
 
-      .brand-card span {
+      .section-head {
+        display: grid;
+        gap: 8px;
+      }
+
+      .section-kicker {
         color: var(--muted);
         font-size: 0.8rem;
         letter-spacing: 0.04em;
         text-transform: uppercase;
       }
 
-      .brand-logo {
-        width: 34px;
-        height: 34px;
-        display: block;
+      .section-head h2 {
+        margin: 0;
+        font-size: 1.7rem;
+      }
+
+      .section-head p {
+        margin: 0;
+        max-width: 78ch;
+        color: var(--muted);
+        line-height: 1.75;
       }
 
       form {
         display: grid;
-        gap: 16px;
+        gap: 18px;
       }
 
       .field-block {
@@ -232,14 +276,30 @@
 
       input[type="text"],
       input[type="file"],
+      textarea,
       select {
         width: 100%;
         border: 1px solid var(--border-strong);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 13px 14px;
-        background: #0d1117;
+        background: #0a0d14;
         color: var(--ink);
         font: inherit;
+      }
+
+      input[type="text"]:focus,
+      input[type="file"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(252, 109, 38, 0.16);
+      }
+
+      textarea {
+        min-height: 280px;
+        resize: vertical;
+        line-height: 1.55;
       }
 
       .field-note {
@@ -256,6 +316,31 @@
         border: 1px solid rgba(48, 54, 61, 0.9);
         border-radius: 12px;
         background: rgba(1, 4, 9, 0.35);
+      }
+
+      .paste-support-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .paste-support-card {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid rgba(48, 54, 61, 0.9);
+        border-radius: 14px;
+        background: rgba(1, 4, 9, 0.35);
+      }
+
+      .paste-support-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .paste-support-head strong {
+        color: #f0f6fc;
       }
 
       .generated-path-item {
@@ -275,7 +360,7 @@
         border: 1px solid var(--border-strong);
         border-radius: 10px;
         padding: 8px 12px;
-        background: #21262d;
+        background: #1d232e;
         color: var(--ink);
         cursor: pointer;
       }
@@ -287,24 +372,33 @@
       }
 
       button {
-        border: 1px solid rgba(63, 185, 80, 0.4);
+        border: 1px solid rgba(252, 109, 38, 0.45);
         border-radius: 12px;
         padding: 12px 18px;
-        background: linear-gradient(180deg, #2ea043, #238636);
+        background: linear-gradient(180deg, var(--orange), var(--orange-strong));
         color: white;
         font: inherit;
         font-weight: 700;
         cursor: pointer;
       }
 
+      .mini-button {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 12px;
+        background: rgba(110, 118, 129, 0.08);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+
       .ghost {
         border-color: var(--border-strong);
-        background: #21262d;
+        background: #1d232e;
         color: var(--ink);
       }
 
-      .meta {
-        margin-top: 24px;
+      .card-grid {
         display: grid;
         gap: 16px;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -317,7 +411,7 @@
       .meta-card code {
         display: block;
         margin-top: 10px;
-        color: var(--blue);
+        color: #ffb088;
         word-break: break-all;
       }
 
@@ -326,20 +420,32 @@
         font-size: 0.92em;
       }
 
-      @media (max-width: 1040px) {
-        .hero {
-          grid-template-columns: 1fr;
+      @media (max-width: 1080px) {
+        .hero-grid,
+        .card-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
 
       @media (max-width: 760px) {
         .hero-grid,
-        .meta {
+        .card-grid {
           grid-template-columns: 1fr;
         }
 
-        .workspace-head {
-          display: grid;
+        .hero-copy,
+        .workspace,
+        .section-panel {
+          padding: 24px;
+        }
+
+        .hero-mark {
+          align-items: flex-start;
+        }
+
+        .hero-logo {
+          width: 82px;
+          height: 82px;
         }
       }
     </style>
@@ -348,78 +454,108 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="repo-mark">
-          <span class="pill">Security · CI/CD · Audit</span>
-          <code>gitlab-ci-ssdlc-auditor</code>
+          <svg class="repo-logo" viewBox="0 0 128 128" aria-label="GitLab logo" role="img">
+            <polygon fill="#e24329" points="64,110 88,36 40,36"/>
+            <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
+            <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
+            <polygon fill="#fca326" points="24,36 12,68 40,36"/>
+            <polygon fill="#fca326" points="104,36 116,68 88,36"/>
+            <polygon fill="#e24329" points="12,68 64,110 24,36"/>
+            <polygon fill="#e24329" points="116,68 64,110 104,36"/>
+            <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
+          </svg>
+          <div class="repo-mark-copy">
+            <span class="repo-mark-title">GitLab CI SSDLC Auditor</span>
+            <code>gitlab-ci-ssdlc-auditor</code>
+          </div>
         </div>
-        <div class="pill">GitHub-dark inspired UI</div>
+        <div class="pill">GitLab dark + orange UI</div>
       </div>
     </header>
 
     <main>
       <section class="hero">
         <article class="panel hero-copy">
-          <div class="pill" style="width: fit-content; margin-bottom: 18px;">GitLab CI • SSDLC • Policy Engine</div>
-          <h1>Audit the full pipeline, not just one file.</h1>
-          <p>
-            The application analyzes <code>.gitlab-ci.yml</code>, local <code>include</code> entries, child and downstream
-            pipelines started by <code>trigger</code>, and breaks the result down into concrete SSDLC gaps:
-            unit tests, SAST, artifact or image scanning, automated test deployment, and security policy compliance.
-          </p>
-
-          <div class="hero-grid">
-            <div class="hero-card">
-              <strong>GitLab Graph</strong>
-              <span>Recursively collected local <code>include</code> files and child pipelines give you a whole-flow assessment.</span>
+          <div class="hero-brand">
+            <div class="hero-mark">
+              <svg class="hero-logo" viewBox="0 0 128 128" aria-label="GitLab logo" role="img">
+                <polygon fill="#e24329" points="64,110 88,36 40,36"/>
+                <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
+                <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
+                <polygon fill="#fca326" points="24,36 12,68 40,36"/>
+                <polygon fill="#fca326" points="104,36 116,68 88,36"/>
+                <polygon fill="#e24329" points="12,68 64,110 24,36"/>
+                <polygon fill="#e24329" points="116,68 64,110 104,36"/>
+                <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
+              </svg>
+              <div>
+                <div class="pill" style="width: fit-content; margin-bottom: 18px;">GitLab CI • SSDLC • Policy Engine</div>
+                <h1>Audit the full pipeline, not just one file.</h1>
+                <p>
+                  The application analyzes <code>.gitlab-ci.yml</code>, local <code>include</code> entries, child and downstream
+                  pipelines started by <code>trigger</code>, and breaks the result down into concrete SSDLC gaps:
+                  unit tests, SAST, artifact or image scanning, SBOM, secret detection, IaC, DAST, automated test deployment, and security policy compliance.
+                </p>
+              </div>
             </div>
-            <div class="hero-card">
-              <strong>Dependabot Thinking</strong>
-              <span>The report shows the issue, the recommendation, and a concrete remediation path.</span>
+
+            <div class="hero-grid">
+              <div class="hero-card">
+                <strong>Whole Pipeline Graph</strong>
+                <span>Recursively collected local <code>include</code> files and child pipelines give you a whole-flow assessment instead of a single-file lint.</span>
+              </div>
+              <div class="hero-card">
+                <strong>Actionable Remediation</strong>
+                <span>The report shows the gap, the policy impact, and the concrete remediation path to move the pipeline toward the expected standard.</span>
+              </div>
+              <div class="hero-card">
+                <strong>Multi-Project Scope</strong>
+                <span>Optional context manifests let you stitch build, deploy, and delivery repositories into one graph when the release path spans multiple projects.</span>
+              </div>
+              <div class="hero-card">
+                <strong>Trend Memory</strong>
+                <span>Persist scan results into a history store and open score drift, category changes, and benchmark movement in the report.</span>
+              </div>
             </div>
           </div>
         </article>
+      </section>
 
-        <aside class="panel workspace">
-          <div class="workspace-head">
-            <div>
-              <h2>Open Audit Session</h2>
-              <p>Provide a file path, upload a single root file, or upload a ZIP bundle. The HTML report and GUI use the same analysis engine.</p>
-            </div>
-
-            <div class="brand-stack">
-              <div class="brand-card">
-                <svg class="brand-logo" viewBox="0 0 128 128" aria-label="GitLab logo" role="img">
-                  <polygon fill="#e24329" points="64,110 88,36 40,36"/>
-                  <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
-                  <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
-                  <polygon fill="#fca326" points="24,36 12,68 40,36"/>
-                  <polygon fill="#fca326" points="104,36 116,68 88,36"/>
-                  <polygon fill="#e24329" points="12,68 64,110 24,36"/>
-                  <polygon fill="#e24329" points="116,68 64,110 104,36"/>
-                  <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
-                </svg>
-                <span>GitLab</span>
-              </div>
-              <div class="brand-card">
-                <svg class="brand-logo" viewBox="0 0 128 128" aria-label="Dependabot style mark" role="img">
-                  <rect x="22" y="26" width="84" height="64" rx="18" fill="#58a6ff"/>
-                  <rect x="34" y="38" width="60" height="40" rx="12" fill="#0d1117"/>
-                  <circle cx="52" cy="58" r="7" fill="#58a6ff"/>
-                  <circle cx="76" cy="58" r="7" fill="#58a6ff"/>
-                  <rect x="52" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
-                  <rect x="68" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
-                  <rect x="48" y="82" width="32" height="10" rx="5" fill="#2ea043"/>
-                  <rect x="28" y="96" width="72" height="12" rx="6" fill="#1f6feb"/>
-                </svg>
-                <span>Dependabot</span>
-              </div>
-            </div>
+      <section class="panel workspace">
+        <div class="workspace-head">
+          <div class="section-head">
+            <span class="section-kicker">Audit Workspace</span>
+            <h2>Open one clear audit session</h2>
+            <p>Provide a repository path, paste the root pipeline, add pasted include files, or upload a ZIP bundle. The HTML report and the GUI use the same analysis engine and produce the same flow graph, findings, and benchmark output.</p>
           </div>
+        </div>
 
           <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
             <label>
               Pipeline file path
               <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
             </label>
+
+            <div class="field-block">
+              <label>
+                Or paste a root pipeline file
+                <textarea name="pipeline_text" placeholder="Paste .gitlab-ci.yml here for immediate lint, graph generation, and SSDLC feedback"></textarea>
+                <span class="field-note">Best for quick analysis. You can also add pasted include or template files below when the root YAML uses local includes or hidden templates.</span>
+              </label>
+              <label>
+                Pasted root filename
+                <input type="text" name="pipeline_text_filename" placeholder=".gitlab-ci.yml" value=".gitlab-ci.yml">
+                <span class="field-note">Optional. Keep <code>.gitlab-ci.yml</code> unless you need a different root filename for relative context.</span>
+              </label>
+              <div class="field-block">
+                <div class="paste-support-head">
+                  <strong>Pasted include or template files</strong>
+                  <button id="add-paste-support" class="mini-button" type="button">Add pasted support file</button>
+                </div>
+                <span class="field-note">Use bundle-relative paths such as <code>.gitlab/ci/templates/build.yml</code> and paste the exact YAML content of each included file.</span>
+                <div id="paste-support-list" class="paste-support-list"></div>
+              </div>
+            </div>
 
             <label>
               Recommended: pipeline ZIP bundle
@@ -461,6 +597,18 @@
             </label>
 
             <label>
+              Multi-project context manifest
+              <input type="text" name="context_file_path" placeholder="/Users/.../pipeline-context.json" value="<%= ERB::Util.html_escape(default_context_file) %>">
+              <span class="field-note">Optional JSON manifest that links multiple repositories into one pipeline graph, for example application build -> ArgoCD delivery repo.</span>
+            </label>
+
+            <label>
+              History store file
+              <input type="text" name="history_file_path" placeholder="/Users/.../gitlab-ci-audit-history.json" value="<%= ERB::Util.html_escape(default_history_file) %>">
+              <span class="field-note">Optional JSON file used to append this scan result and render the trend dashboard in the report.</span>
+            </label>
+
+            <label>
               Policy pack
               <select name="policy_pack" <%= custom_policy_locked ? "disabled" : "" %>>
                 <% available_policy_packs.each do |pack| %>
@@ -480,11 +628,52 @@
               <button type="button" class="ghost" onclick="window.location.reload()">Reset Form</button>
             </div>
           </form>
-        </aside>
       </section>
 
-      <section class="meta">
-        <article class="meta-card">
+      <section class="panel section-panel">
+        <div class="section-head">
+          <span class="section-kicker">What You Get</span>
+          <h2>Readable output across security, quality, and delivery</h2>
+          <p>The UI is split into large, readable sections so the first screen is for running the audit, and the next sections explain what the platform evaluates and how to use it in practice.</p>
+        </div>
+
+        <div class="card-grid">
+          <article class="meta-card">
+            <strong>Lint and structure</strong>
+            <span>Static parser validation, include diagnostics, missing templates, alias issues, and pipeline structure warnings before you even review SSDLC coverage.</span>
+          </article>
+          <article class="meta-card">
+            <strong>SSDLC controls</strong>
+            <span>Unit tests, coverage, SAST, artifact or image scanning, SBOM, secret detection, IaC, DAST, and automated deployment to a test environment.</span>
+          </article>
+          <article class="meta-card">
+            <strong>OWASP SAMM v2</strong>
+            <span>Benchmark estimates for the `Implementation` function with question-level mapping, observed detection signals, and rule-by-rule recommendations.</span>
+          </article>
+          <article class="meta-card">
+            <strong>Flow graph</strong>
+            <span>Pipeline graph, trigger chains, stage ordering, and weak or strong points visible in one report instead of spread across templates.</span>
+          </article>
+          <article class="meta-card">
+            <strong>Policy packs</strong>
+            <span>Balanced, strict, and library-oriented baselines make it easier to keep one engine while changing organizational expectations.</span>
+          </article>
+          <article class="meta-card">
+            <strong>History and trends</strong>
+            <span>Optional history storage lets teams compare runs over time and understand whether a pipeline is improving or drifting.</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel section-panel">
+        <div class="section-head">
+          <span class="section-kicker">Run Modes</span>
+          <h2>CLI, GUI, exports, and container packaging</h2>
+          <p>Use the same engine locally, in Docker, or as a web UI. The goal is one analysis model with several entry points.</p>
+        </div>
+
+        <div class="card-grid">
+          <article class="meta-card">
           <strong>CLI</strong>
           <span>Command-line entrypoint that generates text, JSON, or HTML output.</span>
           <code>./bin/gitlab-ci-auditor scan .gitlab-ci.yml</code>
@@ -519,10 +708,18 @@
           <span>Generate repository-backed sample reports for compliant, library, legacy, and downstream snapshot cases.</span>
           <code>./scripts/generate_example_reports.sh</code>
         </article>
+        </div>
       </section>
 
-      <section class="meta">
-        <article class="meta-card">
+      <section class="panel section-panel">
+        <div class="section-head">
+          <span class="section-kicker">Example Pipelines</span>
+          <h2>Reference cases for quick verification</h2>
+          <p>Use these samples to verify how the analyzer responds to strong, weak, downstream, and multi-repository delivery setups.</p>
+        </div>
+
+        <div class="card-grid">
+          <article class="meta-card">
           <strong>Compliant Service</strong>
           <span>Balanced baseline with unit tests, coverage, SAST, artifact scanning, and automated test deployment.</span>
           <code>examples/pipelines/compliant_service.gitlab-ci.yml</code>
@@ -547,6 +744,7 @@
           <span>SonarQube plus script-backed Trivy scanning, with test deployment proven from an external ArgoCD repository snapshot.</span>
           <code>examples/pipelines/argocd_release_root.gitlab-ci.yml</code>
         </article>
+        </div>
       </section>
     </main>
     <script>
@@ -555,8 +753,10 @@
         var directoryInput = document.getElementById("pipeline-directory-files");
         var supportInput = document.getElementById("pipeline-support-files");
         var supportPaths = document.getElementById("pipeline-support-paths");
+        var pasteSupportList = document.getElementById("paste-support-list");
+        var addPasteSupportButton = document.getElementById("add-paste-support");
 
-        if (!form || !directoryInput || !supportInput || !supportPaths) {
+        if (!form || !directoryInput || !supportInput || !supportPaths || !pasteSupportList || !addPasteSupportButton) {
           return;
         }
 
@@ -596,6 +796,65 @@
 
         supportInput.addEventListener("change", renderSupportPathEditors);
         renderSupportPathEditors();
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function escapeAttribute(value) {
+          return escapeHtml(value).replace(/"/g, "&quot;");
+        }
+
+        function refreshPasteSupportLabels() {
+          Array.prototype.slice.call(pasteSupportList.querySelectorAll(".paste-support-card")).forEach(function(card, index) {
+            var label = card.querySelector(".paste-support-head strong");
+            if (label) {
+              label.textContent = "Support file " + (index + 1);
+            }
+          });
+        }
+
+        function buildPasteSupportCard(index, pathValue, contentValue) {
+          var card = document.createElement("div");
+          card.className = "paste-support-card";
+          card.innerHTML =
+            '<div class="paste-support-head">' +
+              "<strong>Support file " + (index + 1) + "</strong>" +
+              '<button type="button" class="mini-button" data-remove-paste-support="true">Remove</button>' +
+            "</div>" +
+            '<label>Bundle-relative path' +
+              '<input type="text" name="pipeline_text_support_paths" placeholder=".gitlab/ci/templates/prepare.yml" value="' + escapeAttribute(pathValue || "") + '">' +
+            "</label>" +
+            '<label>YAML content' +
+              '<textarea name="pipeline_text_support_contents" placeholder="Paste included YAML here">' + escapeHtml(contentValue || "") + "</textarea>" +
+            "</label>";
+
+          card.querySelector('[data-remove-paste-support="true"]').addEventListener("click", function() {
+            card.remove();
+            refreshPasteSupportLabels();
+          });
+
+          return card;
+        }
+
+        addPasteSupportButton.addEventListener("click", function() {
+          pasteSupportList.appendChild(buildPasteSupportCard(
+            pasteSupportList.querySelectorAll(".paste-support-card").length,
+            "",
+            ""
+          ));
+          refreshPasteSupportLabels();
+        });
+
+        if (!pasteSupportList.querySelector(".paste-support-card")) {
+          pasteSupportList.appendChild(buildPasteSupportCard(0, "", ""));
+          refreshPasteSupportLabels();
+        }
 
         form.addEventListener("submit", function() {
           form.querySelectorAll("input[data-generated-path='true']").forEach(function(node) {

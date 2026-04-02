@@ -9,6 +9,7 @@ This directory contains ready-to-scan `.gitlab-ci.yml` examples that illustrate 
 - [`pipelines/legacy_monolith.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/legacy_monolith.gitlab-ci.yml): intentionally weak pipeline with SSDLC and security gaps
 - [`pipelines/snapshot_root.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/snapshot_root.gitlab-ci.yml): root pipeline that imports an external child pipeline through a local snapshot manifest
 - [`pipelines/argocd_release_root.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/argocd_release_root.gitlab-ci.yml): example that combines SonarQube, a script-backed `trivy fs` dependency scan, and a deployment executed from an external ArgoCD repository snapshot
+- [`pipelines/multi_project_app.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/multi_project_app.gitlab-ci.yml) plus [`pipelines/multi_project_context.json`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/multi_project_context.json): multi-project example that links an application repository to a delivery repository through the context manifest
 - [`pipelines/samm_question_rich.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/samm_question_rich.gitlab-ci.yml): implementation-heavy example with richer OWASP SAMM question coverage
 - [`pipelines/samm_question_gaps.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/samm_question_gaps.gitlab-ci.yml): intentionally weak example that leaves many OWASP SAMM implementation questions on `fail` or `review`
 - [`pipelines/upload_bundle_demo/.gitlab-ci.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/upload_bundle_demo/.gitlab-ci.yml): nested local-include example meant to validate GUI ZIP upload, directory upload, and root-plus-support-file upload flows
@@ -25,12 +26,17 @@ This directory contains ready-to-scan `.gitlab-ci.yml` examples that illustrate 
 - [`reports/snapshot_root.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/snapshot_root.txt)
 - [`reports/argocd_release_root.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/argocd_release_root.html)
 - [`reports/argocd_release_root.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/argocd_release_root.txt)
+- [`reports/multi_project_context.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/multi_project_context.html)
+- [`reports/multi_project_context.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/multi_project_context.txt)
 - [`reports/samm_question_rich.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_rich.html)
 - [`reports/samm_question_rich.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_rich.txt)
 - [`reports/samm_question_gaps.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_gaps.html)
 - [`reports/samm_question_gaps.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/samm_question_gaps.txt)
 - [`reports/upload_bundle_demo.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/upload_bundle_demo.html)
 - [`reports/upload_bundle_demo.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/upload_bundle_demo.txt)
+- [`reports/compliant_service_trends.html`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/compliant_service_trends.html)
+- [`reports/compliant_service_trends.txt`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/compliant_service_trends.txt)
+- [`reports/compliant_service.history.json`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/compliant_service.history.json)
 
 ## Regenerate
 
@@ -41,3 +47,8 @@ Run:
 ```
 
 The script regenerates the example text and HTML reports from the current analyzer implementation.
+
+It also regenerates:
+
+- a multi-project graph example driven by `--context-file`
+- a trend dashboard example driven by `--history-file`

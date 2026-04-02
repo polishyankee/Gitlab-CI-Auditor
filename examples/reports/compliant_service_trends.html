@@ -660,7 +660,7 @@
       <div class="topbar-inner">
         <div class="repo-strip">
           <span class="pill">Audit Report</span>
-          <span class="pill"><code>examples/pipelines/argocd_release_root.gitlab-ci.yml</code></span>
+          <span class="pill"><code>examples/pipelines/compliant_service.gitlab-ci.yml</code></span>
           <span class="pill">Policy Pack: <strong>Balanced Baseline</strong></span>
         </div>
 
@@ -701,9 +701,9 @@
           <span class="badge pass">
             strong
           </span>
-          <h1>SSDLC report for <code>argocd_release_root.gitlab-ci.yml</code></h1>
+          <h1>SSDLC report for <code>compliant_service.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-04-01T19:15:20Z. Active scenarios:
+            Analysis generated 2026-04-01T19:15:22Z. Active scenarios:
             <strong>8</strong>,
             skipped:
             <strong>1</strong>,
@@ -714,7 +714,7 @@
           <div class="brand-row">
             <div class="brand-card">
               <span>Root + Include + Trigger</span>
-              <strong>2 pipeline files</strong>
+              <strong>1 pipeline files</strong>
               <span>The full local CI graph was collected into one shared analysis scope.</span>
             </div>
             <div class="brand-card">
@@ -737,7 +737,7 @@
             </article>
             <article class="card">
               <span class="muted">Resolved Downstream</span>
-              <strong>1</strong>
+              <strong>0</strong>
               <div class="muted">Local child or downstream pipelines loaded</div>
             </article>
             <article class="card">
@@ -755,12 +755,12 @@
 
         <aside class="score">
           <span class="muted">Overall Score</span>
-          <strong>118/120</strong>
+          <strong>120/120</strong>
           <div class="badge pass" style="margin-top: 14px; width: fit-content;">
             Grade A
           </div>
           <div class="sub">
-            <div><strong>Pipeline:</strong> <code>examples/pipelines/argocd_release_root.gitlab-ci.yml</code></div>
+            <div><strong>Pipeline:</strong> <code>examples/pipelines/compliant_service.gitlab-ci.yml</code></div>
             <div><strong>Policy:</strong> Balanced Baseline (policy_pack)</div>
             <div><strong>Scope:</strong> complete</div>
           </div>
@@ -916,13 +916,13 @@
             <article class="card">
               <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
                 <h3>Maintainability and Complexity</h3>
-                <span class="badge warn">warn</span>
+                <span class="badge pass">pass</span>
               </div>
               <div class="meter">
-                <span style="width: 80%"></span>
+                <span style="width: 100%"></span>
               </div>
-              <strong>8/10</strong>
-              <div class="muted">1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules</div>
+              <strong>10/10</strong>
+              <div class="muted">The pipeline is relatively easy to maintain</div>
             </article>
           
         </div>
@@ -933,7 +933,7 @@
             
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">Add workflow:rules to control centrally when a pipeline should exist</span>
+                  <span class="mini-pill">If build, deploy, or security evidence lives in multiple repositories, provide a context manifest so the graph can join them into one audit scope</span>
                 
                   <span class="mini-pill">Review scenarios blocked by workflow rules if they should remain business-supported paths</span>
                 
@@ -964,8 +964,6 @@
                 
                   <span class="mini-pill">DAST is exercised against a deployable environment</span>
                 
-                  <span class="mini-pill">Local child/downstream pipelines are included in the analysis scope</span>
-                
                   <span class="mini-pill">Pipeline complexity remains under control</span>
                 
               </div>
@@ -974,7 +972,7 @@
 
           <div class="list-item">
             <strong>Analysis Context</strong>
-            <div class="finding-copy"><strong>Detected stacks:</strong> Java</div>
+            <div class="finding-copy"><strong>Detected stacks:</strong> Ruby</div>
             <div class="finding-copy"><strong>Template includes:</strong> none detected</div>
             
             
@@ -987,9 +985,85 @@
         <h2>Historical Trend Dashboard</h2>
         
         
+          <div class="category-grid">
+            <article class="card">
+              <span class="muted">History File</span>
+              <strong>/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/reports/compliant_service.history.json</strong>
+              <div class="muted">Persistent JSON store used for score tracking</div>
+            </article>
+            <article class="card">
+              <span class="muted">Stored Runs</span>
+              <strong>2</strong>
+              <div class="muted">Total scans currently recorded</div>
+            </article>
+            <article class="card">
+              <span class="muted">Previous Score</span>
+              <strong>120</strong>
+              <div class="muted">Most recent score before this report</div>
+            </article>
+            <article class="card">
+              <span class="muted">Score Delta</span>
+              <strong>0</strong>
+              <div class="muted">Difference versus the previous stored scan</div>
+            </article>
+          </div>
+
           <div class="list">
             <div class="list-item">
-              Historical trends are disabled for this report. Start the scan with a history store file to persist results and render score drift over time.
+              <strong>Recent Runs</strong>
+              
+                <div class="job-pills" style="margin-top:12px;">
+                  
+                    <span class="mini-pill">2026-04-01T19:15:22Z · 120/120 · A · balanced</span>
+                  
+                    <span class="mini-pill">2026-04-01T19:15:22Z · 120/120 · A · balanced</span>
+                  
+                </div>
+              
+            </div>
+
+            <div class="list-item">
+              <strong>Category Drift</strong>
+              
+                <div class="job-pills" style="margin-top:12px;">
+                  
+                    <span class="mini-pill">Execution Path Coverage: 15/15 (delta 0)</span>
+                  
+                    <span class="mini-pill">Unit Test Execution: 10/10 (delta 0)</span>
+                  
+                    <span class="mini-pill">Coverage Reporting: 5/5 (delta 0)</span>
+                  
+                    <span class="mini-pill">SAST: 12/12 (delta 0)</span>
+                  
+                    <span class="mini-pill">Artifact/Image Scanning: 12/12 (delta 0)</span>
+                  
+                    <span class="mini-pill">SBOM Evidence: 8/8 (delta 0)</span>
+                  
+                    <span class="mini-pill">Secret Detection: 10/10 (delta 0)</span>
+                  
+                    <span class="mini-pill">IaC Policy Scanning: 8/8 (delta 0)</span>
+                  
+                    <span class="mini-pill">DAST: 10/10 (delta 0)</span>
+                  
+                    <span class="mini-pill">Automated Test Deployment: 10/10 (delta 0)</span>
+                  
+                    <span class="mini-pill">Security Policies: 10/10 (delta 0)</span>
+                  
+                    <span class="mini-pill">Maintainability and Complexity: 10/10 (delta 0)</span>
+                  
+                </div>
+              
+            </div>
+
+            <div class="list-item">
+              <strong>Benchmark Drift</strong>
+              
+                <div class="job-pills" style="margin-top:12px;">
+                  
+                    <span class="mini-pill">OWASP SAMM v2: 91/100 (delta 0)</span>
+                  
+                </div>
+              
             </div>
           </div>
         
@@ -1009,13 +1083,13 @@
                 
                   <span class="mini-pill">Analysis scope: complete</span>
                 
-                  <span class="mini-pill">Pipeline files analyzed: 2</span>
+                  <span class="mini-pill">Pipeline files analyzed: 1</span>
                 
                   <span class="mini-pill">Active scenarios analyzed: 8</span>
                 
                   <span class="mini-pill">Unique active jobs mapped into the benchmark: 8</span>
                 
-                  <span class="mini-pill">Resolved downstream pipelines: 1</span>
+                  <span class="mini-pill">Resolved downstream pipelines: 0</span>
                 
                   <span class="mini-pill">No unresolved downstream pipelines detected</span>
                 
@@ -1028,13 +1102,13 @@
               <strong>Technology and Flow Signals</strong>
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">Detected stacks: Java</span>
+                  <span class="mini-pill">Detected stacks: Ruby</span>
                 
-                  <span class="mini-pill">Stage model: build, security, orchestrate, deploy</span>
+                  <span class="mini-pill">Stage model: build, test, security, deploy</span>
                 
-                  <span class="mini-pill">At least one analyzed pipeline file has no workflow:rules</span>
+                  <span class="mini-pill">workflow:rules is present on every analyzed pipeline file</span>
                 
-                  <span class="mini-pill">Declared environments: test</span>
+                  <span class="mini-pill">Declared environments: qa</span>
                 
               </div>
             </div>
@@ -1070,17 +1144,17 @@
               <strong>Security Tooling</strong>
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">SAST families: SonarQube / sonar-scanner</span>
+                  <span class="mini-pill">SAST families: semgrep</span>
                 
-                  <span class="mini-pill">Artifact scan families: GitLab Dependency Scanning, trivy fs</span>
+                  <span class="mini-pill">Artifact scan families: trivy fs</span>
                 
                   <span class="mini-pill">Image scan families: none detected</span>
                 
-                  <span class="mini-pill">SBOM families: trivy sbom, CycloneDX CLI</span>
+                  <span class="mini-pill">SBOM families: syft, CycloneDX CLI</span>
                 
                   <span class="mini-pill">Secret-detection families: GitLab Secret Detection, gitleaks</span>
                 
-                  <span class="mini-pill">IaC families: conftest</span>
+                  <span class="mini-pill">IaC families: trivy config</span>
                 
                   <span class="mini-pill">DAST families: GitLab DAST, OWASP ZAP</span>
                 
@@ -1095,13 +1169,13 @@
               <strong>Reports and Feedback Loops</strong>
               <div class="job-pills" style="margin-top:12px;">
                 
-                  <span class="mini-pill">Report artifacts: coverage report, dependency scanning report, sbom report, secret detection report, iac report, dast report</span>
+                  <span class="mini-pill">Report artifacts: dependency scanning report, sbom report, coverage report, secret detection report, container scanning report, iac report, dast report</span>
                 
-                  <span class="mini-pill">Security report artifacts: dependency scanning report</span>
+                  <span class="mini-pill">Security report artifacts: dependency scanning report, container scanning report</span>
                 
                   <span class="mini-pill">No policy findings reduced benchmark confidence on the analyzed YAML</span>
                 
-                  <span class="mini-pill">Cross-component scope detected: 2 pipeline files analyzed together</span>
+                  <span class="mini-pill">Cross-component scope is limited to a single pipeline file</span>
                 
               </div>
             </div>
@@ -1112,7 +1186,7 @@
                 
                   <span class="mini-pill">Mapped implementation questions: 18</span>
                 
-                  <span class="mini-pill">Question status counts: 6 pass, 5 warn, 2 fail, 9 review</span>
+                  <span class="mini-pill">Question status counts: 7 pass, 4 warn, 2 fail, 9 review</span>
                 
                   <span class="mini-pill">Questions that require manual or process evidence: 4</span>
                 
@@ -1136,17 +1210,17 @@
               <strong>Level 3/3</strong>
               <div class="muted">Alignment 100/100 · Confidence high</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Unit tests are part of active build paths | Coverage evidence is published | SAST is embedded into the build path | Dependency or image scanning is embedded into the build path | SBOM evidence is attached to build outputs | Quality and security gates are blocking</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Some pipelines still rely on job-level rules without workflow governance</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Unit tests are part of active build paths | Coverage evidence is published | SAST is embedded into the build path | Dependency or image scanning is embedded into the build path | SBOM evidence is attached to build outputs | Quality and security gates are blocking | workflow:rules governs pipeline creation</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No significant gaps detected from the pipeline definition</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
                     <div class="benchmark-subhead">
                       <strong>Repeatable build orchestration is visible</strong>
-                      <span class="badge warn">warn</span>
+                      <span class="badge pass">pass</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">An explicit stage model exists, but at least one analyzed pipeline file still lacks workflow governance.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Explicit stages are declared and workflow governance is visible on every analyzed pipeline file.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1201,19 +1275,17 @@
               <div class="finding-copy" style="margin-top:10px;">
                 <strong>Upstream question mapping:</strong>
                 
-                3 pass · 3 warn · 0 fail · 0 review
+                4 pass · 2 warn · 0 fail · 0 review
               </div>
               <div class="list" style="margin-top:10px;">
                 
                   <div class="list-item">
                     <div class="benchmark-subhead">
                       <strong>I-SB-1-A · Is your full build process formally described?</strong>
-                      <span class="badge warn">warn</span>
+                      <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
-                    <div class="finding-copy" style="margin-top:8px;">Build logic exists in CI/CD YAML, but explicit stages or workflow governance are incomplete.</div>
-                    
-                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Keep the build as code in version control with explicit stages and `workflow:rules` for repeatability.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Build logic is codified in the pipeline with explicit stages and workflow governance.</div>
                     
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Build documentation freshness, accessibility, and build-tool hardening still require evidence outside CI/CD YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
@@ -1228,7 +1300,7 @@
                       <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
-                    <div class="finding-copy" style="margin-top:8px;">Dependency scanning reports and SBOM-style artifacts are published using GitLab Dependency Scanning, trivy fs.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Dependency scanning reports and SBOM-style artifacts are published using trivy fs.</div>
                     
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Historical review cadence and CVE triage recency cannot be proven from the pipeline definition alone.</div>
                     <div class="finding-copy" style="margin-top:8px;">
@@ -1260,7 +1332,7 @@
                       <span class="badge warn">warn</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
-                    <div class="finding-copy" style="margin-top:8px;">Dependency-risk checks are present via GitLab Dependency Scanning, trivy fs, but the pipeline does not show the fuller process expected for approvals, license, and package hygiene.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Dependency-risk checks are present via trivy fs, but the pipeline does not show the fuller process expected for approvals, license, and package hygiene.</div>
                     
                       <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Add enforced dependency scanning together with SBOM or license evidence and treat findings as a release gate.</div>
                     
@@ -1292,7 +1364,7 @@
                       <span class="badge pass">pass</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> partial</div>
-                    <div class="finding-copy" style="margin-top:8px;">Dependency scanning via GitLab Dependency Scanning, trivy fs is enforced without optional gate behavior on the build path.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Dependency scanning via trivy fs is enforced without optional gate behavior on the build path.</div>
                     
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Responsible disclosure workflows and explicit risk acceptance usually live outside CI/CD YAML.</div>
                     <div class="finding-copy" style="margin-top:8px;">
@@ -1515,13 +1587,13 @@
                 <span class="badge pass">pass</span>
               </div>
               <div class="meter">
-                <span style="width: 100%"></span>
+                <span style="width: 95%"></span>
               </div>
-              <strong>Level 3/3</strong>
-              <div class="muted">Alignment 100/100 · Confidence medium</div>
+              <strong>Level 2/3</strong>
+              <div class="muted">Alignment 95/100 · Confidence medium</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from machine-readable reports, blocking gates, and whether defects influence later deployment decisions in the pipeline.</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Structured test reports are published | Security defect reports are exported as machine-readable artifacts | Tests and scans act as blocking defect gates | Deployment is influenced by quality and security findings | Multiple pipeline components are analyzed together</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> No significant gaps detected from the pipeline definition</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Structured test reports are published | Security defect reports are exported as machine-readable artifacts | Tests and scans act as blocking defect gates | Deployment is influenced by quality and security findings</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> The current YAML view does not show cross-component defect feedback loops</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
@@ -1538,7 +1610,7 @@
                       <strong>Machine-readable security defect reports are exported</strong>
                       <span class="badge pass">pass</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">Detected dependency scanning report, secret detection report, iac report, dast report artifacts.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Detected dependency scanning report, secret detection report, container scanning report, iac report, dast report artifacts.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1560,9 +1632,9 @@
                   <div class="list-item">
                     <div class="benchmark-subhead">
                       <strong>Cross-component defect visibility is represented</strong>
-                      <span class="badge pass">pass</span>
+                      <span class="badge warn">warn</span>
                     </div>
-                    <div class="finding-copy" style="margin-top:8px;">Multiple pipeline components are analyzed together, so cross-component feedback is visible.</div>
+                    <div class="finding-copy" style="margin-top:8px;">The current YAML view is limited to a single pipeline component.</div>
                   </div>
                 
               </div>
@@ -1611,9 +1683,9 @@
                       <span class="badge review">review</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;"><strong>Observability:</strong> review</div>
-                    <div class="finding-copy" style="margin-top:8px;">Cross-component pipeline evidence exists, but organization-wide severity schemes, SLAs, and roll-up dashboards require external defect-management systems.</div>
+                    <div class="finding-copy" style="margin-top:8px;">Project-level defect data exists, but organization-wide aggregation and shared severity schemes still require manual validation outside the current YAML view.</div>
                     
-                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Review whether defect data from multiple pipelines is normalized into a central view with shared severities and SLAs.</div>
+                      <div class="finding-copy" style="margin-top:8px;"><strong>How to improve:</strong> Aggregate machine-readable findings from multiple pipelines into a shared defect-management view.</div>
                     
                     <div class="finding-copy" style="margin-top:8px;"><strong>Static limits:</strong> Organization-wide severity schemes, SLAs, and compliance reporting are normally managed outside individual pipeline definitions.</div>
                     <div class="finding-copy" style="margin-top:8px;">
@@ -1749,7 +1821,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1757,7 +1829,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1765,7 +1837,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -1773,7 +1845,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -1781,7 +1853,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -1823,21 +1895,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1858,7 +1930,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1866,7 +1938,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1874,7 +1946,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -1882,7 +1954,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -1890,7 +1962,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -1932,21 +2004,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -1967,7 +2039,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1975,7 +2047,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -1983,7 +2055,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -1991,7 +2063,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -1999,7 +2071,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2041,21 +2113,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2076,7 +2148,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2084,7 +2156,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2092,7 +2164,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -2100,7 +2172,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -2108,7 +2180,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2150,21 +2222,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2185,7 +2257,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2193,7 +2265,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2201,7 +2273,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -2209,7 +2281,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -2217,7 +2289,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2259,21 +2331,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2294,7 +2366,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2302,7 +2374,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2310,7 +2382,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -2318,7 +2390,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -2326,7 +2398,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2368,21 +2440,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2403,7 +2475,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2411,7 +2483,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2419,7 +2491,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -2427,7 +2499,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -2435,7 +2507,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2477,21 +2549,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2512,7 +2584,7 @@
                       <strong>unit_tests</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2520,7 +2592,7 @@
                       <strong>coverage_report</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">build_and_test (build)</p>
+                        <p class="muted" style="margin:10px 0 0;">unit_tests (test)</p>
                       
                     </div>
                   
@@ -2528,7 +2600,7 @@
                       <strong>sast</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">sonarqube_scan (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">sast (security)</p>
                       
                     </div>
                   
@@ -2536,7 +2608,7 @@
                       <strong>scan</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">artifact_scan (security)</p>
                       
                     </div>
                   
@@ -2544,7 +2616,7 @@
                       <strong>sbom</strong>
                       <div class="badge pass" style="margin-top:8px; width: fit-content;">pass</div>
                       
-                        <p class="muted" style="margin:10px 0 0;">trivy_dependency (security)</p>
+                        <p class="muted" style="margin:10px 0 0;">build_app (build)</p>
                       
                     </div>
                   
@@ -2586,21 +2658,21 @@
 
                 <div class="job-pills">
                   
-                    <span class="job-pill">build_and_test / build / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">build_app / build / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">sonarqube_scan / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">unit_tests / test / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">trivy_dependency / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">sast / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">secret_detection / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">artifact_scan / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">iac_policy / security / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">secret_detection / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_via_argocd / orchestrate / examples/pipelines/argocd_release_root.gitlab-ci.yml</span>
+                    <span class="job-pill">iac_policy / security / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">deploy_test / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">deploy_test / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
-                    <span class="job-pill">dast / deploy / examples/pipelines/argocd_release_deploy.yml</span>
+                    <span class="job-pill">dast / deploy / examples/pipelines/compliant_service.gitlab-ci.yml</span>
                   
                 </div>
               
@@ -2633,15 +2705,13 @@
         <h2>Pipeline Maintainability</h2>
         <div class="list">
           
-            
-              <div class="list-item">1 pipeline files are missing a workflow section, so execution governance depends only on job-level rules</div>
-            
+            <div class="list-item">No material maintainability problems were detected.</div>
           
         </div>
       </section>
     </main>
 
-    <script id="graph-data" type="application/json">{"stages":["build","security","orchestrate","deploy"],"pipelines":[{"label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","order":0},{"label":"examples/pipelines/argocd_release_deploy.yml","order":1}],"nodes":[{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::build_and_test","label":"build_and_test","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: target/site/jacoco/jacoco.xml","Reports: coverage report","Script lines: 1"]},{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::iac_policy","label":"iac_policy","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":["iac"],"strengths":["Validates IaC or deployment policy","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: conftest-report.json","Reports: iac report","IaC policy checks: conftest","Script lines: 1"]},{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::secret_detection","label":"secret_detection","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":["secret_detection"],"strengths":["Scans repository content for secrets","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-secret-detection-report.json","Reports: secret detection report","Secret detection: GitLab Secret Detection, gitleaks","Script lines: 1"]},{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::sonarqube_scan","label":"sonarqube_scan","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":["build_and_test"],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::trivy_dependency","label":"trivy_dependency","stage":"security","stage_index":1,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan","sbom"],"strengths":["Scans artifacts or dependencies","Publishes SBOM evidence","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":["build_and_test"],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dependency-scanning-report.json, sbom.cyclonedx.json","Reports: dependency scanning report, sbom report","Local script evidence: examples/pipelines/ci/trivy.sh","SBOM tooling: trivy sbom, CycloneDX CLI","Script lines: 1"]},{"id":"examples/pipelines/argocd_release_root.gitlab-ci.yml::deploy_via_argocd","label":"deploy_via_argocd","stage":"orchestrate","stage_index":2,"pipeline_label":"examples/pipelines/argocd_release_root.gitlab-ci.yml","pipeline_short_label":".../pipelines/argocd_release_root.gitlab-ci.yml","pipeline_index":0,"classifications":[],"strengths":["Orchestrates a local child/downstream pipeline"],"weaknesses":[],"variant":"trigger","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":true,"unresolved_downstream":false,"notes":["Script lines: 0"]},{"id":"examples/pipelines/argocd_release_deploy.yml::dast","label":"dast","stage":"deploy","stage_index":3,"pipeline_label":"examples/pipelines/argocd_release_deploy.yml","pipeline_short_label":".../pipelines/argocd_release_deploy.yml","pipeline_index":1,"classifications":["dast"],"strengths":["Runs DAST against a deployed surface","Declares explicit needs dependencies"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":["deploy_test"],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dast-report.json","Reports: dast report","DAST tooling: GitLab DAST, OWASP ZAP","Script lines: 1"]},{"id":"examples/pipelines/argocd_release_deploy.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":3,"pipeline_label":"examples/pipelines/argocd_release_deploy.yml","pipeline_short_label":".../pipelines/argocd_release_deploy.yml","pipeline_index":1,"classifications":["deploy_test"],"strengths":["Deploys automatically to a test environment","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":"test","needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Local script evidence: examples/pipelines/scripts/argocd-sync.sh","Environment: test","Script lines: 1"]}],"edges":[{"from":"examples/pipelines/argocd_release_root.gitlab-ci.yml::build_and_test","to":"examples/pipelines/argocd_release_root.gitlab-ci.yml::sonarqube_scan","type":"needs"},{"from":"examples/pipelines/argocd_release_root.gitlab-ci.yml::build_and_test","to":"examples/pipelines/argocd_release_root.gitlab-ci.yml::trivy_dependency","type":"needs"},{"from":"examples/pipelines/argocd_release_root.gitlab-ci.yml::deploy_via_argocd","to":"examples/pipelines/argocd_release_deploy.yml::deploy_test","type":"trigger"},{"from":"examples/pipelines/argocd_release_root.gitlab-ci.yml::deploy_via_argocd","to":"examples/pipelines/argocd_release_deploy.yml::dast","type":"trigger"},{"from":"examples/pipelines/argocd_release_deploy.yml::deploy_test","to":"examples/pipelines/argocd_release_deploy.yml::dast","type":"needs"}]}</script>
+    <script id="graph-data" type="application/json">{"stages":["build","test","security","deploy"],"pipelines":[{"label":"examples/pipelines/compliant_service.gitlab-ci.yml","order":0}],"nodes":[{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::build_app","label":"build_app","stage":"build","stage_index":0,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["sbom"],"strengths":["Publishes SBOM evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: pkg/service.gem, sbom.cyclonedx.json","Reports: dependency scanning report, sbom report","SBOM tooling: syft, CycloneDX CLI","Script lines: 3"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::unit_tests","label":"unit_tests","stage":"test","stage_index":1,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["unit_tests","coverage_report"],"strengths":["Runs unit tests","Publishes coverage evidence","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: coverage/jacoco.xml","Reports: coverage report","Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::artifact_scan","label":"artifact_scan","stage":"security","stage_index":2,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["artifact_scan"],"strengths":["Scans artifacts or dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::iac_policy","label":"iac_policy","stage":"security","stage_index":2,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["iac"],"strengths":["Validates IaC or deployment policy","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: trivy-config-report.json","Reports: container scanning report, iac report","IaC policy checks: trivy config","Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::sast","label":"sast","stage":"security","stage_index":2,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["sast"],"strengths":["Provides SAST coverage","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::secret_detection","label":"secret_detection","stage":"security","stage_index":2,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["secret_detection"],"strengths":["Scans repository content for secrets","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":[],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-secret-detection-report.json","Reports: secret detection report","Secret detection: GitLab Secret Detection, gitleaks","Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::dast","label":"dast","stage":"deploy","stage_index":3,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["dast"],"strengths":["Runs DAST against a deployed surface","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":null,"needs":["deploy_test"],"has_trigger":false,"unresolved_downstream":false,"notes":["Artifacts: gl-dast-report.json","Reports: dast report","DAST tooling: GitLab DAST, OWASP ZAP","Script lines: 1"]},{"id":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","label":"deploy_test","stage":"deploy","stage_index":3,"pipeline_label":"examples/pipelines/compliant_service.gitlab-ci.yml","pipeline_short_label":".../pipelines/compliant_service.gitlab-ci.yml","pipeline_index":0,"classifications":["deploy_test"],"strengths":["Deploys automatically to a test environment","Declares explicit needs dependencies","Uses a pinned image"],"weaknesses":[],"variant":"good","when":"on_success","manual":false,"allow_failure":false,"environment":"qa","needs":["unit_tests","sast","artifact_scan","secret_detection","iac_policy"],"has_trigger":false,"unresolved_downstream":false,"notes":["Environment: qa","Script lines: 1"]}],"edges":[{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::unit_tests","to":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::sast","to":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::artifact_scan","to":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::secret_detection","to":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::iac_policy","to":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","type":"needs"},{"from":"examples/pipelines/compliant_service.gitlab-ci.yml::deploy_test","to":"examples/pipelines/compliant_service.gitlab-ci.yml::dast","type":"needs"}]}</script>
     <script>
       (function () {
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));

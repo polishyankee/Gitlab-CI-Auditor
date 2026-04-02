@@ -632,6 +632,13 @@
         stroke-dasharray: 6 5;
       }
 
+      .edge-context {
+        stroke: rgba(88, 166, 255, 0.72);
+        stroke-width: 2;
+        fill: none;
+        stroke-dasharray: 2 8;
+      }
+
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.93em;
@@ -696,7 +703,7 @@
           </span>
           <h1>SSDLC report for <code>legacy_monolith.gitlab-ci.yml</code></h1>
           <p class="muted">
-            Analysis generated 2026-03-30T16:08:46Z. Active scenarios:
+            Analysis generated 2026-04-01T19:15:19Z. Active scenarios:
             <strong>11</strong>,
             skipped:
             <strong>0</strong>,
@@ -712,7 +719,7 @@
             </div>
             <div class="brand-card">
               <span>Policy Remediation</span>
-              <strong>5 findings</strong>
+              <strong>8 findings</strong>
               <span>Each gap includes the issue, the recommendation, and a remediation direction.</span>
             </div>
           </div>
@@ -748,7 +755,7 @@
 
         <aside class="score">
           <span class="muted">Overall Score</span>
-          <strong>16/100</strong>
+          <strong>21/120</strong>
           <div class="badge fail" style="margin-top: 14px; width: fit-content;">
             Grade F
           </div>
@@ -762,6 +769,7 @@
 
       <div class="tabbar" role="tablist" aria-label="Report views">
         <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="trends">Trends</button>
         <button class="tab-btn" data-tab="benchmark">OWASP SAMM</button>
         <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
         <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
@@ -781,7 +789,7 @@
               <div class="meter">
                 <span style="width: 0%"></span>
               </div>
-              <strong>0/20</strong>
+              <strong>0/15</strong>
               <div class="muted">0/11 active scenarios satisfy the selected SSDLC policy pack</div>
             </article>
           
@@ -817,7 +825,7 @@
               <div class="meter">
                 <span style="width: 0%"></span>
               </div>
-              <strong>0/15</strong>
+              <strong>0/12</strong>
               <div class="muted">0 pass, 0 warn, 11 missing</div>
             </article>
           
@@ -829,7 +837,55 @@
               <div class="meter">
                 <span style="width: 0%"></span>
               </div>
-              <strong>0/15</strong>
+              <strong>0/12</strong>
+              <div class="muted">0 pass, 0 warn, 11 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>SBOM Evidence</h3>
+                <span class="badge fail">fail</span>
+              </div>
+              <div class="meter">
+                <span style="width: 0%"></span>
+              </div>
+              <strong>0/8</strong>
+              <div class="muted">0 pass, 0 warn, 11 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>Secret Detection</h3>
+                <span class="badge fail">fail</span>
+              </div>
+              <div class="meter">
+                <span style="width: 0%"></span>
+              </div>
+              <strong>0/10</strong>
+              <div class="muted">0 pass, 0 warn, 11 missing</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>IaC Policy Scanning</h3>
+                <span class="badge disabled">disabled</span>
+              </div>
+              <div class="meter">
+                <span style="width: 100%"></span>
+              </div>
+              <strong>8/8</strong>
+              <div class="muted">Disabled by the selected policy pack</div>
+            </article>
+          
+            <article class="card">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
+                <h3>DAST</h3>
+                <span class="badge fail">fail</span>
+              </div>
+              <div class="meter">
+                <span style="width: 0%"></span>
+              </div>
+              <strong>0/10</strong>
               <div class="muted">0 pass, 0 warn, 11 missing</div>
             </article>
           
@@ -839,9 +895,9 @@
                 <span class="badge warn">warn</span>
               </div>
               <div class="meter">
-                <span style="width: 53%"></span>
+                <span style="width: 50%"></span>
               </div>
-              <strong>8/15</strong>
+              <strong>5/10</strong>
               <div class="muted">0 pass, 11 warn, 0 missing</div>
             </article>
           
@@ -885,7 +941,15 @@
                 
                   <span class="mini-pill">Add artifact scanning or image scanning based on the build type and treat the result as a gate</span>
                 
+                  <span class="mini-pill">Generate and publish a machine-readable SBOM such as CycloneDX or SPDX for each supported build output</span>
+                
+                  <span class="mini-pill">Add secret-detection scanning with a blocking policy for merge requests and protected branches</span>
+                
+                  <span class="mini-pill">Run DAST against a deployed test, review, or staging environment and make the result blocking</span>
+                
                   <span class="mini-pill">Automate deployment to a test environment and declare it explicitly in the environment section</span>
+                
+                  <span class="mini-pill">If build, deploy, or security evidence lives in multiple repositories, provide a context manifest so the graph can join them into one audit scope</span>
                 
                   <span class="mini-pill">Add workflow:rules to control centrally when a pipeline should exist</span>
                 
@@ -909,7 +973,28 @@
               </div>
             
           </div>
+
+          <div class="list-item">
+            <strong>Analysis Context</strong>
+            <div class="finding-copy"><strong>Detected stacks:</strong> Java</div>
+            <div class="finding-copy"><strong>Template includes:</strong> none detected</div>
+            
+            
+            
+          </div>
         </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="trends" hidden>
+        <h2>Historical Trend Dashboard</h2>
+        
+        
+          <div class="list">
+            <div class="list-item">
+              Historical trends are disabled for this report. Start the scan with a history store file to persist results and render score drift over time.
+            </div>
+          </div>
+        
       </section>
 
       <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
@@ -935,6 +1020,8 @@
                   <span class="mini-pill">Resolved downstream pipelines: 0</span>
                 
                   <span class="mini-pill">No unresolved downstream pipelines detected</span>
+                
+                  <span class="mini-pill">No explicit multi-project context manifest was supplied</span>
                 
               </div>
             </div>
@@ -966,6 +1053,14 @@
                 
                   <span class="mini-pill">Artifact or image scanning: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
                 
+                  <span class="mini-pill">SBOM coverage: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                
+                  <span class="mini-pill">Secret-detection coverage: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                
+                  <span class="mini-pill">IaC policy coverage: 0 pass, 0 warn, 0 missing, 11 disabled across 11 active scenarios</span>
+                
+                  <span class="mini-pill">DAST coverage: 0 pass, 0 warn, 11 missing across 11 active scenarios</span>
+                
                   <span class="mini-pill">Automated test deployment: 0 pass, 11 warn, 0 missing across 11 active scenarios</span>
                 
                   <span class="mini-pill">Critical quality and security jobs are blocking</span>
@@ -982,6 +1077,14 @@
                   <span class="mini-pill">Artifact scan families: none detected</span>
                 
                   <span class="mini-pill">Image scan families: none detected</span>
+                
+                  <span class="mini-pill">SBOM families: none detected</span>
+                
+                  <span class="mini-pill">Secret-detection families: none detected</span>
+                
+                  <span class="mini-pill">IaC families: none detected</span>
+                
+                  <span class="mini-pill">DAST families: none detected</span>
                 
                   <span class="mini-pill">Secret-management signals: none detected</span>
                 
@@ -1036,7 +1139,7 @@
               <div class="muted">Alignment 20/100 · Confidence high</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from build repeatability, testing, SAST, and dependency or image scanning signals in the pipeline.</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Build flow uses explicit stages | Quality and security gates are blocking</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Unit tests are not consistently enforced across active scenarios | Coverage artifacts are not consistently published | SAST is missing or does not meet the detected stack policy | Artifact or image scanning is missing on part of the build path | Some pipelines still rely on job-level rules without workflow governance</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Unit tests are not consistently enforced across active scenarios | Coverage artifacts are not consistently published | SAST is missing or does not meet the detected stack policy | Artifact or image scanning is missing on part of the build path | SBOM evidence is missing from part of the build path | Some pipelines still rely on job-level rules without workflow governance</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
@@ -1075,6 +1178,14 @@
                   <div class="list-item">
                     <div class="benchmark-subhead">
                       <strong>Artifact or image scanning is enforced on the build path</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>SBOM evidence accompanies supported build outputs</strong>
                       <span class="badge fail">fail</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
@@ -1217,7 +1328,7 @@
               <div class="muted">Alignment 30/100 · Confidence medium</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Rationale:</strong> Derived from deployment automation, secret-management signals, integrity verification, and gate enforcement in the pipeline.</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>Good signals:</strong> Deployment jobs declare explicit environments | Test deployment is automated on the happy path</div>
-              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Deployment is not clearly gated by tests and security scans | No external secret manager signal was detected in deployment automation | No signature or checksum verification was detected before deployment | No production deployment path was detected | Deployment hygiene findings reduce confidence in secure deployment</div>
+              <div class="finding-copy" style="margin-top:10px;"><strong>Gaps:</strong> Deployment is not clearly gated by tests and security scans | No external secret manager signal was detected in deployment automation | No signature or checksum verification was detected before deployment | No DAST signal was detected against the deployed environment | No production deployment path was detected | Deployment hygiene findings reduce confidence in secure deployment</div>
               <div class="finding-copy" style="margin-top:10px;"><strong>OWASP SAMM rules:</strong></div>
               <div class="list" style="margin-top:10px;">
                 
@@ -1259,6 +1370,22 @@
                       <span class="badge fail">fail</span>
                     </div>
                     <div class="finding-copy" style="margin-top:8px;">No signature or checksum verification was detected before deployment.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>Infrastructure or deployment policy is validated as code</strong>
+                      <span class="badge pass">pass</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">IaC validation is not required by the selected policy pack.</div>
+                  </div>
+                
+                  <div class="list-item">
+                    <div class="benchmark-subhead">
+                      <strong>DAST validates the deployed attack surface</strong>
+                      <span class="badge fail">fail</span>
+                    </div>
+                    <div class="finding-copy" style="margin-top:8px;">0 pass, 0 warn, 11 missing across active scenarios.</div>
                   </div>
                 
                   <div class="list-item">
@@ -1582,6 +1709,7 @@
           <span class="mini-pill">yellow: mixed</span>
           <span class="mini-pill">red: weak spot</span>
           <span class="mini-pill">violet: trigger/downstream</span>
+          <span class="mini-pill">blue dashed: multi-project context link</span>
         </div>
 
         <div class="graph-shell">
@@ -1668,6 +1796,57 @@
             
               <div class="list-item">
                 <div class="finding-head">
+                  <span class="badge fail">high</span>
+                  <strong>SBOM evidence is not complete</strong>
+                </div>
+                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios do not publish SBOM evidence, and 0 scenarios only do so in a non-enforcing context.</div>
+                
+                  <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
+                
+                
+                  <div class="finding-copy"><strong>Recommendation:</strong> Publish a machine-readable SBOM for every supported build output.</div>
+                
+                
+                  <div class="finding-copy"><strong>How to fix:</strong> Generate `CycloneDX` or `SPDX` artifacts with tools such as `syft`, `cdxgen`, `trivy sbom`, or `snyk sbom`, and keep the files in `artifacts.paths`.</div>
+                
+              </div>
+            
+              <div class="list-item">
+                <div class="finding-head">
+                  <span class="badge fail">high</span>
+                  <strong>Secret-detection coverage is not complete</strong>
+                </div>
+                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios have no secret-detection scan, and 0 scenarios run it in a non-enforcing mode.</div>
+                
+                  <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
+                
+                
+                  <div class="finding-copy"><strong>Recommendation:</strong> Scan repository content for committed secrets on merge requests and protected branches.</div>
+                
+                
+                  <div class="finding-copy"><strong>How to fix:</strong> Add `gitleaks`, `trufflehog`, `detect-secrets`, or the GitLab Secret Detection template, publish the report artifact, and keep `allow_failure` disabled.</div>
+                
+              </div>
+            
+              <div class="list-item">
+                <div class="finding-head">
+                  <span class="badge fail">high</span>
+                  <strong>DAST coverage is not complete</strong>
+                </div>
+                <div class="finding-copy"><strong>Issue:</strong> 11/11 scenarios do not run DAST against a deployed environment, and 0 scenarios run it in a non-enforcing mode.</div>
+                
+                  <div class="finding-copy"><strong>Evidence:</strong> push -> main | push -> master | push -> develop | push -> feature/audit-coverage | push -> release/1.0.0</div>
+                
+                
+                  <div class="finding-copy"><strong>Recommendation:</strong> Run DAST against a test, review, or staging environment after deployment.</div>
+                
+                
+                  <div class="finding-copy"><strong>How to fix:</strong> Add GitLab DAST, OWASP ZAP, StackHawk, Burp, or Nikto after the deploy-to-test step. Make the job blocking and publish the machine-readable report.</div>
+                
+              </div>
+            
+              <div class="list-item">
+                <div class="finding-head">
                   <span class="badge warn">medium</span>
                   <strong>Automated test deployment is not complete</strong>
                 </div>
@@ -1719,6 +1898,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -1781,6 +1986,32 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
                       
@@ -1833,6 +2064,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -1895,6 +2152,32 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
                       
@@ -1947,6 +2230,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -2009,6 +2318,32 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
                       
@@ -2061,6 +2396,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -2123,6 +2484,32 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
                       
@@ -2175,6 +2562,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -2237,6 +2650,32 @@
                     </div>
                   
                     <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
                       <strong>deploy_test</strong>
                       <div class="badge warn" style="margin-top:8px; width: fit-content;">warn</div>
                       
@@ -2289,6 +2728,32 @@
                   
                     <div class="control">
                       <strong>scan</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>sbom</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>secret_detection</strong>
+                      <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>iac</strong>
+                      <div class="badge disabled" style="margin-top:8px; width: fit-content;">disabled</div>
+                      
+                        <p class="muted" style="margin:10px 0 0;">Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected</p>
+                      
+                    </div>
+                  
+                    <div class="control">
+                      <strong>dast</strong>
                       <div class="badge missing" style="margin-top:8px; width: fit-content;">missing</div>
                       
                     </div>
@@ -2615,7 +3080,13 @@
             var curve = Math.max(50, Math.abs(endX - startX) * 0.35);
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", "M " + startX + " " + startY + " C " + (startX + curve) + " " + startY + ", " + (endX - curve) + " " + endY + ", " + endX + " " + endY);
-            path.setAttribute("class", edge.type === "trigger" ? "edge-trigger" : "edge-needs");
+            var edgeClass = "edge-needs";
+            if (edge.type === "trigger") {
+              edgeClass = "edge-trigger";
+            } else if (edge.type === "context") {
+              edgeClass = "edge-context";
+            }
+            path.setAttribute("class", edgeClass);
             svg.appendChild(path);
           });
         }

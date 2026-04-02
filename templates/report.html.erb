@@ -6,20 +6,25 @@
     <title>GitLab CI SSDLC Report</title>
     <style>
       :root {
-        --bg: #0d1117;
-        --bg-accent: #010409;
-        --panel: #161b22;
-        --panel-soft: #0f1720;
-        --border: #30363d;
-        --border-strong: #3d444d;
-        --ink: #c9d1d9;
-        --muted: #8b949e;
+        --bg: #0e1016;
+        --bg-accent: #05070d;
+        --panel: #151821;
+        --panel-soft: #10131b;
+        --border: #2f3442;
+        --border-strong: #444d60;
+        --ink: #dce3ea;
+        --muted: #99a4b3;
+        --orange: #fc6d26;
+        --orange-strong: #e24329;
+        --orange-soft: rgba(252, 109, 38, 0.16);
+        --orange-soft-strong: rgba(252, 109, 38, 0.28);
+        --amber: #fca326;
         --green: #2ea043;
-        --blue: #58a6ff;
+        --blue: #7cb4ff;
         --red: #f85149;
-        --yellow: #d29922;
+        --yellow: #d7a33e;
         --violet: #8957e5;
-        --shadow: 0 28px 80px rgba(1, 4, 9, 0.58);
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
       }
 
       * {
@@ -30,9 +35,9 @@
         margin: 0;
         color: var(--ink);
         background:
-          radial-gradient(circle at top left, rgba(88, 166, 255, 0.16), transparent 22%),
-          radial-gradient(circle at top right, rgba(248, 81, 73, 0.14), transparent 18%),
-          linear-gradient(180deg, #0d1117, #010409);
+          radial-gradient(circle at top left, rgba(252, 109, 38, 0.18), transparent 24%),
+          radial-gradient(circle at top right, rgba(226, 67, 41, 0.16), transparent 20%),
+          linear-gradient(180deg, #151821, #0a0d14);
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
@@ -41,16 +46,16 @@
         top: 0;
         z-index: 20;
         backdrop-filter: blur(18px);
-        background: rgba(13, 17, 23, 0.84);
-        border-bottom: 1px solid rgba(48, 54, 61, 0.84);
+        background: rgba(14, 16, 22, 0.88);
+        border-bottom: 1px solid rgba(68, 77, 96, 0.5);
       }
 
       .topbar-inner,
       main {
         max-width: 1280px;
         margin: 0 auto;
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-left: 24px;
+        padding-right: 24px;
       }
 
       .topbar-inner {
@@ -65,7 +70,7 @@
       .repo-strip {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         flex-wrap: wrap;
       }
 
@@ -76,9 +81,9 @@
         gap: 8px;
         border-radius: 999px;
         padding: 7px 12px;
-        border: 1px solid var(--border);
-        background: rgba(110, 118, 129, 0.08);
-        color: var(--muted);
+        border: 1px solid var(--orange-soft-strong);
+        background: var(--orange-soft);
+        color: #ffd7bf;
         font-size: 0.82rem;
       }
 
@@ -88,12 +93,12 @@
         letter-spacing: 0.06em;
       }
 
-      .pass { color: #3fb950; background: rgba(63, 185, 80, 0.12); }
-      .warn { color: #d29922; background: rgba(210, 153, 34, 0.12); }
-      .fail { color: #f85149; background: rgba(248, 81, 73, 0.12); }
-      .review { color: #a371f7; background: rgba(163, 113, 247, 0.12); }
-      .skipped { color: #8b949e; background: rgba(139, 148, 158, 0.12); }
-      .disabled { color: #79c0ff; background: rgba(88, 166, 255, 0.12); }
+      .pass { color: #8ef0a5; background: rgba(63, 185, 80, 0.16); border-color: rgba(63, 185, 80, 0.28); }
+      .warn { color: #ffd27c; background: rgba(215, 163, 62, 0.16); border-color: rgba(215, 163, 62, 0.28); }
+      .fail { color: #ffaea9; background: rgba(248, 81, 73, 0.14); border-color: rgba(248, 81, 73, 0.28); }
+      .review { color: #d0b0ff; background: rgba(163, 113, 247, 0.14); border-color: rgba(163, 113, 247, 0.28); }
+      .skipped { color: #a8b2bf; background: rgba(153, 164, 179, 0.12); border-color: rgba(153, 164, 179, 0.18); }
+      .disabled { color: #b7d6ff; background: rgba(124, 180, 255, 0.14); border-color: rgba(124, 180, 255, 0.26); }
 
       .brand {
         display: inline-flex;
@@ -108,23 +113,23 @@
       }
 
       main {
-        padding-top: 32px;
-        padding-bottom: 72px;
+        padding-top: 34px;
+        padding-bottom: 88px;
       }
 
       .hero,
       .section {
-        background: linear-gradient(180deg, rgba(22, 27, 34, 0.96), rgba(13, 17, 23, 0.98));
+        background: linear-gradient(180deg, rgba(21, 24, 33, 0.96), rgba(9, 11, 16, 0.98));
         border: 1px solid var(--border);
-        border-radius: 20px;
+        border-radius: 28px;
         box-shadow: var(--shadow);
       }
 
       .hero {
-        padding: 28px;
+        padding: 36px;
         display: grid;
-        gap: 24px;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.8fr);
+        gap: 28px;
+        grid-template-columns: 1fr;
         align-items: start;
       }
 
@@ -136,9 +141,10 @@
 
       .hero h1 {
         margin-top: 16px;
-        font-size: clamp(2.4rem, 4.6vw, 4.4rem);
-        line-height: 0.94;
+        font-size: clamp(2.8rem, 4.8vw, 4.8rem);
+        line-height: 0.92;
         letter-spacing: -0.04em;
+        color: #f8fafc;
       }
 
       .muted {
@@ -151,25 +157,39 @@
         max-width: 72ch;
       }
 
-      .brand-row {
-        margin-top: 18px;
+      .hero-mark {
         display: flex;
+        gap: 22px;
+        align-items: flex-start;
         flex-wrap: wrap;
-        gap: 12px;
+      }
+
+      .hero-logo {
+        width: 98px;
+        height: 98px;
+        flex: none;
+        filter: drop-shadow(0 14px 26px rgba(252, 109, 38, 0.2));
+      }
+
+      .brand-row {
+        margin-top: 22px;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .brand-card {
         min-width: 152px;
-        padding: 14px;
-        border-radius: 16px;
+        padding: 18px;
+        border-radius: 18px;
         border: 1px solid var(--border);
-        background: rgba(110, 118, 129, 0.07);
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.07), rgba(255, 255, 255, 0.02));
       }
 
       .brand-card strong {
         display: block;
         margin-top: 10px;
-        color: #f0f6fc;
+        color: #fff3eb;
       }
 
       .brand-card span {
@@ -181,43 +201,90 @@
       }
 
       .score {
-        padding: 22px;
-        border-radius: 18px;
+        padding: 24px;
+        border-radius: 20px;
         border: 1px solid var(--border);
-        background: linear-gradient(180deg, rgba(31, 111, 235, 0.12), rgba(13, 17, 23, 0.92));
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.12), rgba(9, 11, 16, 0.96));
       }
 
-      .score strong {
+      .score-row .score {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .score-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .score-main {
+        min-width: 0;
+      }
+
+      .score-side {
+        display: grid;
+        gap: 12px;
+        justify-items: start;
+      }
+
+      .score-value {
         display: block;
         margin-top: 10px;
         font-size: 4rem;
         line-height: 0.95;
-        color: #f0f6fc;
+        color: #f8fafc;
       }
 
-      .score .sub {
-        margin-top: 14px;
-        color: var(--muted);
-        line-height: 1.6;
+      .score-meta {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .stat-grid,
+      .score-meta-card {
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .score-meta-card strong {
+        display: block;
+        margin-top: 8px;
+        color: #fff3eb;
+        font-size: 1rem;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+
+      .score-row,
+      .metric-grid,
       .category-grid,
       .controls {
         display: grid;
         gap: 16px;
       }
 
-      .stat-grid {
+      .score-row {
         margin-top: 22px;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid {
+        margin-top: 16px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
       .card {
         padding: 18px;
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1px solid var(--border);
-        background: rgba(110, 118, 129, 0.07);
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.07), rgba(255, 255, 255, 0.02));
       }
 
       .card strong {
@@ -229,7 +296,7 @@
 
       .section {
         margin-top: 22px;
-        padding: 24px;
+        padding: 30px 32px;
       }
 
       .graph-panel {
@@ -255,8 +322,8 @@
 
       .tab-btn {
         border: 1px solid var(--border);
-        border-radius: 10px;
-        background: rgba(110, 118, 129, 0.06);
+        border-radius: 12px;
+        background: rgba(252, 109, 38, 0.06);
         color: var(--muted);
         padding: 10px 14px;
         font: inherit;
@@ -265,9 +332,9 @@
       }
 
       .tab-btn.active {
-        color: #f0f6fc;
-        background: rgba(31, 111, 235, 0.16);
-        border-color: rgba(88, 166, 255, 0.4);
+        color: #fff3eb;
+        background: rgba(252, 109, 38, 0.16);
+        border-color: rgba(252, 109, 38, 0.42);
       }
 
       .tab-panel[hidden] {
@@ -298,7 +365,7 @@
         display: block;
         height: 100%;
         border-radius: 999px;
-        background: linear-gradient(90deg, #1f6feb, #2ea043);
+        background: linear-gradient(90deg, var(--orange), var(--amber));
       }
 
       .list {
@@ -310,8 +377,8 @@
       .list-item,
       details {
         border: 1px solid var(--border);
-        border-radius: 16px;
-        background: rgba(110, 118, 129, 0.06);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.05), rgba(255, 255, 255, 0.02));
       }
 
       .list-item {
@@ -380,7 +447,7 @@
       }
 
       .benchmark-link {
-        color: #79c0ff;
+        color: #ffb088;
         display: inline-block;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -393,7 +460,7 @@
       summary {
         cursor: pointer;
         font-weight: 700;
-        color: #f0f6fc;
+        color: #f8fafc;
       }
 
       .controls {
@@ -427,8 +494,8 @@
       }
 
       .job-pill {
-        background: rgba(31, 111, 235, 0.1);
-        color: #dbe9ff;
+        background: rgba(252, 109, 38, 0.1);
+        color: #ffe3d1;
       }
 
       .mini-pill {
@@ -440,8 +507,8 @@
         position: relative;
         margin-top: 18px;
         border: 1px solid var(--border);
-        border-radius: 18px;
-        background: linear-gradient(180deg, rgba(15, 23, 32, 0.98), rgba(13, 17, 23, 0.98));
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(16, 19, 27, 0.98), rgba(10, 13, 20, 0.98));
         overflow: auto;
       }
 
@@ -480,8 +547,8 @@
         padding: 12px 14px;
         border-radius: 14px;
         border: 1px solid var(--border);
-        background: rgba(22, 27, 34, 0.94);
-        color: #f0f6fc;
+        background: rgba(21, 24, 33, 0.94);
+        color: #f8fafc;
         font-weight: 700;
       }
 
@@ -495,7 +562,7 @@
         position: relative;
         border: 1px solid var(--border);
         border-radius: 16px;
-        background: rgba(110, 118, 129, 0.07);
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.05), rgba(255, 255, 255, 0.015));
         padding: 14px;
         min-height: 108px;
         transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
@@ -503,8 +570,8 @@
 
       .graph-node:hover {
         transform: translateY(-2px);
-        border-color: rgba(88, 166, 255, 0.42);
-        box-shadow: 0 12px 30px rgba(1, 4, 9, 0.35);
+        border-color: rgba(252, 109, 38, 0.42);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
       }
 
       .graph-node.good {
@@ -528,14 +595,14 @@
       }
 
       .graph-node.neutral {
-        border-color: rgba(88, 166, 255, 0.22);
+        border-color: rgba(252, 109, 38, 0.22);
       }
 
       .graph-node h3 {
         margin: 0 0 8px;
         font-size: 1rem;
         line-height: 1.35;
-        color: #f0f6fc;
+        color: #f8fafc;
         overflow-wrap: anywhere;
         word-break: break-word;
       }
@@ -560,9 +627,9 @@
         align-items: center;
         border-radius: 999px;
         padding: 4px 8px;
-        background: rgba(31, 111, 235, 0.12);
-        border: 1px solid rgba(88, 166, 255, 0.18);
-        color: #dbe9ff;
+        background: rgba(252, 109, 38, 0.12);
+        border: 1px solid rgba(252, 109, 38, 0.18);
+        color: #ffe3d1;
         font-size: 0.75rem;
       }
 
@@ -579,15 +646,15 @@
         width: min(360px, calc(100vw - 24px));
         border: 1px solid var(--border-strong);
         border-radius: 16px;
-        background: rgba(22, 27, 34, 0.98);
-        box-shadow: 0 20px 50px rgba(1, 4, 9, 0.5);
+        background: rgba(21, 24, 33, 0.98);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         padding: 14px;
         pointer-events: none;
       }
 
       .graph-tooltip h4 {
         margin: 0 0 8px;
-        color: #f0f6fc;
+        color: #f8fafc;
       }
 
       .graph-tooltip .tooltip-section {
@@ -620,7 +687,7 @@
       }
 
       .edge-needs {
-        stroke: rgba(88, 166, 255, 0.58);
+        stroke: rgba(252, 109, 38, 0.58);
         stroke-width: 2;
         fill: none;
       }
@@ -632,17 +699,47 @@
         stroke-dasharray: 6 5;
       }
 
+      .edge-context {
+        stroke: rgba(88, 166, 255, 0.72);
+        stroke-width: 2;
+        fill: none;
+        stroke-dasharray: 2 8;
+      }
+
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.93em;
       }
 
       @media (max-width: 1120px) {
-        .hero,
-        .stat-grid,
+        .metric-grid,
         .category-grid,
         .controls,
         .benchmark-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .brand-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .hero,
+        .section {
+          padding: 24px;
+        }
+
+        .hero-logo {
+          width: 82px;
+          height: 82px;
+        }
+
+        .score-value {
+          font-size: 3.2rem;
+        }
+
+        .score-meta {
           grid-template-columns: 1fr;
         }
       }
@@ -651,12 +748,6 @@
   <body>
     <header class="topbar">
       <div class="topbar-inner">
-        <div class="repo-strip">
-          <span class="pill">Audit Report</span>
-          <span class="pill"><code><%= ERB::Util.html_escape(@report[:pipeline_path]) %></code></span>
-          <span class="pill">Policy Pack: <strong><%= ERB::Util.html_escape(@report[:summary][:policy_pack_label]) %></strong></span>
-        </div>
-
         <div class="repo-strip">
           <span class="brand pill">
             <svg viewBox="0 0 128 128" aria-hidden="true">
@@ -669,21 +760,10 @@
               <polygon fill="#e24329" points="116,68 64,110 104,36"/>
               <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
             </svg>
-            GitLab
+            GitLab Report
           </span>
-          <span class="brand pill">
-            <svg viewBox="0 0 128 128" aria-hidden="true">
-              <rect x="22" y="26" width="84" height="64" rx="18" fill="#58a6ff"/>
-              <rect x="34" y="38" width="60" height="40" rx="12" fill="#0d1117"/>
-              <circle cx="52" cy="58" r="7" fill="#58a6ff"/>
-              <circle cx="76" cy="58" r="7" fill="#58a6ff"/>
-              <rect x="52" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
-              <rect x="68" y="14" width="8" height="16" rx="4" fill="#2ea043"/>
-              <rect x="48" y="82" width="32" height="10" rx="5" fill="#2ea043"/>
-              <rect x="28" y="96" width="72" height="12" rx="6" fill="#1f6feb"/>
-            </svg>
-            Dependabot
-          </span>
+          <span class="pill"><code><%= ERB::Util.html_escape(@report[:pipeline_path]) %></code></span>
+          <span class="pill">Policy Pack: <strong><%= ERB::Util.html_escape(@report[:summary][:policy_pack_label]) %></strong></span>
         </div>
       </div>
     </header>
@@ -691,18 +771,32 @@
     <main>
       <section class="hero">
         <div class="hero-copy">
-          <span class="badge <%= @report[:summary][:status] == 'strong' ? 'pass' : (@report[:summary][:status] == 'acceptable' ? 'warn' : 'fail') %>">
-            <%= @report[:summary][:status].tr("_", " ") %>
-          </span>
-          <h1>SSDLC report for <code><%= ERB::Util.html_escape(File.basename(@report[:pipeline_path])) %></code></h1>
-          <p class="muted">
-            Analysis generated <%= @report[:generated_at] %>. Active scenarios:
-            <strong><%= @report[:summary][:active_scenarios] %></strong>,
-            skipped:
-            <strong><%= @report[:summary][:skipped_scenarios] %></strong>,
-            scope:
-            <strong><%= @report[:summary][:analysis_scope] %></strong>.
-          </p>
+          <div class="hero-mark">
+            <svg class="hero-logo" viewBox="0 0 128 128" aria-hidden="true">
+              <polygon fill="#e24329" points="64,110 88,36 40,36"/>
+              <polygon fill="#fc6d26" points="64,110 24,36 40,36"/>
+              <polygon fill="#fc6d26" points="64,110 104,36 88,36"/>
+              <polygon fill="#fca326" points="24,36 12,68 40,36"/>
+              <polygon fill="#fca326" points="104,36 116,68 88,36"/>
+              <polygon fill="#e24329" points="12,68 64,110 24,36"/>
+              <polygon fill="#e24329" points="116,68 64,110 104,36"/>
+              <polygon fill="#fc6d26" points="40,36 64,18 88,36 64,110"/>
+            </svg>
+            <div>
+              <span class="badge <%= @report[:summary][:status] == 'strong' ? 'pass' : (@report[:summary][:status] == 'acceptable' ? 'warn' : 'fail') %>">
+                <%= @report[:summary][:status].tr("_", " ") %>
+              </span>
+              <h1>SSDLC report for <code><%= ERB::Util.html_escape(File.basename(@report[:pipeline_path])) %></code></h1>
+              <p class="muted">
+                Analysis generated <%= @report[:generated_at] %>. Active scenarios:
+                <strong><%= @report[:summary][:active_scenarios] %></strong>,
+                skipped:
+                <strong><%= @report[:summary][:skipped_scenarios] %></strong>,
+                scope:
+                <strong><%= @report[:summary][:analysis_scope] %></strong>.
+              </p>
+            </div>
+          </div>
 
           <div class="brand-row">
             <div class="brand-card">
@@ -717,7 +811,33 @@
             </div>
           </div>
 
-          <div class="stat-grid">
+          <div class="score-row">
+            <article class="score">
+              <div class="score-top">
+                <div class="score-main">
+                  <span class="muted">Overall Score</span>
+                  <div class="score-value"><%= @report[:summary][:overall_score] %>/<%= @report[:summary][:max_score] %></div>
+                </div>
+                <div class="score-side">
+                  <div class="badge <%= @report[:summary][:status] == 'strong' ? 'pass' : (@report[:summary][:status] == 'acceptable' ? 'warn' : 'fail') %>" style="width: fit-content;">
+                    Grade <%= @report[:summary][:grade] %>
+                  </div>
+                </div>
+              </div>
+              <div class="score-meta">
+                <div class="score-meta-card">
+                  <span class="muted">Policy</span>
+                  <strong><%= @report[:summary][:policy_pack_label] %> (<%= @report[:summary][:policy_source] %>)</strong>
+                </div>
+                <div class="score-meta-card">
+                  <span class="muted">Scope</span>
+                  <strong><%= @report[:summary][:analysis_scope] %></strong>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="metric-grid">
             <article class="card">
               <span class="muted">Jobs</span>
               <strong><%= @report[:summary][:total_jobs] %></strong>
@@ -745,23 +865,12 @@
             </article>
           </div>
         </div>
-
-        <aside class="score">
-          <span class="muted">Overall Score</span>
-          <strong><%= @report[:summary][:overall_score] %>/<%= @report[:summary][:max_score] %></strong>
-          <div class="badge <%= @report[:summary][:status] == 'strong' ? 'pass' : (@report[:summary][:status] == 'acceptable' ? 'warn' : 'fail') %>" style="margin-top: 14px; width: fit-content;">
-            Grade <%= @report[:summary][:grade] %>
-          </div>
-          <div class="sub">
-            <div><strong>Pipeline:</strong> <code><%= ERB::Util.html_escape(@report[:pipeline_path]) %></code></div>
-            <div><strong>Policy:</strong> <%= @report[:summary][:policy_pack_label] %> (<%= @report[:summary][:policy_source] %>)</div>
-            <div><strong>Scope:</strong> <%= @report[:summary][:analysis_scope] %></div>
-          </div>
-        </aside>
       </section>
 
       <div class="tabbar" role="tablist" aria-label="Report views">
         <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="lint">Lint</button>
+        <button class="tab-btn" data-tab="trends">Trends</button>
         <button class="tab-btn" data-tab="benchmark">OWASP SAMM</button>
         <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
         <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
@@ -813,7 +922,161 @@
               </div>
             <% end %>
           </div>
+
+          <div class="list-item">
+            <strong>Analysis Context</strong>
+            <div class="finding-copy"><strong>Detected stacks:</strong> <%= Array(@report.dig(:metadata, :detected_stacks)).any? ? @report.dig(:metadata, :detected_stacks).join(", ") : "none detected" %></div>
+            <div class="finding-copy"><strong>Template includes:</strong> <%= Array(@report.dig(:metadata, :template_includes)).any? ? @report.dig(:metadata, :template_includes).join(" | ") : "none detected" %></div>
+            <% if @report.dig(:metadata, :context_manifest) %>
+              <div class="finding-copy"><strong>Context manifest:</strong> <code><%= ERB::Util.html_escape(@report.dig(:metadata, :context_manifest)) %></code></div>
+            <% end %>
+            <% if Array(@report.dig(:metadata, :context_projects)).any? %>
+              <div class="finding-copy"><strong>Context projects:</strong> <%= @report.dig(:metadata, :context_projects).join(", ") %></div>
+            <% end %>
+            <% if Array(@report.dig(:metadata, :resolved_project_includes)).any? %>
+              <div class="finding-copy"><strong>Resolved project include snapshots:</strong> <%= @report.dig(:metadata, :resolved_project_includes).map { |item| item.is_a?(Hash) ? item["file"] || item[:file] : item }.join(" | ") %></div>
+            <% end %>
+          </div>
         </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="lint" hidden>
+        <h2>Lint and Best Practices</h2>
+        <% lint = @report[:lint] || {} %>
+        <div class="category-grid">
+          <article class="card">
+            <span class="muted">Lint Status</span>
+            <strong><%= lint[:status] || "n/a" %></strong>
+            <div class="badge <%= lint[:status] || "skipped" %>" style="margin-top: 12px; width: fit-content;"><%= lint[:status] || "n/a" %></div>
+            <div class="muted" style="margin-top: 12px;"><%= lint[:summary] || "No lint summary available." %></div>
+          </article>
+          <article class="card">
+            <span class="muted">Best-Practice Guidance</span>
+            <strong><%= @report[:recommendations].size %></strong>
+            <div class="muted">Global SSDLC and quality recommendations generated for this pipeline.</div>
+          </article>
+        </div>
+
+        <div class="list">
+          <div class="list-item">
+            <strong>Lint Findings</strong>
+            <% if Array(lint[:findings]).empty? %>
+              <div class="finding-copy">No structural lint findings were detected.</div>
+            <% else %>
+              <% Array(lint[:findings]).each do |finding| %>
+                <div class="finding-copy">
+                  <span class="badge <%= finding[:status] %>"><%= finding[:status] %></span>
+                  <strong><%= finding[:message] %></strong>
+                  <% if Array(finding[:evidence]).any? %>
+                    <div class="finding-copy"><%= Array(finding[:evidence]).join(" | ") %></div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+
+          <div class="list-item">
+            <strong>Loader Warnings</strong>
+            <% if @report[:loader_warnings].empty? %>
+              <div class="finding-copy">No parser or loader warnings were emitted.</div>
+            <% else %>
+              <div class="job-pills" style="margin-top:12px;">
+                <% @report[:loader_warnings].each do |warning| %>
+                  <span class="mini-pill"><%= warning %></span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="list-item">
+            <strong>Best-Practice Recommendations</strong>
+            <% if @report[:recommendations].empty? %>
+              <div class="finding-copy">No global best-practice recommendations were generated.</div>
+            <% else %>
+              <div class="job-pills" style="margin-top:12px;">
+                <% @report[:recommendations].each do |item| %>
+                  <span class="mini-pill"><%= item %></span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </section>
+
+      <section class="section tab-panel" data-panel="trends" hidden>
+        <h2>Historical Trend Dashboard</h2>
+        <% history = @report[:history] || {} %>
+        <% if history[:enabled] %>
+          <div class="category-grid">
+            <article class="card">
+              <span class="muted">History File</span>
+              <strong><%= ERB::Util.html_escape(history[:path].to_s) %></strong>
+              <div class="muted">Persistent JSON store used for score tracking</div>
+            </article>
+            <article class="card">
+              <span class="muted">Stored Runs</span>
+              <strong><%= history[:total_runs] %></strong>
+              <div class="muted">Total scans currently recorded</div>
+            </article>
+            <article class="card">
+              <span class="muted">Previous Score</span>
+              <strong><%= history[:previous_score] || "n/a" %></strong>
+              <div class="muted">Most recent score before this report</div>
+            </article>
+            <article class="card">
+              <span class="muted">Score Delta</span>
+              <strong><%= history[:score_delta] || "n/a" %></strong>
+              <div class="muted">Difference versus the previous stored scan</div>
+            </article>
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <strong>Recent Runs</strong>
+              <% if Array(history[:recent_runs]).empty? %>
+                <div class="finding-copy">No previous scans are available yet.</div>
+              <% else %>
+                <div class="job-pills" style="margin-top:12px;">
+                  <% history[:recent_runs].each do |run| %>
+                    <span class="mini-pill"><%= "#{run[:generated_at]} · #{run[:overall_score]}/#{run[:max_score]} · #{run[:grade]} · #{run[:policy_pack_name]}" %></span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="list-item">
+              <strong>Category Drift</strong>
+              <% if Array(history[:category_deltas]).empty? %>
+                <div class="finding-copy">No previous run is available for category comparison.</div>
+              <% else %>
+                <div class="job-pills" style="margin-top:12px;">
+                  <% history[:category_deltas].each do |delta| %>
+                    <span class="mini-pill"><%= "#{delta[:title]}: #{delta[:current_score]}/#{delta[:max_score]} (delta #{delta[:delta]})" %></span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="list-item">
+              <strong>Benchmark Drift</strong>
+              <% if Array(history[:benchmark_deltas]).empty? %>
+                <div class="finding-copy">No previous run is available for benchmark comparison.</div>
+              <% else %>
+                <div class="job-pills" style="margin-top:12px;">
+                  <% history[:benchmark_deltas].each do |delta| %>
+                    <span class="mini-pill"><%= "#{delta[:title]}: #{delta[:current_score]}/100 (delta #{delta[:delta]})" %></span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <div class="list">
+            <div class="list-item">
+              Historical trends are disabled for this report. Start the scan with a history store file to persist results and render score drift over time.
+            </div>
+          </div>
+        <% end %>
       </section>
 
       <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
@@ -908,6 +1171,7 @@
           <span class="mini-pill">yellow: mixed</span>
           <span class="mini-pill">red: weak spot</span>
           <span class="mini-pill">violet: trigger/downstream</span>
+          <span class="mini-pill">blue dashed: multi-project context link</span>
         </div>
 
         <div class="graph-shell">
@@ -1235,7 +1499,13 @@
             var curve = Math.max(50, Math.abs(endX - startX) * 0.35);
             var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", "M " + startX + " " + startY + " C " + (startX + curve) + " " + startY + ", " + (endX - curve) + " " + endY + ", " + endX + " " + endY);
-            path.setAttribute("class", edge.type === "trigger" ? "edge-trigger" : "edge-needs");
+            var edgeClass = "edge-needs";
+            if (edge.type === "trigger") {
+              edgeClass = "edge-trigger";
+            } else if (edge.type === "context") {
+              edgeClass = "edge-context";
+            }
+            path.setAttribute("class", edgeClass);
             svg.appendChild(path);
           });
         }

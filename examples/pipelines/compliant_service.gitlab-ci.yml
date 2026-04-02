@@ -17,6 +17,11 @@ build_app:
   script:
     - bundle install
     - bundle exec rake build
+    - syft dir:. -o cyclonedx-json=sbom.cyclonedx.json
+  artifacts:
+    paths:
+      - pkg/service.gem
+      - sbom.cyclonedx.json
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -44,6 +49,26 @@ artifact_scan:
   rules:
     - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"'
 
+secret_detection:
+  stage: security
+  script:
+    - gitleaks detect --no-git --exit-code 1 --report-format json --report-path gl-secret-detection-report.json .
+  artifacts:
+    paths:
+      - gl-secret-detection-report.json
+  rules:
+    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"'
+
+iac_policy:
+  stage: security
+  script:
+    - trivy config --exit-code 1 k8s/
+  artifacts:
+    paths:
+      - trivy-config-report.json
+  rules:
+    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "merge_request_event"'
+
 deploy_test:
   stage: deploy
   environment:
@@ -52,7 +77,21 @@ deploy_test:
     - unit_tests
     - sast
     - artifact_scan
+    - secret_detection
+    - iac_policy
   script:
     - kubectl apply -f k8s/qa.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dast:
+  stage: deploy
+  needs:
+    - deploy_test
+  script:
+    - zap-baseline.py -t https://qa.example.internal -J gl-dast-report.json
+  artifacts:
+    paths:
+      - gl-dast-report.json
   rules:
     - if: '$CI_COMMIT_BRANCH'

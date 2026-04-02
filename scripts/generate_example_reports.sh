@@ -31,3 +31,12 @@ mkdir -p "$REPORT_DIR"
 
 "$BIN" scan "$PIPELINE_DIR/upload_bundle_demo/.gitlab-ci.yml" --policy-pack balanced --format html --output "$REPORT_DIR/upload_bundle_demo.html"
 "$BIN" scan "$PIPELINE_DIR/upload_bundle_demo/.gitlab-ci.yml" --policy-pack balanced --format text --output "$REPORT_DIR/upload_bundle_demo.txt"
+
+"$BIN" scan "$PIPELINE_DIR/multi_project_app.gitlab-ci.yml" --context-file "$PIPELINE_DIR/multi_project_context.json" --policy-pack balanced --format html --output "$REPORT_DIR/multi_project_context.html"
+"$BIN" scan "$PIPELINE_DIR/multi_project_app.gitlab-ci.yml" --context-file "$PIPELINE_DIR/multi_project_context.json" --policy-pack balanced --format text --output "$REPORT_DIR/multi_project_context.txt"
+
+HISTORY_FILE="$REPORT_DIR/compliant_service.history.json"
+rm -f "$HISTORY_FILE"
+"$BIN" scan "$PIPELINE_DIR/compliant_service.gitlab-ci.yml" --policy-pack balanced --history-file "$HISTORY_FILE" --format text --output /tmp/gitlab-ci-auditor-history-primer.txt
+"$BIN" scan "$PIPELINE_DIR/compliant_service.gitlab-ci.yml" --policy-pack balanced --history-file "$HISTORY_FILE" --format html --output "$REPORT_DIR/compliant_service_trends.html"
+"$BIN" scan "$PIPELINE_DIR/compliant_service.gitlab-ci.yml" --policy-pack balanced --history-file "$HISTORY_FILE" --format text --output "$REPORT_DIR/compliant_service_trends.txt"

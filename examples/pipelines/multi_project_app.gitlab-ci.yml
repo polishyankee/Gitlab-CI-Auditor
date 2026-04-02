@@ -5,35 +5,27 @@ workflow:
 stages:
   - build
   - security
-  - publish
-
-default:
-  image: gradle:8.7.0-jdk17
+  - orchestrate
 
 build_and_test:
   stage: build
+  image: maven:3.9.6-eclipse-temurin-17
   script:
-    - ./gradlew clean build jacocoTestReport cyclonedxBom
+    - mvn -B clean verify cyclonedx:makeAggregateBom
   artifacts:
     paths:
-      - build/reports/jacoco/test/jacocoTestReport.xml
-      - build/reports/bom.cyclonedx.json
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
+      - target/site/jacoco/jacoco.xml
+      - target/bom.cyclonedx.xml
 
 sast:
   stage: security
   script:
     - semgrep --config auto .
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
 
 dependency_scan:
   stage: security
   script:
-    - grype .
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - trivy fs --exit-code 1 .
 
 secret_detection:
   stage: security
@@ -42,12 +34,8 @@ secret_detection:
   artifacts:
     paths:
       - gl-secret-detection-report.json
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
 
-publish_package:
-  stage: publish
+handoff_to_delivery:
+  stage: orchestrate
   script:
-    - ./gradlew publish
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - echo "handoff to delivery repo"

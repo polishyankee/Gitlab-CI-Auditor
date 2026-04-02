@@ -1,25 +1,29 @@
 GitLab CI SSDLC Audit
 Pipeline: examples/pipelines/samm_question_gaps.gitlab-ci.yml
-Score: 26/100 (F)
+Score: 31/120 (F)
 Status: critical
 Policy Pack: Strict Platform (policy_pack)
 Scope: complete (pipeline_files=1, downstream_resolved=0, downstream_unresolved=0)
 
 Categories:
-  - Execution Path Coverage: 0/20 [fail] 0/8 active scenarios satisfy the selected SSDLC policy pack
+  - Execution Path Coverage: 0/15 [fail] 0/8 active scenarios satisfy the selected SSDLC policy pack
   - Unit Test Execution: 0/10 [fail] 0 pass, 0 warn, 8 missing
   - Coverage Reporting: 0/5 [fail] 0 pass, 0 warn, 8 missing
-  - SAST: 0/15 [fail] 0 pass, 0 warn, 8 missing
-  - Artifact/Image Scanning: 0/15 [fail] 0 pass, 0 warn, 8 missing
-  - Automated Test Deployment: 8/15 [warn] 0 pass, 8 warn, 0 missing
+  - SAST: 0/12 [fail] 0 pass, 0 warn, 8 missing
+  - Artifact/Image Scanning: 0/12 [fail] 0 pass, 0 warn, 8 missing
+  - SBOM Evidence: 0/8 [fail] 0 pass, 0 warn, 8 missing
+  - Secret Detection: 0/10 [fail] 0 pass, 0 warn, 8 missing
+  - IaC Policy Scanning: 8/8 [disabled] Disabled by the selected policy pack
+  - DAST: 0/10 [fail] 0 pass, 0 warn, 8 missing
+  - Automated Test Deployment: 5/10 [warn] 0 pass, 8 warn, 0 missing
   - Security Policies: 8/10 [warn] 1 security policy violations detected
   - Maintainability and Complexity: 10/10 [pass] The pipeline is relatively easy to maintain
 
 OWASP SAMM v2:
-  observed Analysis Scope: Analysis scope: complete | Pipeline files analyzed: 1 | Active scenarios analyzed: 8 | Unique active jobs mapped into the benchmark: 2 | Resolved downstream pipelines: 0 | No unresolved downstream pipelines detected
+  observed Analysis Scope: Analysis scope: complete | Pipeline files analyzed: 1 | Active scenarios analyzed: 8 | Unique active jobs mapped into the benchmark: 2 | Resolved downstream pipelines: 0 | No unresolved downstream pipelines detected | No explicit multi-project context manifest was supplied
   observed Technology and Flow Signals: Detected stacks: Java | Stage model: build, deploy | workflow:rules is present on every analyzed pipeline file | Declared environments: test
-  observed Controls and Gates: Unit test execution: 0 pass, 0 warn, 8 missing across 8 active scenarios | Coverage reporting: 0 pass, 0 warn, 8 missing across 8 active scenarios | SAST coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios | Artifact or image scanning: 0 pass, 0 warn, 8 missing across 8 active scenarios | Automated test deployment: 0 pass, 8 warn, 0 missing across 8 active scenarios | Critical quality and security jobs are blocking
-  observed Security Tooling: SAST families: none detected | Artifact scan families: none detected | Image scan families: none detected | Secret-management signals: none detected | Integrity-verification signals: none detected
+  observed Controls and Gates: Unit test execution: 0 pass, 0 warn, 8 missing across 8 active scenarios | Coverage reporting: 0 pass, 0 warn, 8 missing across 8 active scenarios | SAST coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios | Artifact or image scanning: 0 pass, 0 warn, 8 missing across 8 active scenarios | SBOM coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios | Secret-detection coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios | IaC policy coverage: 0 pass, 0 warn, 0 missing, 8 disabled across 8 active scenarios | DAST coverage: 0 pass, 0 warn, 8 missing across 8 active scenarios | Automated test deployment: 0 pass, 8 warn, 0 missing across 8 active scenarios | Critical quality and security jobs are blocking
+  observed Security Tooling: SAST families: none detected | Artifact scan families: none detected | Image scan families: none detected | SBOM families: none detected | Secret-detection families: none detected | IaC families: none detected | DAST families: none detected | Secret-management signals: none detected | Integrity-verification signals: none detected
   observed Reports and Feedback Loops: Report artifacts: none detected | Security report artifacts: none detected | 1 policy findings reduce benchmark confidence on the analyzed YAML | Cross-component scope is limited to a single pipeline file
   observed Upstream Question Mapping: Mapped implementation questions: 18 | Question status counts: 1 pass, 4 warn, 13 fail, 4 review | Questions that require manual or process evidence: 4 | Some SAMM questions remain review-oriented because CI/CD YAML cannot prove organizational process maturity on its own
   - Secure Build: level 1/3 [fail] alignment=30/100 confidence=high
@@ -29,6 +33,7 @@ OWASP SAMM v2:
     rule [fail]: Coverage evidence is published for build outputs - 0 pass, 0 warn, 8 missing across active scenarios.
     rule [fail]: Stack-aware SAST is enforced in the build flow - 0 pass, 0 warn, 8 missing across active scenarios.
     rule [fail]: Artifact or image scanning is enforced on the build path - 0 pass, 0 warn, 8 missing across active scenarios.
+    rule [fail]: SBOM evidence accompanies supported build outputs - 0 pass, 0 warn, 8 missing across active scenarios.
     rule [pass]: Critical quality and security gates block progression - No `allow_failure` exception was detected on critical quality or security jobs.
     questions: 1 pass, 1 warn, 4 fail, 0 review
     question [pass] I-SB-1-A (partial): Is your full build process formally described?
@@ -55,6 +60,8 @@ OWASP SAMM v2:
     rule [fail]: Deployment is gated by tests and security scans - Deployment is not clearly gated by the expected test and security controls.
     rule [fail]: External secret management is referenced in deployment automation - No external secret-management signal was detected in deployment automation.
     rule [fail]: Artifact integrity is verified before deployment - No signature or checksum verification was detected before deployment.
+    rule [pass]: Infrastructure or deployment policy is validated as code - IaC validation is not required by the selected policy pack.
+    rule [fail]: DAST validates the deployed attack surface - 0 pass, 0 warn, 8 missing across active scenarios.
     rule [warn]: A production deployment path is visible - No production deployment path was detected in the analyzed YAML.
     rule [pass]: Deployment hygiene remains policy-compliant - No high-risk deployment hygiene violations were detected.
     questions: 0 pass, 3 warn, 3 fail, 0 review
@@ -104,14 +111,14 @@ OWASP SAMM v2:
       recommendation: Export structured findings so metric effectiveness can be evaluated outside the pipeline.
 
 Scenario Results:
-  - push -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> master: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> develop: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> feature/audit-coverage: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> release/1.0.0: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> hotfix/urgent-fix: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - push -> test: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
-  - merge_request_event feature/merge-request -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, deploy_test=warn]
+  - push -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> master: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> develop: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> feature/audit-coverage: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> release/1.0.0: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> hotfix/urgent-fix: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - push -> test: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
+  - merge_request_event feature/merge-request -> main: warn [unit_tests=missing, coverage_report=missing, sast=missing, scan=missing, sbom=missing, secret_detection=missing, iac=disabled, dast=missing, deploy_test=warn]
   - tag v1.0.0: skipped (workflow rules prevented pipeline creation)
 
 SSDLC Findings:
@@ -131,6 +138,18 @@ SSDLC Findings:
     issue: 8/8 scenarios have no artifact or image scan, and 0 scenarios run the scan in a non-enforcing mode.
     recommendation: Add a mandatory dependency, artifact, or image scan after build output is produced.
     how_to_fix: For application or source scans, use tools such as `trivy fs`, `dependency-check`, or `grype`. For container images, add `trivy image` after image build and treat the exit code as a gate.
+  - [high] SBOM evidence is not complete
+    issue: 8/8 scenarios do not publish SBOM evidence, and 0 scenarios only do so in a non-enforcing context.
+    recommendation: Publish a machine-readable SBOM for every supported build output.
+    how_to_fix: Generate `CycloneDX` or `SPDX` artifacts with tools such as `syft`, `cdxgen`, `trivy sbom`, or `snyk sbom`, and keep the files in `artifacts.paths`.
+  - [high] Secret-detection coverage is not complete
+    issue: 8/8 scenarios have no secret-detection scan, and 0 scenarios run it in a non-enforcing mode.
+    recommendation: Scan repository content for committed secrets on merge requests and protected branches.
+    how_to_fix: Add `gitleaks`, `trufflehog`, `detect-secrets`, or the GitLab Secret Detection template, publish the report artifact, and keep `allow_failure` disabled.
+  - [high] DAST coverage is not complete
+    issue: 8/8 scenarios do not run DAST against a deployed environment, and 0 scenarios run it in a non-enforcing mode.
+    recommendation: Run DAST against a test, review, or staging environment after deployment.
+    how_to_fix: Add GitLab DAST, OWASP ZAP, StackHawk, Burp, or Nikto after the deploy-to-test step. Make the job blocking and publish the machine-readable report.
   - [medium] Automated test deployment is not complete
     issue: 0/8 scenarios do not deploy automatically to a test environment, and 8 scenarios do so in a non-enforcing way.
     recommendation: Deploy automatically to a test environment after tests and scans succeed.
@@ -151,5 +170,9 @@ Recommendations:
   - Publish explicit coverage artifacts such as JaCoCo, Cobertura, or LCOV so coverage reporting is visible per scenario
   - Add enforced SAST without allow_failure, ideally through a GitLab template or a dedicated scanner job
   - Add artifact scanning or image scanning based on the build type and treat the result as a gate
+  - Generate and publish a machine-readable SBOM such as CycloneDX or SPDX for each supported build output
+  - Add secret-detection scanning with a blocking policy for merge requests and protected branches
+  - Run DAST against a deployed test, review, or staging environment and make the result blocking
   - Automate deployment to a test environment and declare it explicitly in the environment section
+  - If build, deploy, or security evidence lives in multiple repositories, provide a context manifest so the graph can join them into one audit scope
   - Review scenarios blocked by workflow rules if they should remain business-supported paths

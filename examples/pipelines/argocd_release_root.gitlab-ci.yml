@@ -34,10 +34,27 @@ trivy_dependency:
       - gl-dependency-scanning-report.json
       - sbom.cyclonedx.json
 
+secret_detection:
+  stage: security
+  image: zricethezav/gitleaks:v8.18.4
+  script:
+    - gitleaks detect --no-git --exit-code 1 --report-format json --report-path gl-secret-detection-report.json .
+  artifacts:
+    paths:
+      - gl-secret-detection-report.json
+
+iac_policy:
+  stage: security
+  image: openpolicyagent/conftest:v0.56.0
+  script:
+    - conftest test argocd/app.yaml --output json > conftest-report.json
+  artifacts:
+    paths:
+      - conftest-report.json
+
 deploy_via_argocd:
   stage: orchestrate
   trigger:
     project: platform/argocd-deploy
     file: deploy.gitlab-ci.yml
     branch: main
-

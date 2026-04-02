@@ -1,7 +1,7 @@
 module GitlabCiAuditor
   class Analyzer
     DEFAULT_POLICY = GitlabCiAuditor::PolicyLoader.load
-    CONTROL_KEYS = %i[unit_tests coverage_report sast scan deploy_test].freeze
+    CONTROL_KEYS = %i[unit_tests coverage_report sast scan sbom secret_detection iac dast deploy_test].freeze
     STACK_LABELS = {
       "dotnet" => ".NET",
       "node_js" => "Node / JS",
@@ -43,6 +43,31 @@ module GitlabCiAuditor
       "docker_scan" => "docker scan",
       "snyk_container" => "snyk container",
       "anchore" => "Anchore",
+      "syft" => "syft",
+      "cdxgen" => "cdxgen",
+      "trivy_sbom" => "trivy sbom",
+      "snyk_sbom" => "snyk sbom",
+      "cyclonedx_cli" => "CycloneDX CLI",
+      "spdx_tools" => "SPDX tools",
+      "gitlab_dast" => "GitLab DAST",
+      "owasp_zap" => "OWASP ZAP",
+      "stackhawk" => "StackHawk",
+      "burp" => "Burp",
+      "nikto" => "Nikto",
+      "gitlab_secret_detection" => "GitLab Secret Detection",
+      "gitleaks" => "gitleaks",
+      "trufflehog" => "trufflehog",
+      "detect_secrets" => "detect-secrets",
+      "tfsec" => "tfsec",
+      "checkov" => "checkov",
+      "terrascan" => "terrascan",
+      "kics" => "KICS",
+      "trivy_config" => "trivy config",
+      "conftest" => "conftest",
+      "kubeconform" => "kubeconform",
+      "kube_score" => "kube-score",
+      "datree" => "Datree",
+      "ansible_lint" => "ansible-lint",
       "vault" => "HashiCorp Vault",
       "aws_secretsmanager" => "AWS Secrets Manager",
       "azure_keyvault" => "Azure Key Vault",
@@ -99,6 +124,39 @@ module GitlabCiAuditor
       "snyk_container" => /\bsnyk\s+container\b/,
       "anchore" => /\banchore\b/
     }.freeze
+    SBOM_TOOL_PATTERNS = {
+      "syft" => /\bsyft\b/,
+      "cdxgen" => /\bcdxgen\b/,
+      "trivy_sbom" => /\btrivy\s+sbom\b|\btrivy\b.*\b(?:cyclonedx|spdx|sbom)\b/,
+      "snyk_sbom" => /\bsnyk\s+sbom\b/,
+      "cyclonedx_cli" => /\bcyclonedx\b/,
+      "spdx_tools" => /\bspdx\b/
+    }.freeze
+    DAST_TOOL_PATTERNS = {
+      "gitlab_dast" => /\bgitlab[-_ ]?dast\b|\bgl-dast-report\.json\b|\bdast(?:[-_ ](?:api|scan|website))\b/,
+      "owasp_zap" => /\b(?:zap-baseline\.py|zap-full-scan\.py|owasp\s+zap|zaproxy)\b/,
+      "stackhawk" => /\b(?:stackhawk|hawkscan)\b/,
+      "burp" => /\bburp(?:suite)?\b/,
+      "nikto" => /\bnikto\b/
+    }.freeze
+    SECRET_DETECTION_TOOL_PATTERNS = {
+      "gitlab_secret_detection" => /\bsecret[-_ ]detection\b|\bgl-secret-detection-report\.json\b/,
+      "gitleaks" => /\bgitleaks\b/,
+      "trufflehog" => /\btrufflehog\b/,
+      "detect_secrets" => /\bdetect-secrets\b/
+    }.freeze
+    IAC_TOOL_PATTERNS = {
+      "tfsec" => /\btfsec\b/,
+      "checkov" => /\bcheckov\b/,
+      "terrascan" => /\bterrascan\b/,
+      "kics" => /\bkics\b/,
+      "trivy_config" => /\btrivy\s+config\b/,
+      "conftest" => /\bconftest\b/,
+      "kubeconform" => /\bkubeconform\b/,
+      "kube_score" => /\bkube-score\b/,
+      "datree" => /\bdatree\b/,
+      "ansible_lint" => /\bansible-lint\b/
+    }.freeze
     SECRET_MANAGEMENT_PATTERNS = {
       "vault" => /\bvault\b/,
       "aws_secretsmanager" => /\baws\s+secretsmanager\b/,
@@ -127,7 +185,11 @@ module GitlabCiAuditor
       "coverage_report" => /jacoco(?:\.exec|\.xml)?|site\/jacoco|jacoco\/.*\.xml|cobertura(?:-coverage)?\.xml|lcov\.info|coverage\/.*\.(xml|exec|info)/,
       "sast_report" => /\bgl-sast-report\.json\b|\bsast.*\.sarif\b|\bcodeql.*\.sarif\b|\bsemgrep.*\.sarif\b|\bsarif\b/,
       "dependency_scanning_report" => /\bgl-dependency-scanning-report\.json\b|\bdependency[-_ ]scanning.*\.json\b|\bdependency-check-report\.(json|xml|html)\b|\bcyclonedx.*\.(json|xml)\b|\bsbom\b/,
-      "container_scanning_report" => /\bgl-container-scanning-report\.json\b|\bcontainer[-_ ]scanning.*\.json\b|\btrivy.*\.json\b|\bgrype.*\.json\b/
+      "container_scanning_report" => /\bgl-container-scanning-report\.json\b|\bcontainer[-_ ]scanning.*\.json\b|\btrivy.*\.json\b|\bgrype.*\.json\b/,
+      "sbom_report" => /\b(?:cyclonedx|spdx|sbom).*\.(json|xml)\b|\b(?:cyclonedx|spdx|sbom)\b/,
+      "dast_report" => /\bgl-dast-report\.json\b|\bdast.*\.(json|xml|html)\b|\bzap.*\.(json|xml|html)\b|\bstackhawk.*\.json\b|\bburp.*\.(xml|json)\b/,
+      "secret_detection_report" => /\bgl-secret-detection-report\.json\b|\bgitleaks.*\.(json|sarif)\b|\btrufflehog.*\.json\b|\bdetect-secrets.*\.(json|baseline)\b/,
+      "iac_report" => /\b(?:checkov|tfsec|kics|terrascan|trivy-config|trivy_config|kubeconform|conftest|datree).*\.(json|sarif|xml)\b/
     }.freeze
     SHELL_SCRIPT_EXTENSIONS = %w[.sh .bash .zsh .ksh].freeze
     SHELL_SCRIPT_COMMANDS = %w[bash sh source .].freeze
@@ -509,7 +571,9 @@ module GitlabCiAuditor
       coverage = coverage_summary(active_scenarios)
       categories = build_categories(active_scenarios, coverage, security_findings, maintainability)
       benchmarks = build_benchmarks(active_scenarios, coverage, security_findings)
+      lint = build_lint_summary(maintainability)
       overall_score = categories.sum { |category| category[:score] }
+      max_score = categories.sum { |category| category[:max_score] }
       strengths = strengths(active_scenarios, security_findings, maintainability)
       recommendations = recommendations(coverage, security_findings, maintainability, inactive_scenarios)
       ssdlc_findings = build_ssdlc_findings(active_scenarios, coverage, inactive_scenarios)
@@ -524,9 +588,9 @@ module GitlabCiAuditor
         pipeline_path: relative_pipeline_path(@pipeline.path),
         summary: {
           overall_score: overall_score,
-          max_score: categories.sum { |category| category[:max_score] },
-          grade: grade_for(overall_score),
-          status: status_for_score(overall_score),
+          max_score: max_score,
+          grade: grade_for(overall_score, max_score),
+          status: status_for_score(overall_score, max_score),
           active_scenarios: active_scenarios.size,
           skipped_scenarios: inactive_scenarios.size,
           total_jobs: total_job_count,
@@ -540,6 +604,7 @@ module GitlabCiAuditor
           policy_source: policy_meta[:source]
         },
         categories: categories,
+        lint: lint,
         benchmarks: benchmarks,
         graph: graph,
         scenarios: active_scenarios + inactive_scenarios,
@@ -552,8 +617,11 @@ module GitlabCiAuditor
         metadata: {
           template_includes: pipeline_files.flat_map { |pipeline| pipeline.include_metadata[:template_includes] }.uniq,
           resolved_local_includes: pipeline_files.flat_map { |pipeline| pipeline.include_metadata[:resolved_local_includes] }.uniq,
+          resolved_project_includes: pipeline_files.flat_map { |pipeline| Array(pipeline.include_metadata[:resolved_project_includes]) }.uniq,
           unresolved_includes: pipeline_files.flat_map { |pipeline| pipeline.include_metadata[:unresolved_includes] }.uniq,
           resolved_downstream_pipelines: resolved_downstreams,
+          context_manifest: @pipeline.include_metadata[:context_manifest],
+          context_projects: Array(@pipeline.include_metadata[:context_projects]),
           detected_stacks: detected_stack_labels,
           detected_security_tools: detected_security_tools,
           unresolved_downstream_pipelines: unresolved_downstreams.map do |reference|
@@ -654,6 +722,10 @@ module GitlabCiAuditor
         sast_tools: detect_sast_tools(text),
         artifact_scan_tools: detect_artifact_scan_tools(text),
         image_scan_tools: detect_image_scan_tools(text),
+        sbom_tools: detect_sbom_tools(text),
+        secret_detection_tools: detect_secret_detection_tools(text),
+        iac_tools: detect_iac_tools(text),
+        dast_tools: detect_dast_tools(text),
         secret_management_tools: detect_secret_management_tools(text),
         artifact_signing_tools: detect_artifact_signing_tools(text),
         integrity_verification_tools: detect_integrity_verification_tools(text),
@@ -800,6 +872,10 @@ module GitlabCiAuditor
       classifications << "sast" if sast_job?(text)
       classifications << "artifact_scan" if artifact_scan_job?(text)
       classifications << "image_scan" if image_scan_job?(text)
+      classifications << "sbom" if sbom_job?(artifact_strings, text)
+      classifications << "secret_detection" if secret_detection_job?(text)
+      classifications << "iac" if iac_job?(text)
+      classifications << "dast" if dast_job?(text)
       classifications << "deploy_test" if deploy_test_job?(text, environment_name)
       classifications << "deploy_prod" if deploy_production_job?(environment_name)
       classifications
@@ -847,6 +923,22 @@ module GitlabCiAuditor
       detect_image_scan_tools(text).any?
     end
 
+    def sbom_job?(artifact_strings, text)
+      detect_sbom_tools(text).any? || detect_report_families(artifact_strings).include?("sbom_report")
+    end
+
+    def secret_detection_job?(text)
+      detect_secret_detection_tools(text).any?
+    end
+
+    def iac_job?(text)
+      detect_iac_tools(text).any?
+    end
+
+    def dast_job?(text)
+      detect_dast_tools(text).any?
+    end
+
     def deploy_test_job?(text, environment_name)
       deployment_like = text.match?(/\b(deploy|kubectl apply|helm upgrade|ansible-playbook|terraform apply|oc apply|scp |rsync |argocd app (?:sync|wait|create|set|rollback)|argocd appset|argocd app delete)\b/)
       non_prod_env = environment_name.to_s.match?(environment_pattern(@policy["test_environments"]))
@@ -863,6 +955,10 @@ module GitlabCiAuditor
         coverage_report: control_required?(:coverage_report) ? control_state_for(active_jobs, "coverage_report") : disabled_control("Disabled by the selected policy pack"),
         sast: control_required?(:sast) ? sast_control_state(active_jobs, sast_stack_coverage || scenario_sast_stack_coverage(active_jobs)) : disabled_control("Disabled by the selected policy pack"),
         scan: control_required?(:scan) ? scan_control_state(active_jobs) : disabled_control("Disabled by the selected policy pack"),
+        sbom: control_required?(:sbom) ? control_state_for(active_jobs, "sbom") : disabled_control(control_disabled_reason(:sbom)),
+        secret_detection: control_required?(:secret_detection) ? control_state_for(active_jobs, "secret_detection") : disabled_control(control_disabled_reason(:secret_detection)),
+        iac: control_required?(:iac) ? control_state_for(active_jobs, "iac") : disabled_control(control_disabled_reason(:iac)),
+        dast: control_required?(:dast) ? control_state_for(active_jobs, "dast") : disabled_control(control_disabled_reason(:dast)),
         deploy_test: control_required?(:deploy_test) ? control_state_for(active_jobs, "deploy_test") : disabled_control("Disabled by the selected policy pack")
       }
 
@@ -908,6 +1004,9 @@ module GitlabCiAuditor
     def apply_template_inferences(controls)
       controls[:sast] = template_override("sast", controls[:sast])
       controls[:scan] = template_override("scan", controls[:scan])
+      controls[:secret_detection] = template_override("secret_detection", controls[:secret_detection])
+      controls[:dast] = template_override("dast", controls[:dast])
+      controls[:iac] = template_override("iac", controls[:iac])
       controls
     end
 
@@ -949,6 +1048,10 @@ module GitlabCiAuditor
         coverage_report: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         sast: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         scan: { pass: 0, warn: 0, missing: 0, disabled: 0 },
+        sbom: { pass: 0, warn: 0, missing: 0, disabled: 0 },
+        secret_detection: { pass: 0, warn: 0, missing: 0, disabled: 0 },
+        iac: { pass: 0, warn: 0, missing: 0, disabled: 0 },
+        dast: { pass: 0, warn: 0, missing: 0, disabled: 0 },
         deploy_test: { pass: 0, warn: 0, missing: 0, disabled: 0 }
       }
 
@@ -969,17 +1072,25 @@ module GitlabCiAuditor
       coverage_report_ratio = ratio_for(coverage[:coverage_report])
       sast_ratio = ratio_for(coverage[:sast])
       scan_ratio = ratio_for(coverage[:scan])
+      sbom_ratio = ratio_for(coverage[:sbom])
+      secret_detection_ratio = ratio_for(coverage[:secret_detection])
+      iac_ratio = ratio_for(coverage[:iac])
+      dast_ratio = ratio_for(coverage[:dast])
       deploy_ratio = ratio_for(coverage[:deploy_test])
       security_ratio = [[10 - security_findings.sum { |finding| severity_weight(finding[:severity]) }, 0].max, 10].min / 10.0
       maintainability_ratio = maintainability[:score].to_f / maintainability[:max_score]
 
       [
-        category("execution_path_coverage", "Execution Path Coverage", 20, fully_compliant, "#{coverage[:fully_compliant]}/#{active_scenarios.size} active scenarios satisfy the selected SSDLC policy pack"),
+        category("execution_path_coverage", "Execution Path Coverage", 15, fully_compliant, "#{coverage[:fully_compliant]}/#{active_scenarios.size} active scenarios satisfy the selected SSDLC policy pack"),
         category("unit_tests", "Unit Test Execution", 10, unit_tests_ratio, status_summary(coverage[:unit_tests]), required: control_required?(:unit_tests)),
         category("coverage_report", "Coverage Reporting", 5, coverage_report_ratio, status_summary(coverage[:coverage_report]), required: control_required?(:coverage_report)),
-        category("sast", "SAST", 15, sast_ratio, status_summary(coverage[:sast]), required: control_required?(:sast)),
-        category("scan", "Artifact/Image Scanning", 15, scan_ratio, status_summary(coverage[:scan]), required: control_required?(:scan)),
-        category("deploy_test", "Automated Test Deployment", 15, deploy_ratio, status_summary(coverage[:deploy_test]), required: control_required?(:deploy_test)),
+        category("sast", "SAST", 12, sast_ratio, status_summary(coverage[:sast]), required: control_required?(:sast)),
+        category("scan", "Artifact/Image Scanning", 12, scan_ratio, status_summary(coverage[:scan]), required: control_required?(:scan)),
+        category("sbom", "SBOM Evidence", 8, sbom_ratio, status_summary(coverage[:sbom]), required: control_required?(:sbom)),
+        category("secret_detection", "Secret Detection", 10, secret_detection_ratio, status_summary(coverage[:secret_detection]), required: control_required?(:secret_detection)),
+        category("iac", "IaC Policy Scanning", 8, iac_ratio, status_summary(coverage[:iac]), required: control_required?(:iac)),
+        category("dast", "DAST", 10, dast_ratio, status_summary(coverage[:dast]), required: control_required?(:dast)),
+        category("deploy_test", "Automated Test Deployment", 10, deploy_ratio, status_summary(coverage[:deploy_test]), required: control_required?(:deploy_test)),
         category("security", "Security Policies", 10, security_ratio, security_findings.empty? ? "No material policy violations detected" : "#{security_findings.size} security policy violations detected"),
         {
           key: "maintainability",
@@ -1052,13 +1163,105 @@ module GitlabCiAuditor
 
     def control_required?(key)
       defaults = {
-        "coverage_report" => false
+        "coverage_report" => false,
+        "sbom" => true,
+        "secret_detection" => true,
+        "iac" => true,
+        "dast" => true
       }
-      @policy.fetch("required_controls", {}).fetch(key.to_s, defaults.fetch(key.to_s, true))
+      required = @policy.fetch("required_controls", {}).fetch(key.to_s, defaults.fetch(key.to_s, true))
+      required && control_applicable?(key)
     end
 
     def required_control_keys
       CONTROL_KEYS.select { |key| control_required?(key) }
+    end
+
+    def control_applicable?(key)
+      case key
+      when :dast
+        web_surface_detected?
+      when :iac
+        iac_surface_detected?
+      when :sbom
+        build_output_detected?
+      else
+        true
+      end
+    end
+
+    def control_disabled_reason(key)
+      return "Disabled by the selected policy pack" unless @policy.fetch("required_controls", {}).fetch(key.to_s, default_control_requirement(key))
+
+      case key
+      when :dast
+        "Not applicable to the current pipeline scope because no deployable web surface was detected"
+      when :iac
+        "Not applicable to the current pipeline scope because no IaC or deployment-configuration surface was detected"
+      when :sbom
+        "Not applicable to the current pipeline scope because no build-output or package-production signal was detected"
+      else
+        "Disabled by the selected policy pack"
+      end
+    end
+
+    def default_control_requirement(key)
+      {
+        "coverage_report" => false,
+        "sbom" => true,
+        "secret_detection" => true,
+        "iac" => true,
+        "dast" => true
+      }.fetch(key.to_s, true)
+    end
+
+    def build_output_detected?
+      all_pipelines.any? do |pipeline|
+        pipeline.jobs.any? do |_job_name, job|
+          stage = (job["stage"] || "").to_s.downcase
+          script_lines = collect_script_lines(pipeline, job)
+          artifact_strings = collect_artifact_strings(job["artifacts"])
+          text = classification_text(
+            "",
+            job,
+            script_lines,
+            artifact_strings,
+            extract_environment_name(job),
+            expand_local_script_evidence(pipeline, script_lines)
+          )
+
+          stage.include?("build") ||
+            stage.include?("package") ||
+            stage.include?("publish") ||
+            text.match?(/\b(?:mvn|mvnw|gradle|gradlew|dotnet\s+(?:build|publish|pack)|npm\s+(?:build|publish|pack)|pnpm\s+(?:build|publish|pack)|yarn\s+(?:build|pack)|go\s+build|cargo\s+build|docker\s+build|kaniko|buildah|jib)\b/) ||
+            artifact_strings.any? { |item| item.to_s.match?(/\b(?:target\/.+\.(?:jar|war)|dist\/|build\/|pkg\/|sbom|cyclonedx|spdx)\b/i) }
+        end
+      end
+    end
+
+    def web_surface_detected?
+      all_pipelines.any? do |pipeline|
+        pipeline.jobs.any? do |_job_name, job|
+          stage = (job["stage"] || "").to_s.downcase
+          script_lines = collect_script_lines(pipeline, job)
+          text = classification_text(
+            "",
+            job,
+            script_lines,
+            collect_artifact_strings(job["artifacts"]),
+            extract_environment_name(job),
+            expand_local_script_evidence(pipeline, script_lines)
+          )
+
+          extract_environment_name(job).to_s != "" ||
+            stage.include?("deploy") ||
+            text.match?(/\b(?:kubectl|helm|argocd|kustomize|ingress|service\.ya?ml|openapi|swagger|review app|preview)\b/)
+        end
+      end
+    end
+
+    def iac_surface_detected?
+      analysis_corpus.match?(/\b(?:terraform|tofu|helm|kubectl|kustomize|argocd|ansible|cloudformation|pulumi|tfsec|checkov|terrascan|kics|conftest|kubeconform|datree)\b|\.tf\b|charts\/|k8s\/|manifests?\//)
     end
 
     def extract_template_features
@@ -1069,10 +1272,16 @@ module GitlabCiAuditor
           features["sast"] ||= [] if downcased.include?("sast")
           features["scan"] ||= [] if downcased.include?("container-scanning") || downcased.include?("dependency-scanning")
           features["scan"] ||= [] if downcased.include?("license-scanning")
+          features["secret_detection"] ||= [] if downcased.include?("secret-detection")
+          features["dast"] ||= [] if downcased.include?("dast")
+          features["iac"] ||= [] if downcased.include?("iac") || downcased.include?("kics")
           features["sast"] << template_name if downcased.include?("sast")
           if downcased.include?("container-scanning") || downcased.include?("dependency-scanning") || downcased.include?("license-scanning")
             features["scan"] << template_name
           end
+          features["secret_detection"] << template_name if downcased.include?("secret-detection")
+          features["dast"] << template_name if downcased.include?("dast")
+          features["iac"] << template_name if downcased.include?("iac") || downcased.include?("kics")
         end
       end
       features
@@ -1138,7 +1347,7 @@ module GitlabCiAuditor
             expand_local_script_evidence(pipeline, script_lines)
           )
           if @policy.dig("security_policies", "forbid_allow_failure_on_security") &&
-              job["allow_failure"] == true && (classifications & %w[unit_tests sast artifact_scan image_scan]).any?
+              job["allow_failure"] == true && (classifications & %w[unit_tests sast artifact_scan image_scan sbom secret_detection iac dast]).any?
             findings << finding(
               "medium",
               "Critical gate #{job_ref} has allow_failure=true",
@@ -1214,15 +1423,8 @@ module GitlabCiAuditor
       global_variables = all_pipelines.sum { |pipeline| pipeline.variables.size }
       rule_complexity = max_rule_complexity
       long_script_jobs = collect_long_job_names
-      deprecated_jobs = all_pipelines.flat_map do |pipeline|
-        pipeline.jobs.select { |_name, job| job.key?("only") || job.key?("except") }.keys.map { |job_name| job_reference(job_name, pipeline) }
-      end
-      undefined_stage_jobs = all_pipelines.each_with_object([]) do |pipeline, jobs|
-        pipeline.jobs.each do |job_name, job|
-          stage = (job["stage"] || "test").to_s
-          jobs << job_reference(job_name, pipeline) if pipeline.stages.any? && !pipeline.stages.include?(stage)
-        end
-      end
+      deprecated_jobs = deprecated_only_except_jobs
+      undefined_stage_jobs = undefined_stage_jobs()
 
       workflowless = all_pipelines.select { |pipeline| pipeline.workflow.empty? }
       findings << "#{workflowless.size} pipeline files are missing a workflow section, so execution governance depends only on job-level rules" if workflowless.any?
@@ -1256,6 +1458,63 @@ module GitlabCiAuditor
       }
     end
 
+    def build_lint_summary(maintainability)
+      warnings = aggregate_loader_warnings
+      unresolved_includes = all_pipelines.flat_map { |pipeline| Array(pipeline.include_metadata[:unresolved_includes]) }
+      deprecated_jobs = deprecated_only_except_jobs
+      undefined_jobs = undefined_stage_jobs
+      total_jobs = total_job_count
+
+      findings = []
+      findings << lint_finding("pass", "YAML parsed successfully and a job graph was generated.") if total_jobs.positive?
+      findings << lint_finding("fail", "No jobs were discovered after parsing the pipeline.") if total_jobs.zero?
+      findings << lint_finding("warn", "#{warnings.size} loader or parser warnings were emitted.", warnings.first(6)) if warnings.any?
+      findings << lint_finding("warn", "#{unresolved_includes.size} include entries could not be resolved statically.", unresolved_includes.first(6).map(&:inspect)) if unresolved_includes.any?
+      findings << lint_finding("warn", "Deprecated `only/except` syntax is still present in #{deprecated_jobs.size} job(s).", deprecated_jobs.first(6)) if deprecated_jobs.any?
+      findings << lint_finding("warn", "#{undefined_jobs.size} job(s) use stages outside the declared stage list.", undefined_jobs.first(6)) if undefined_jobs.any?
+      findings << lint_finding("warn", "#{unresolved_downstream_references.size} downstream trigger(s) remain unresolved.", unresolved_downstream_references.first(6).map { |reference| "#{reference.trigger_job_name}: #{reference.warning}" }) if unresolved_downstream_references.any?
+
+      strengths = []
+      strengths << "All local and snapshot includes resolved cleanly" if unresolved_includes.empty?
+      strengths << "No loader warnings were emitted" if warnings.empty?
+      strengths << "All jobs use declared stages" if undefined_jobs.empty?
+      strengths << "No deprecated `only/except` syntax was detected" if deprecated_jobs.empty?
+
+      status = if total_jobs.zero?
+                 "fail"
+               elsif findings.any? { |finding| finding[:status] == "warn" }
+                 "warn"
+               else
+                 "pass"
+               end
+
+      {
+        status: status,
+        title: "Static Pipeline Lint",
+        summary: if status == "pass"
+                   "The pipeline parsed cleanly and no structural lint issues were detected."
+                 elsif status == "fail"
+                   "The pipeline parsed, but no runnable jobs were discovered."
+                 else
+                   "The pipeline parsed, but structural warnings or compatibility issues remain."
+                 end,
+        findings: findings,
+        strengths: strengths,
+        warnings: warnings,
+        score: status == "pass" ? 10 : (status == "warn" ? 7 : 0),
+        max_score: 10,
+        maintainability_hint: maintainability[:summary]
+      }
+    end
+
+    def lint_finding(status, message, evidence = [])
+      {
+        status: status,
+        message: message,
+        evidence: Array(evidence)
+      }
+    end
+
     def duplicate_script_groups
       signatures = Hash.new { |hash, key| hash[key] = [] }
       all_pipelines.each do |pipeline|
@@ -1267,6 +1526,21 @@ module GitlabCiAuditor
         end
       end
       signatures.values.select { |group| group.size > 1 }
+    end
+
+    def deprecated_only_except_jobs
+      all_pipelines.flat_map do |pipeline|
+        pipeline.jobs.select { |_name, job| job.key?("only") || job.key?("except") }.keys.map { |job_name| job_reference(job_name, pipeline) }
+      end
+    end
+
+    def undefined_stage_jobs
+      all_pipelines.each_with_object([]) do |pipeline, jobs|
+        pipeline.jobs.each do |job_name, job|
+          stage = (job["stage"] || "test").to_s
+          jobs << job_reference(job_name, pipeline) if pipeline.stages.any? && !pipeline.stages.include?(stage)
+        end
+      end
     end
 
     def max_rule_complexity
@@ -1325,6 +1599,22 @@ module GitlabCiAuditor
 
     def detect_image_scan_tools(text)
       detect_tool_families(IMAGE_SCAN_TOOL_PATTERNS, text)
+    end
+
+    def detect_sbom_tools(text)
+      detect_tool_families(SBOM_TOOL_PATTERNS, text)
+    end
+
+    def detect_dast_tools(text)
+      detect_tool_families(DAST_TOOL_PATTERNS, text)
+    end
+
+    def detect_secret_detection_tools(text)
+      detect_tool_families(SECRET_DETECTION_TOOL_PATTERNS, text)
+    end
+
+    def detect_iac_tools(text)
+      detect_tool_families(IAC_TOOL_PATTERNS, text)
     end
 
     def detect_secret_management_tools(text)
@@ -1408,6 +1698,10 @@ module GitlabCiAuditor
             sast: detect_sast_tools(text),
             artifact_scan: detect_artifact_scan_tools(text),
             image_scan: detect_image_scan_tools(text),
+            sbom: detect_sbom_tools(text),
+            dast: detect_dast_tools(text),
+            secret_detection: detect_secret_detection_tools(text),
+            iac: detect_iac_tools(text),
             secret_management: detect_secret_management_tools(text),
             integrity_verification: detect_integrity_verification_tools(text)
           }
@@ -1418,6 +1712,10 @@ module GitlabCiAuditor
         sast: jobs.flat_map { |job| job[:sast] }.uniq.map { |family| tool_family_label(family) },
         artifact_scan: jobs.flat_map { |job| job[:artifact_scan] }.uniq.map { |family| tool_family_label(family) },
         image_scan: jobs.flat_map { |job| job[:image_scan] }.uniq.map { |family| tool_family_label(family) },
+        sbom: jobs.flat_map { |job| job[:sbom] }.uniq.map { |family| tool_family_label(family) },
+        dast: jobs.flat_map { |job| job[:dast] }.uniq.map { |family| tool_family_label(family) },
+        secret_detection: jobs.flat_map { |job| job[:secret_detection] }.uniq.map { |family| tool_family_label(family) },
+        iac: jobs.flat_map { |job| job[:iac] }.uniq.map { |family| tool_family_label(family) },
         secret_management: jobs.flat_map { |job| job[:secret_management] }.uniq.map { |family| tool_family_label(family) },
         integrity_verification: jobs.flat_map { |job| job[:integrity_verification] }.uniq.map { |family| tool_family_label(family) }
       }
@@ -1461,6 +1759,10 @@ module GitlabCiAuditor
       items << "Images are pinned instead of relying on latest" if security_findings.none? { |finding| finding[:title].include?("latest") }
       items << "At least some execution scenarios achieve full SSDLC coverage" if active_scenarios.any? { |scenario| scenario[:status] == "pass" }
       items << "Coverage artifacts are published for supported scenarios" if control_required?(:coverage_report) && active_scenarios.any? { |scenario| scenario[:controls][:coverage_report][:status] == "pass" }
+      items << "SBOM artifacts are produced for supported build outputs" if control_required?(:sbom) && active_scenarios.any? { |scenario| scenario[:controls][:sbom][:status] == "pass" }
+      items << "Secret-detection tooling is present on supported paths" if control_required?(:secret_detection) && active_scenarios.any? { |scenario| scenario[:controls][:secret_detection][:status] == "pass" }
+      items << "IaC or policy scans protect deployment configuration" if control_required?(:iac) && active_scenarios.any? { |scenario| scenario[:controls][:iac][:status] == "pass" }
+      items << "DAST is exercised against a deployable environment" if control_required?(:dast) && active_scenarios.any? { |scenario| scenario[:controls][:dast][:status] == "pass" }
       items << "Local child/downstream pipelines are included in the analysis scope" if resolved_downstream_references.any?
       items << "Pipeline complexity remains under control" if maintainability[:score] >= 7
       items.uniq
@@ -1473,8 +1775,13 @@ module GitlabCiAuditor
       items << "Publish explicit coverage artifacts such as JaCoCo, Cobertura, or LCOV so coverage reporting is visible per scenario" if control_required?(:coverage_report) && (coverage[:coverage_report][:missing].positive? || coverage[:coverage_report][:warn].positive?)
       items << "Add enforced SAST without allow_failure, ideally through a GitLab template or a dedicated scanner job" if control_required?(:sast) && (coverage[:sast][:missing].positive? || coverage[:sast][:warn].positive?)
       items << "Add artifact scanning or image scanning based on the build type and treat the result as a gate" if control_required?(:scan) && (coverage[:scan][:missing].positive? || coverage[:scan][:warn].positive?)
+      items << "Generate and publish a machine-readable SBOM such as CycloneDX or SPDX for each supported build output" if control_required?(:sbom) && (coverage[:sbom][:missing].positive? || coverage[:sbom][:warn].positive?)
+      items << "Add secret-detection scanning with a blocking policy for merge requests and protected branches" if control_required?(:secret_detection) && (coverage[:secret_detection][:missing].positive? || coverage[:secret_detection][:warn].positive?)
+      items << "Scan Terraform, Helm, Kubernetes, or Ansible definitions with IaC policy tooling before deployment" if control_required?(:iac) && (coverage[:iac][:missing].positive? || coverage[:iac][:warn].positive?)
+      items << "Run DAST against a deployed test, review, or staging environment and make the result blocking" if control_required?(:dast) && (coverage[:dast][:missing].positive? || coverage[:dast][:warn].positive?)
       items << "Automate deployment to a test environment and declare it explicitly in the environment section" if control_required?(:deploy_test) && (coverage[:deploy_test][:missing].positive? || coverage[:deploy_test][:warn].positive?)
       items << "If deployment is executed from a separate ArgoCD or delivery repository, analyze that repository too through a downstream snapshot or a separate auditor run" if control_required?(:deploy_test) && coverage[:deploy_test][:missing].positive?
+      items << "If build, deploy, or security evidence lives in multiple repositories, provide a context manifest so the graph can join them into one audit scope" if all_pipelines.size == 1 && @pipeline.include_metadata[:context_manifest].to_s.empty?
       items << "Add workflow:rules to control centrally when a pipeline should exist" if all_pipelines.any? { |pipeline| pipeline.workflow.empty? }
       items << "Remove allow_failure from critical test and scan jobs" if security_findings.any? { |finding| finding[:title].include?("allow_failure") }
       items << "Remove StrictHostKeyChecking no and replace it with controlled known_hosts management" if security_findings.any? { |finding| finding[:title].include?("Host key verification") || finding[:title].include?("host key") }
@@ -1531,7 +1838,9 @@ module GitlabCiAuditor
             "Active scenarios analyzed: #{active_scenarios.size}",
             "Unique active jobs mapped into the benchmark: #{jobs.size}",
             "Resolved downstream pipelines: #{resolved_downstream_references.size}",
-            unresolved_downstream_references.any? ? "Unresolved downstream pipelines: #{unresolved_downstream_references.size}" : "No unresolved downstream pipelines detected"
+            unresolved_downstream_references.any? ? "Unresolved downstream pipelines: #{unresolved_downstream_references.size}" : "No unresolved downstream pipelines detected",
+            @pipeline.include_metadata[:context_manifest].to_s.empty? ? "No explicit multi-project context manifest was supplied" : "Context manifest loaded: #{relative_pipeline_path(@pipeline.include_metadata[:context_manifest])}",
+            Array(@pipeline.include_metadata[:context_projects]).any? ? "Context projects: #{Array(@pipeline.include_metadata[:context_projects]).join(', ')}" : nil
           ]
         ),
         benchmark_signal_group(
@@ -1552,6 +1861,10 @@ module GitlabCiAuditor
             benchmark_control_signal("Coverage reporting", coverage[:coverage_report], active_scenarios.size),
             benchmark_control_signal("SAST coverage", coverage[:sast], active_scenarios.size),
             benchmark_control_signal("Artifact or image scanning", coverage[:scan], active_scenarios.size),
+            benchmark_control_signal("SBOM coverage", coverage[:sbom], active_scenarios.size),
+            benchmark_control_signal("Secret-detection coverage", coverage[:secret_detection], active_scenarios.size),
+            benchmark_control_signal("IaC policy coverage", coverage[:iac], active_scenarios.size),
+            benchmark_control_signal("DAST coverage", coverage[:dast], active_scenarios.size),
             benchmark_control_signal("Automated test deployment", coverage[:deploy_test], active_scenarios.size),
             gating ? "Critical quality and security jobs are blocking" : "At least one critical quality or security job is optional because `allow_failure` is enabled"
           ]
@@ -1563,6 +1876,10 @@ module GitlabCiAuditor
             benchmark_family_signal("SAST families", security_tools[:sast]),
             benchmark_family_signal("Artifact scan families", security_tools[:artifact_scan]),
             benchmark_family_signal("Image scan families", security_tools[:image_scan]),
+            benchmark_family_signal("SBOM families", security_tools[:sbom]),
+            benchmark_family_signal("Secret-detection families", security_tools[:secret_detection]),
+            benchmark_family_signal("IaC families", security_tools[:iac]),
+            benchmark_family_signal("DAST families", security_tools[:dast]),
             benchmark_family_signal("Secret-management signals", security_tools[:secret_management]),
             benchmark_family_signal("Integrity-verification signals", security_tools[:integrity_verification])
           ]
@@ -1700,7 +2017,7 @@ module GitlabCiAuditor
 
     def defect_management_question_context(jobs, coverage, security_findings)
       report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
-      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
+      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report dast_report secret_detection_report iac_report]
 
       {
         structured_reporting: report_families.include?("junit") || report_families.include?("coverage_report"),
@@ -1922,6 +2239,7 @@ module GitlabCiAuditor
       coverage_ratio = ratio_for(coverage[:coverage_report])
       sast_ratio = ratio_for(coverage[:sast])
       scan_ratio = ratio_for(coverage[:scan])
+      sbom_ratio = ratio_for(coverage[:sbom])
       workflow_governed = all_pipelines.none? { |pipeline| pipeline.workflow.empty? }
       gated = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
       orchestration_status = if effective_stages.any? && workflow_governed
@@ -1940,6 +2258,7 @@ module GitlabCiAuditor
       good_signals << "Coverage evidence is published" if coverage_ratio >= 0.45
       good_signals << "SAST is embedded into the build path" if sast_ratio >= 0.45
       good_signals << "Dependency or image scanning is embedded into the build path" if scan_ratio >= 0.45
+      good_signals << "SBOM evidence is attached to build outputs" if sbom_ratio >= 0.45
       good_signals << "Quality and security gates are blocking" if gated
       good_signals << "workflow:rules governs pipeline creation" if workflow_governed
 
@@ -1947,6 +2266,7 @@ module GitlabCiAuditor
       gaps << "Coverage artifacts are not consistently published" if coverage_ratio < 0.45
       gaps << "SAST is missing or does not meet the detected stack policy" if sast_ratio < 0.85
       gaps << "Artifact or image scanning is missing on part of the build path" if scan_ratio < 0.45
+      gaps << "SBOM evidence is missing from part of the build path" if control_required?(:sbom) && sbom_ratio < 0.45
       gaps << "Some pipelines still rely on job-level rules without workflow governance" unless workflow_governed
       gaps << "At least one quality or security job is optional because allow_failure is enabled" unless gated
 
@@ -1957,6 +2277,7 @@ module GitlabCiAuditor
       score += (coverage_ratio * 10).round
       score += (sast_ratio * 25).round
       score += (scan_ratio * 15).round
+      score += (sbom_ratio * 10).round if control_required?(:sbom)
       score += 10 if gated
       score = [score, 100].min
 
@@ -1992,6 +2313,11 @@ module GitlabCiAuditor
         "#{status_summary(coverage[:scan])} across active scenarios."
       )
       rules << benchmark_rule(
+        "SBOM evidence accompanies supported build outputs",
+        control_required?(:sbom) ? score_status(sbom_ratio) : "pass",
+        control_required?(:sbom) ? "#{status_summary(coverage[:sbom])} across active scenarios." : "SBOM evidence is not required by the selected policy pack."
+      )
+      rules << benchmark_rule(
         "Critical quality and security gates block progression",
         gated ? "pass" : "fail",
         gated ? "No `allow_failure` exception was detected on critical quality or security jobs." : "At least one quality or security job is optional because `allow_failure` is enabled."
@@ -2014,6 +2340,8 @@ module GitlabCiAuditor
 
     def samm_secure_deployment(jobs, coverage, security_findings)
       deploy_ratio = ratio_for(coverage[:deploy_test])
+      iac_ratio = ratio_for(coverage[:iac])
+      dast_ratio = ratio_for(coverage[:dast])
       environment_count = jobs.map { |job| job[:environment] }.compact.uniq.size
       deploy_jobs = jobs.select { |job| deployment_job?(job) }
       production_present = jobs.any? { |job| job[:classifications].include?("deploy_prod") }
@@ -2032,6 +2360,8 @@ module GitlabCiAuditor
       good_signals << "Deployment runs after quality and security gates" if gating
       good_signals << "External secret management is referenced in deployment automation" if secret_tools.any?
       good_signals << "Artifact integrity verification is present before deployment" if integrity_tools.any?
+      good_signals << "Infrastructure or deployment manifests are policy-scanned" if control_required?(:iac) && iac_ratio >= 0.45
+      good_signals << "DAST validates the deployed surface" if control_required?(:dast) && dast_ratio >= 0.45
       good_signals << "A production deployment path is defined" if production_present
       good_signals << "No deployment hygiene policy violations were detected" if deploy_hygiene
 
@@ -2040,6 +2370,8 @@ module GitlabCiAuditor
       gaps << "Deployment is not clearly gated by tests and security scans" unless gating
       gaps << "No external secret manager signal was detected in deployment automation" if secret_tools.empty?
       gaps << "No signature or checksum verification was detected before deployment" if integrity_tools.empty?
+      gaps << "No IaC or deployment-policy scan was detected before deployment" if control_required?(:iac) && iac_ratio < 0.45
+      gaps << "No DAST signal was detected against the deployed environment" if control_required?(:dast) && dast_ratio < 0.45
       gaps << "No production deployment path was detected" unless production_present
       gaps << "Deployment hygiene findings reduce confidence in secure deployment" unless deploy_hygiene
 
@@ -2049,6 +2381,8 @@ module GitlabCiAuditor
       score += 15 if gating
       score += 15 if secret_tools.any?
       score += 15 if integrity_tools.any?
+      score += (iac_ratio * 10).round if control_required?(:iac)
+      score += (dast_ratio * 5).round if control_required?(:dast)
       score += 5 if production_present
       score += 5 if deploy_hygiene
       score = [score, 100].min
@@ -2077,6 +2411,16 @@ module GitlabCiAuditor
         "Artifact integrity is verified before deployment",
         integrity_tools.any? ? "pass" : "fail",
         integrity_tools.any? ? "Detected #{integrity_tools.map { |family| tool_family_label(family) }.join(', ')} before deployment." : "No signature or checksum verification was detected before deployment."
+      )
+      rules << benchmark_rule(
+        "Infrastructure or deployment policy is validated as code",
+        control_required?(:iac) ? score_status(iac_ratio) : "pass",
+        control_required?(:iac) ? "#{status_summary(coverage[:iac])} across active scenarios." : "IaC validation is not required by the selected policy pack."
+      )
+      rules << benchmark_rule(
+        "DAST validates the deployed attack surface",
+        control_required?(:dast) ? score_status(dast_ratio) : "pass",
+        control_required?(:dast) ? "#{status_summary(coverage[:dast])} across active scenarios." : "DAST is not required by the selected policy pack."
       )
       rules << benchmark_rule(
         "A production deployment path is visible",
@@ -2110,7 +2454,7 @@ module GitlabCiAuditor
       scan_ratio = ratio_for(coverage[:scan])
       deploy_ratio = ratio_for(coverage[:deploy_test])
       report_families = jobs.flat_map { |job| Array(job[:report_families]) }.uniq
-      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report]
+      security_reports = report_families & %w[sast_report dependency_scanning_report container_scanning_report dast_report secret_detection_report iac_report]
       structured_reporting = report_families.include?("junit") || report_families.include?("coverage_report")
       blocking_gates = security_findings.none? { |finding| finding[:title].include?("allow_failure") }
       flow_influenced = deploy_ratio >= 0.45 && unit_ratio >= 0.45 && sast_ratio >= 0.45 && scan_ratio >= 0.45
@@ -2237,6 +2581,10 @@ module GitlabCiAuditor
       findings.concat(control_findings(:coverage_report, active_scenarios, coverage[:coverage_report])) if control_required?(:coverage_report)
       findings.concat(control_findings(:sast, active_scenarios, coverage[:sast])) if control_required?(:sast)
       findings.concat(control_findings(:scan, active_scenarios, coverage[:scan])) if control_required?(:scan)
+      findings.concat(control_findings(:sbom, active_scenarios, coverage[:sbom])) if control_required?(:sbom)
+      findings.concat(control_findings(:secret_detection, active_scenarios, coverage[:secret_detection])) if control_required?(:secret_detection)
+      findings.concat(control_findings(:iac, active_scenarios, coverage[:iac])) if control_required?(:iac)
+      findings.concat(control_findings(:dast, active_scenarios, coverage[:dast])) if control_required?(:dast)
       findings.concat(control_findings(:deploy_test, active_scenarios, coverage[:deploy_test])) if control_required?(:deploy_test)
 
       if unresolved_downstream_references.any?
@@ -2360,6 +2708,38 @@ module GitlabCiAuditor
           recommendation: "Add a mandatory dependency, artifact, or image scan after build output is produced.",
           how_to_fix: "For application or source scans, use tools such as `trivy fs`, `dependency-check`, or `grype`. For container images, add `trivy image` after image build and treat the exit code as a gate."
         },
+        sbom: {
+          title: "SBOM evidence is not complete",
+          issue: lambda { |counts, total|
+            "#{counts[:missing]}/#{total} scenarios do not publish SBOM evidence, and #{counts[:warn]} scenarios only do so in a non-enforcing context."
+          },
+          recommendation: "Publish a machine-readable SBOM for every supported build output.",
+          how_to_fix: "Generate `CycloneDX` or `SPDX` artifacts with tools such as `syft`, `cdxgen`, `trivy sbom`, or `snyk sbom`, and keep the files in `artifacts.paths`."
+        },
+        secret_detection: {
+          title: "Secret-detection coverage is not complete",
+          issue: lambda { |counts, total|
+            "#{counts[:missing]}/#{total} scenarios have no secret-detection scan, and #{counts[:warn]} scenarios run it in a non-enforcing mode."
+          },
+          recommendation: "Scan repository content for committed secrets on merge requests and protected branches.",
+          how_to_fix: "Add `gitleaks`, `trufflehog`, `detect-secrets`, or the GitLab Secret Detection template, publish the report artifact, and keep `allow_failure` disabled."
+        },
+        iac: {
+          title: "IaC policy scanning is not complete",
+          issue: lambda { |counts, total|
+            "#{counts[:missing]}/#{total} scenarios do not validate deployment configuration or infrastructure code, and #{counts[:warn]} scenarios only do so in a non-enforcing mode."
+          },
+          recommendation: "Validate Terraform, Helm, Kubernetes, or Ansible definitions before deployment.",
+          how_to_fix: "Add `checkov`, `tfsec`, `terrascan`, `kics`, `trivy config`, `conftest`, `kubeconform`, `kube-score`, `datree`, or `ansible-lint` depending on the deployment stack."
+        },
+        dast: {
+          title: "DAST coverage is not complete",
+          issue: lambda { |counts, total|
+            "#{counts[:missing]}/#{total} scenarios do not run DAST against a deployed environment, and #{counts[:warn]} scenarios run it in a non-enforcing mode."
+          },
+          recommendation: "Run DAST against a test, review, or staging environment after deployment.",
+          how_to_fix: "Add GitLab DAST, OWASP ZAP, StackHawk, Burp, or Nikto after the deploy-to-test step. Make the job blocking and publish the machine-readable report."
+        },
         deploy_test: {
           title: "Automated test deployment is not complete",
           issue: lambda { |counts, total|
@@ -2406,7 +2786,7 @@ module GitlabCiAuditor
               edges << {
                 from: from_id,
                 to: graph_node_id(reference.pipeline, child_job_name),
-                type: "trigger"
+                type: graph_edge_type(reference)
               }
             end
           end
@@ -2464,6 +2844,12 @@ module GitlabCiAuditor
       "#{relative_pipeline_path(pipeline.path)}::#{job_name}"
     end
 
+    def graph_edge_type(reference)
+      return "context" if reference.kind.to_s == "multi_project_context"
+
+      "trigger"
+    end
+
     def compact_pipeline_label(path)
       return path if path.to_s.length <= 36
 
@@ -2503,6 +2889,10 @@ module GitlabCiAuditor
       items << "Provides SAST coverage" if classifications.include?("sast")
       items << "Scans artifacts or dependencies" if classifications.include?("artifact_scan")
       items << "Scans container images" if classifications.include?("image_scan")
+      items << "Publishes SBOM evidence" if classifications.include?("sbom")
+      items << "Scans repository content for secrets" if classifications.include?("secret_detection")
+      items << "Validates IaC or deployment policy" if classifications.include?("iac")
+      items << "Runs DAST against a deployed surface" if classifications.include?("dast")
       items << "Deploys automatically to a test environment" if classifications.include?("deploy_test") && job["when"].to_s != "manual"
       items << "Declares explicit needs dependencies" if job_needs(job).any?
       items << "Orchestrates a local child/downstream pipeline" if trigger_refs.any? { |reference| reference.pipeline }
@@ -2518,7 +2908,7 @@ module GitlabCiAuditor
     def graph_job_weaknesses(pipeline, job_name, job, script_lines, artifact_strings, environment_name, classifications, trigger_refs)
       items = []
 
-      critical_gate = (classifications & %w[unit_tests sast artifact_scan image_scan deploy_test]).any?
+      critical_gate = (classifications & %w[unit_tests sast artifact_scan image_scan sbom secret_detection iac dast deploy_test]).any?
       items << "Critical gate is optional because allow_failure is enabled" if critical_gate && job["allow_failure"] == true
       items << "Test deployment is manual" if classifications.include?("deploy_test") && job["when"].to_s == "manual"
       items << "Triggers downstream content outside the analysis scope" if trigger_refs.any? { |reference| reference.pipeline.nil? }
@@ -2546,6 +2936,14 @@ module GitlabCiAuditor
       report_families = detect_report_families(artifact_strings)
       notes << "Reports: #{report_families.map { |family| tool_family_label(family) }.join(', ')}" if report_families.any?
       notes << "Local script evidence: #{script_evidence[:files].join(', ')}" if script_evidence[:files].any?
+      sbom_tools = detect_sbom_tools(script_text)
+      notes << "SBOM tooling: #{sbom_tools.map { |family| tool_family_label(family) }.join(', ')}" if sbom_tools.any?
+      secret_detection_tools = detect_secret_detection_tools(script_text)
+      notes << "Secret detection: #{secret_detection_tools.map { |family| tool_family_label(family) }.join(', ')}" if secret_detection_tools.any?
+      iac_tools = detect_iac_tools(script_text)
+      notes << "IaC policy checks: #{iac_tools.map { |family| tool_family_label(family) }.join(', ')}" if iac_tools.any?
+      dast_tools = detect_dast_tools(script_text)
+      notes << "DAST tooling: #{dast_tools.map { |family| tool_family_label(family) }.join(', ')}" if dast_tools.any?
       secret_tools = detect_secret_management_tools(script_text)
       notes << "Secret management: #{secret_tools.map { |family| tool_family_label(family) }.join(', ')}" if secret_tools.any?
       integrity_tools = detect_integrity_verification_tools(script_text)
@@ -2586,8 +2984,8 @@ module GitlabCiAuditor
       path.sub(%r{\A#{Regexp.escape(Dir.pwd)}/?}, "")
     end
 
-    def detect_stacks
-      text = all_pipelines.flat_map do |pipeline|
+    def analysis_corpus
+      @analysis_corpus ||= all_pipelines.flat_map do |pipeline|
         items = []
         items << pipeline.path
         items << extract_image_name(pipeline.raw_config["image"])
@@ -2600,12 +2998,17 @@ module GitlabCiAuditor
           items << job_name
           items << job["stage"]
           items << extract_image_name(job["image"])
+          items << extract_environment_name(job)
           items.concat(script_lines)
           items.concat(script_evidence[:lines])
           items.concat(collect_artifact_strings(job["artifacts"]))
         end
         items
       end.compact.join("\n").downcase
+    end
+
+    def detect_stacks
+      text = analysis_corpus
 
       STACK_LABELS.keys.select do |stack_key|
         stack_signal_pattern(stack_key).match?(text)
@@ -2694,19 +3097,21 @@ module GitlabCiAuditor
       }
     end
 
-    def grade_for(score)
-      return "A" if score >= 85
-      return "B" if score >= 70
-      return "C" if score >= 55
-      return "D" if score >= 40
+    def grade_for(score, max_score)
+      ratio = max_score.to_f.zero? ? 0.0 : score.to_f / max_score.to_f
+      return "A" if ratio >= 0.85
+      return "B" if ratio >= 0.70
+      return "C" if ratio >= 0.55
+      return "D" if ratio >= 0.40
 
       "F"
     end
 
-    def status_for_score(score)
-      return "strong" if score >= 85
-      return "acceptable" if score >= 70
-      return "at_risk" if score >= 55
+    def status_for_score(score, max_score)
+      ratio = max_score.to_f.zero? ? 0.0 : score.to_f / max_score.to_f
+      return "strong" if ratio >= 0.85
+      return "acceptable" if ratio >= 0.70
+      return "at_risk" if ratio >= 0.55
 
       "critical"
     end

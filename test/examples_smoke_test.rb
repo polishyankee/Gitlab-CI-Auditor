@@ -42,6 +42,12 @@ class ExamplesSmokeTest < Minitest::Test
         path: example_path("pipelines/argocd_release_root.gitlab-ci.yml"),
         policy_pack: "balanced",
         expected_grade: "A"
+      },
+      {
+        path: example_path("pipelines/multi_project_app.gitlab-ci.yml"),
+        policy_pack: "balanced",
+        expected_grade: "A",
+        context_file: example_path("pipelines/multi_project_context.json")
       }
     ]
   end
@@ -50,7 +56,11 @@ class ExamplesSmokeTest < Minitest::Test
     @example_cases.each do |example_case|
       loader = GitlabCiAuditor::PipelineLoader.new
       policy = GitlabCiAuditor::PolicyLoader.load(pack: example_case[:policy_pack])
-      pipeline = loader.load(example_case[:path])
+      pipeline = if example_case[:context_file]
+                   GitlabCiAuditor::ContextLoader.new(context_file: example_case[:context_file]).load(example_case[:path])
+                 else
+                   loader.load(example_case[:path])
+                 end
       report = GitlabCiAuditor::Analyzer.new(pipeline, policy).analyze
 
       assert_equal example_case[:expected_grade], report[:summary][:grade], example_case[:path]

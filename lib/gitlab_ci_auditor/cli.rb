@@ -27,16 +27,20 @@ module GitlabCiAuditor
         output: nil,
         policy: nil,
         policy_pack: PolicyLoader::DEFAULT_PACK,
-        snapshot_file: nil
+        snapshot_file: nil,
+        context_file: nil,
+        history_file: nil
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]"
+        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]"
         opts.on("--format FORMAT", "text, json, json-bundle, html, csv, pdf") { |value| options[:format] = value }
         opts.on("--output FILE", "Write report to file") { |value| options[:output] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
         opts.on("--policy-pack NAME", "Use a bundled policy pack (default: #{PolicyLoader::DEFAULT_PACK})") { |value| options[:policy_pack] = value }
         opts.on("--snapshot-file FILE", "Load downstream snapshot mappings from JSON") { |value| options[:snapshot_file] = value }
+        opts.on("--context-file FILE", "Load a multi-project context manifest from JSON") { |value| options[:context_file] = value }
+        opts.on("--history-file FILE", "Append this scan to a history store JSON file and include trend data") { |value| options[:history_file] = value }
       end
       parser.parse!(argv)
 
@@ -45,8 +49,9 @@ module GitlabCiAuditor
       raise ArgumentError, "PDF output requires --output FILE" if options[:format] == "pdf" && options[:output].nil?
 
       policy = load_policy(options)
-      pipeline = PipelineLoader.new(snapshot_file: options[:snapshot_file]).load(path)
+      pipeline = ContextLoader.new(snapshot_file: options[:snapshot_file], context_file: options[:context_file]).load(path)
       report = Analyzer.new(pipeline, policy).analyze
+      report = HistoryStore.new(options[:history_file]).attach(report) if options[:history_file]
       renderer = ReportRenderer.new(report)
       output =
         case options[:format]
@@ -78,16 +83,20 @@ module GitlabCiAuditor
         port: 4567,
         policy: nil,
         policy_pack: PolicyLoader::DEFAULT_PACK,
-        snapshot_file: nil
+        snapshot_file: nil,
+        context_file: nil,
+        history_file: nil
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]"
+        opts.banner = "Usage: gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]"
         opts.on("--host HOST", "Bind host") { |value| options[:host] = value }
         opts.on("--port PORT", Integer, "Bind port") { |value| options[:port] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
         opts.on("--policy-pack NAME", "Default bundled policy pack (default: #{PolicyLoader::DEFAULT_PACK})") { |value| options[:policy_pack] = value }
         opts.on("--snapshot-file FILE", "Default downstream snapshot manifest for GUI analysis") { |value| options[:snapshot_file] = value }
+        opts.on("--context-file FILE", "Default multi-project context manifest for GUI analysis") { |value| options[:context_file] = value }
+        opts.on("--history-file FILE", "Default history store JSON file for GUI trend views") { |value| options[:history_file] = value }
       end
       parser.parse!(argv)
 
@@ -99,7 +108,9 @@ module GitlabCiAuditor
         port: options[:port],
         policy_path: options[:policy],
         policy_pack: options[:policy_pack],
-        snapshot_file: options[:snapshot_file]
+        snapshot_file: options[:snapshot_file],
+        context_file: options[:context_file],
+        history_file: options[:history_file]
       ).start
     end
 
@@ -118,8 +129,8 @@ module GitlabCiAuditor
     def usage
       <<~TEXT
         Usage:
-          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]
-          gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE]
+          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
+          gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
           gitlab-ci-auditor list-packs
       TEXT
     end

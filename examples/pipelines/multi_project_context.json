@@ -1,0 +1,17 @@
+{
+  "root_project": "application",
+  "projects": [
+    {
+      "name": "delivery",
+      "root": "multi_project_delivery.yml"
+    }
+  ],
+  "links": [
+    {
+      "from_project": "application",
+      "to_project": "delivery",
+      "trigger_job_name": "handoff_to_delivery",
+      "kind": "multi_project_context"
+    }
+  ]
+}

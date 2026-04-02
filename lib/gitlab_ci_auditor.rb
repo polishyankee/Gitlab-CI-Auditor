@@ -8,6 +8,7 @@ require "optparse"
 require "tmpdir"
 require "csv"
 require "shellwords"
+require "fileutils"
 
 module GitlabCiAuditor
   VERSION = "0.3.0".freeze
@@ -86,6 +87,8 @@ end
 
 require_relative "gitlab_ci_auditor/policy_loader"
 require_relative "gitlab_ci_auditor/pipeline_loader"
+require_relative "gitlab_ci_auditor/context_loader"
+require_relative "gitlab_ci_auditor/history_store"
 require_relative "gitlab_ci_auditor/rule_evaluator"
 require_relative "gitlab_ci_auditor/analyzer"
 require_relative "gitlab_ci_auditor/report_renderer"

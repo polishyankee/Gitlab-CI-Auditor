@@ -20,11 +20,33 @@ artifact_scan:
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
+iac_policy:
+  stage: security
+  script:
+    - trivy config --exit-code 1 k8s/
+  artifacts:
+    paths:
+      - trivy-config-report.json
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
 deploy_test:
   stage: deploy
   environment:
     name: staging
   script:
     - kubectl apply -f k8s/staging.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+dast:
+  stage: deploy
+  needs:
+    - deploy_test
+  script:
+    - zap-baseline.py -t https://staging.example.internal -J gl-dast-report.json
+  artifacts:
+    paths:
+      - gl-dast-report.json
   rules:
     - if: '$CI_COMMIT_BRANCH'

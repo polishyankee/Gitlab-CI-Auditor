@@ -5,6 +5,9 @@
 - [x] stack-aware SAST policy enforcement for `.NET`, `Node / JS`, `Java`, `Python`, `Go`, `Ruby`, and `PHP`
 - [x] policy-pack driven accepted SAST tool families through `stack_sast_requirements`
 - [x] richer scan detection for artifact, dependency, and container-image scanners
+- [x] first-class SBOM, secret-detection, IaC, and DAST controls with policy-pack support
+- [x] multi-project graph ingestion through JSON context manifests
+- [x] historical trend dashboards backed by a persistent JSON history store
 - [x] OWASP SAMM v2 `Implementation` benchmark for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - [x] report and GUI support for benchmark views, detected security tooling, and remediation context
 - [x] explicit benchmark detection signals and per-practice rule mapping in the `OWASP SAMM` tab
@@ -31,8 +34,8 @@
 
 ## Long Term
 
-- [ ] multi-project pipeline graph ingestion
-- [ ] historical trend dashboards
+- [x] multi-project pipeline graph ingestion
+- [x] historical trend dashboards
 - [ ] approval rules for production deployment gates
-- [ ] SBOM, DAST, secret-detection, and IaC policy extensions
+- [x] SBOM, DAST, secret-detection, and IaC policy extensions
 - [ ] packaging as a standalone gem or container image

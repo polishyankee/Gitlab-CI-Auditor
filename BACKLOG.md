@@ -6,14 +6,13 @@ This backlog turns the high-level rule catalog into implementable work items.
 
 - Add explicit coverage-vs-execution scoring so unit test execution and published coverage are separate checks.
 - Expand downstream support for imported YAML snapshots from external child and multi-project pipelines.
+- Add a persistent scan-history storage backend and trend dashboard views.
 - Add a rule DSL so new rules can be added without editing the core analyzer for every change.
 - Add policy-pack validation to fail fast on malformed JSON or unsupported keys.
 
 ## P1
 
-- Add DAST detection and policy enforcement for web-facing services.
-- Add SBOM detection and scoring for build outputs.
-- Add secret-detection and IaC scanning as first-class SSDLC controls.
+- Expand SBOM, DAST, secret-detection, and IaC rules with organization-specific severity tuning and package-manager aware policies.
 - Add remote include pinning checks for templates and external project includes.
 - Add runner risk checks for Docker-in-Docker, privileged mode, and unsafe executor settings.
 
@@ -23,7 +22,7 @@ This backlog turns the high-level rule catalog into implementable work items.
 - Export findings as SARIF and JUnit-style machine-readable outputs.
 - Highlight critical path and gate locations directly on the pipeline graph.
 - Add organizational severity overrides per rule pack.
-- Add historical trend and score drift reporting.
+- Extend trend reporting with repository baselines, branch comparisons, and release milestone snapshots.
 
 ## P3
 

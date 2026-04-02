@@ -4,15 +4,27 @@ workflow:
 
 stages:
   - build
+  - security
   - orchestrate
 
 build_and_test:
   stage: build
   script:
-    - mvn -B clean verify
+    - mvn -B clean verify cyclonedx:makeAggregateBom
   artifacts:
     paths:
       - target/site/jacoco/jacoco.xml
+      - target/bom.cyclonedx.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+secret_detection:
+  stage: security
+  script:
+    - gitleaks detect --no-git --exit-code 1 --report-format json --report-path gl-secret-detection-report.json .
+  artifacts:
+    paths:
+      - gl-secret-detection-report.json
   rules:
     - if: '$CI_COMMIT_BRANCH'
 

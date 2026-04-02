@@ -1,0 +1,33 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - validate
+  - deploy
+
+iac_policy:
+  stage: validate
+  script:
+    - conftest test manifests/ --output json > conftest-report.json
+  artifacts:
+    paths:
+      - conftest-report.json
+
+deploy_test:
+  stage: deploy
+  image: argoproj/argocd:v2.11.3
+  environment:
+    name: review
+  script:
+    - argocd app sync demo-review
+
+dast:
+  stage: deploy
+  needs:
+    - deploy_test
+  script:
+    - zap-baseline.py -t https://review.example.internal -J gl-dast-report.json
+  artifacts:
+    paths:
+      - gl-dast-report.json

@@ -1,0 +1,274 @@
+{
+  "records": [
+    {
+      "generated_at": "2026-04-01T19:15:22Z",
+      "pipeline_path": "examples/pipelines/compliant_service.gitlab-ci.yml",
+      "policy_pack_name": "balanced",
+      "overall_score": 120,
+      "max_score": 120,
+      "grade": "A",
+      "status": "strong",
+      "categories": {
+        "execution_path_coverage": {
+          "title": "Execution Path Coverage",
+          "score": 15,
+          "max_score": 15,
+          "status": "pass"
+        },
+        "unit_tests": {
+          "title": "Unit Test Execution",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "coverage_report": {
+          "title": "Coverage Reporting",
+          "score": 5,
+          "max_score": 5,
+          "status": "pass"
+        },
+        "sast": {
+          "title": "SAST",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "scan": {
+          "title": "Artifact/Image Scanning",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "sbom": {
+          "title": "SBOM Evidence",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "secret_detection": {
+          "title": "Secret Detection",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "iac": {
+          "title": "IaC Policy Scanning",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "dast": {
+          "title": "DAST",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "deploy_test": {
+          "title": "Automated Test Deployment",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "security": {
+          "title": "Security Policies",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "maintainability": {
+          "title": "Maintainability and Complexity",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        }
+      },
+      "benchmarks": {
+        "owasp_samm_v2": {
+          "title": "OWASP SAMM v2",
+          "alignment_score": 91,
+          "status": "warn"
+        }
+      }
+    },
+    {
+      "generated_at": "2026-04-01T19:15:22Z",
+      "pipeline_path": "examples/pipelines/compliant_service.gitlab-ci.yml",
+      "policy_pack_name": "balanced",
+      "overall_score": 120,
+      "max_score": 120,
+      "grade": "A",
+      "status": "strong",
+      "categories": {
+        "execution_path_coverage": {
+          "title": "Execution Path Coverage",
+          "score": 15,
+          "max_score": 15,
+          "status": "pass"
+        },
+        "unit_tests": {
+          "title": "Unit Test Execution",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "coverage_report": {
+          "title": "Coverage Reporting",
+          "score": 5,
+          "max_score": 5,
+          "status": "pass"
+        },
+        "sast": {
+          "title": "SAST",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "scan": {
+          "title": "Artifact/Image Scanning",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "sbom": {
+          "title": "SBOM Evidence",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "secret_detection": {
+          "title": "Secret Detection",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "iac": {
+          "title": "IaC Policy Scanning",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "dast": {
+          "title": "DAST",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "deploy_test": {
+          "title": "Automated Test Deployment",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "security": {
+          "title": "Security Policies",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "maintainability": {
+          "title": "Maintainability and Complexity",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        }
+      },
+      "benchmarks": {
+        "owasp_samm_v2": {
+          "title": "OWASP SAMM v2",
+          "alignment_score": 91,
+          "status": "warn"
+        }
+      }
+    },
+    {
+      "generated_at": "2026-04-01T19:15:22Z",
+      "pipeline_path": "examples/pipelines/compliant_service.gitlab-ci.yml",
+      "policy_pack_name": "balanced",
+      "overall_score": 120,
+      "max_score": 120,
+      "grade": "A",
+      "status": "strong",
+      "categories": {
+        "execution_path_coverage": {
+          "title": "Execution Path Coverage",
+          "score": 15,
+          "max_score": 15,
+          "status": "pass"
+        },
+        "unit_tests": {
+          "title": "Unit Test Execution",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "coverage_report": {
+          "title": "Coverage Reporting",
+          "score": 5,
+          "max_score": 5,
+          "status": "pass"
+        },
+        "sast": {
+          "title": "SAST",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "scan": {
+          "title": "Artifact/Image Scanning",
+          "score": 12,
+          "max_score": 12,
+          "status": "pass"
+        },
+        "sbom": {
+          "title": "SBOM Evidence",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "secret_detection": {
+          "title": "Secret Detection",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "iac": {
+          "title": "IaC Policy Scanning",
+          "score": 8,
+          "max_score": 8,
+          "status": "pass"
+        },
+        "dast": {
+          "title": "DAST",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "deploy_test": {
+          "title": "Automated Test Deployment",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "security": {
+          "title": "Security Policies",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        },
+        "maintainability": {
+          "title": "Maintainability and Complexity",
+          "score": 10,
+          "max_score": 10,
+          "status": "pass"
+        }
+      },
+      "benchmarks": {
+        "owasp_samm_v2": {
+          "title": "OWASP SAMM v2",
+          "alignment_score": 91,
+          "status": "warn"
+        }
+      }
+    }
+  ]
+}

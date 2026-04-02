@@ -34,6 +34,99 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_analyze_request_supports_pasted_pipeline_yaml
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_text" => pasted_single_file_pipeline,
+          "pipeline_text_filename" => ".gitlab-ci.yml",
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal ".gitlab-ci.yml", File.basename(report[:pipeline_path])
+    assert_equal "pass", report.dig(:lint, :status)
+    assert report[:graph][:nodes].any?
+    assert report[:recommendations].any?
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_analyze_request_supports_pasted_pipeline_with_support_files
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_text" => nested_include_root_pipeline,
+          "pipeline_text_filename" => ".gitlab-ci.yml",
+          "pipeline_text_support_paths" => [
+            ".gitlab/ci/templates/prepare.yml"
+          ],
+          "pipeline_text_support_contents" => [
+            nested_prepare_template
+          ],
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal 1, report[:metadata][:resolved_local_includes].size
+    assert report[:metadata][:resolved_local_includes].first.end_with?(".gitlab/ci/templates/prepare.yml")
+    assert_equal "pass", report.dig(:lint, :status)
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_analyze_request_supports_context_manifest_and_history_store
+    GitlabCiAuditor.require_server!
+
+    Dir.mktmpdir("gitlab-ci-auditor-server-history") do |dir|
+      history_path = File.join(dir, "history.json")
+      server = GitlabCiAuditor::Server.new(
+        host: "127.0.0.1",
+        port: 4567
+      )
+
+      report = server.send(
+        :analyze_request,
+        RequestStub.new(
+          {
+            "pipeline_path" => fixture("context_root.yml"),
+            "context_file_path" => fixture("context_manifest.json"),
+            "history_file_path" => history_path,
+            "policy_pack" => "balanced"
+          }
+        )
+      )
+
+      assert_equal "complete", report[:summary][:analysis_scope]
+      assert_equal 2, report[:summary][:total_pipeline_files]
+      assert_equal true, report.dig(:history, :enabled)
+      assert_equal fixture("context_manifest.json"), report.dig(:metadata, :context_manifest)
+      assert File.exist?(history_path)
+    end
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_supports_uploaded_pipeline_directory_bundle
     GitlabCiAuditor.require_server!
 
@@ -265,6 +358,71 @@ class ServerTest < Minitest::Test
             - coverage/jacoco.xml
         rules:
           - if: '$CI_COMMIT_BRANCH'
+    YAML
+  end
+
+  def pasted_single_file_pipeline
+    <<~YAML
+      workflow:
+        rules:
+          - if: '$CI_COMMIT_BRANCH'
+
+      stages:
+        - build
+        - security
+        - deploy
+
+      build_and_test:
+        stage: build
+        script:
+          - mvn -B clean verify cyclonedx:makeAggregateBom
+        artifacts:
+          paths:
+            - target/site/jacoco/jacoco.xml
+            - target/bom.cyclonedx.xml
+
+      sast:
+        stage: security
+        script:
+          - semgrep --config auto .
+
+      dependency_scan:
+        stage: security
+        script:
+          - trivy fs --exit-code 1 .
+
+      secret_detection:
+        stage: security
+        script:
+          - gitleaks detect --no-git --exit-code 1 --report-format json --report-path gl-secret-detection-report.json .
+        artifacts:
+          paths:
+            - gl-secret-detection-report.json
+
+      iac_policy:
+        stage: security
+        script:
+          - trivy config --exit-code 1 k8s/
+        artifacts:
+          paths:
+            - trivy-config-report.json
+
+      deploy_test:
+        stage: deploy
+        environment:
+          name: test
+        script:
+          - kubectl apply -f k8s/test.yaml
+
+      dast:
+        stage: deploy
+        needs:
+          - deploy_test
+        script:
+          - zap-baseline.py -t https://test.example.internal -J gl-dast-report.json
+        artifacts:
+          paths:
+            - gl-dast-report.json
     YAML
   end
 

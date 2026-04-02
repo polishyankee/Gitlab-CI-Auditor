@@ -9,6 +9,10 @@
     "coverage_report": true,
     "sast": true,
     "scan": true,
+    "sbom": true,
+    "secret_detection": true,
+    "iac": false,
+    "dast": false,
     "deploy_test": false
   },
   "test_environments": ["test", "qa", "stage", "staging", "dev", "sandbox", "review", "uat"],

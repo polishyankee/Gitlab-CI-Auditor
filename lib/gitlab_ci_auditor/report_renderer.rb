@@ -115,6 +115,20 @@ module GitlabCiAuditor
       lines << "Status: #{@report[:summary][:status]}"
       lines << "Policy Pack: #{@report[:summary][:policy_pack_label]} (#{@report[:summary][:policy_source]})"
       lines << "Scope: #{@report[:summary][:analysis_scope]} (pipeline_files=#{@report[:summary][:total_pipeline_files]}, downstream_resolved=#{@report[:summary][:resolved_downstream_pipelines]}, downstream_unresolved=#{@report[:summary][:unresolved_downstream_pipelines]})"
+      if @report.dig(:metadata, :context_manifest)
+        lines << "Context Manifest: #{@report.dig(:metadata, :context_manifest)}"
+        lines << "Context Projects: #{Array(@report.dig(:metadata, :context_projects)).join(', ')}" if Array(@report.dig(:metadata, :context_projects)).any?
+      end
+      lines << ""
+      if @report[:lint].is_a?(Hash)
+        lines << "Lint:"
+        lines << "  - status: #{@report.dig(:lint, :status)}"
+        lines << "  - summary: #{@report.dig(:lint, :summary)}"
+        Array(@report.dig(:lint, :findings)).each do |finding|
+          lines << "    finding [#{finding[:status]}]: #{finding[:message]}"
+        end
+        lines << ""
+      end
       lines << ""
       lines << "Categories:"
       @report[:categories].each do |category|
@@ -137,6 +151,18 @@ module GitlabCiAuditor
           lines << "    question [#{question[:status]}] #{question[:key]} (#{question[:observability]}): #{question[:title]}"
           lines << "      detail: #{question[:detail]}"
           lines << "      recommendation: #{question[:recommendation]}" if question[:recommendation]
+        end
+      end
+      if @report[:history].is_a?(Hash) && @report[:history][:enabled]
+        history = @report[:history]
+        lines << ""
+        lines << "Historical Trends:"
+        lines << "  - History file: #{history[:path]}"
+        lines << "  - Total stored runs: #{history[:total_runs]}"
+        lines << "  - Previous score: #{history[:previous_score] || 'n/a'}"
+        lines << "  - Score delta: #{history[:score_delta] || 'n/a'}"
+        Array(history[:recent_runs]).each do |run|
+          lines << "    recent: #{run[:generated_at]} score=#{run[:overall_score]}/#{run[:max_score]} grade=#{run[:grade]} policy=#{run[:policy_pack_name]}"
         end
       end
       lines << ""
@@ -185,8 +211,23 @@ module GitlabCiAuditor
         csv << %w[row_type section key label status severity score max_score summary issue recommendation how_to_fix evidence]
         csv << ["summary", "report", "overall", @report[:pipeline_path], @report[:summary][:status], nil, @report[:summary][:overall_score], @report[:summary][:max_score], "grade=#{@report[:summary][:grade]}; policy_pack=#{@report[:summary][:policy_pack_label]}; scope=#{@report[:summary][:analysis_scope]}", nil, nil, nil, nil]
 
+        if @report[:lint].is_a?(Hash)
+          csv << ["lint", "lint", "summary", @report[:lint][:title], @report[:lint][:status], nil, @report[:lint][:score], @report[:lint][:max_score], @report[:lint][:summary], nil, nil, nil, nil]
+          Array(@report[:lint][:findings]).each_with_index do |finding, index|
+            csv << ["lint_finding", "lint", index.to_s, finding[:message], finding[:status], nil, nil, nil, nil, nil, nil, nil, Array(finding[:evidence]).join(" | ")]
+          end
+        end
+
         @report[:categories].each do |category|
           csv << ["category", "categories", category[:key], category[:title], category[:status], nil, category[:score], category[:max_score], category[:summary], nil, nil, nil, nil]
+        end
+
+        if @report[:history].is_a?(Hash) && @report[:history][:enabled]
+          history = @report[:history]
+          csv << ["history", "history", "summary", "Historical Trend", nil, nil, nil, nil, "total_runs=#{history[:total_runs]}; previous_score=#{history[:previous_score]}; score_delta=#{history[:score_delta]}", nil, nil, nil, history[:path]]
+          Array(history[:recent_runs]).each_with_index do |run, index|
+            csv << ["history_run", "history", index.to_s, run[:generated_at], run[:status], nil, run[:overall_score], run[:max_score], "grade=#{run[:grade]}; policy_pack=#{run[:policy_pack_name]}", nil, nil, nil, nil]
+          end
         end
 
         @report.fetch(:benchmarks, {}).fetch(:owasp_samm_v2, {}).fetch(:practices, []).each do |practice|

@@ -19,8 +19,12 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
 
     assert report[:summary][:overall_score] >= 75
+    assert_equal "pass", report.dig(:lint, :status)
     assert report[:categories].find { |category| category[:key] == "unit_tests" }[:score] >= 10
     assert_equal "pass", report[:categories].find { |category| category[:key] == "coverage_report" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "secret_detection" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "iac" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "dast" }[:status]
     assert report[:scenarios].any? { |scenario| scenario[:status] == "pass" }
   end
 
@@ -179,6 +183,19 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_equal "pass", secure_deployment[:questions].find { |question| question[:key] == "I-SD-3-A" }[:status]
     assert_equal "review", defect_management[:questions].find { |question| question[:key] == "I-DM-2-A" }[:status]
     assert_includes question_signal[:values], "Mapped implementation questions: 18"
+  end
+
+  def test_context_manifest_can_expand_multi_project_scope
+    pipeline = GitlabCiAuditor::ContextLoader.new(context_file: fixture("context_manifest.json")).load(fixture("context_root.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+
+    assert_equal 2, report[:summary][:total_pipeline_files]
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "sbom" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "secret_detection" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "iac" }[:status]
+    assert_equal "pass", report[:categories].find { |category| category[:key] == "dast" }[:status]
+    assert report[:graph][:edges].any? { |edge| edge[:type] == "context" }
   end
 
   def test_graph_nodes_expose_short_pipeline_labels_for_long_paths

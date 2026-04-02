@@ -6,6 +6,9 @@ Recent additions:
 
 - stack-aware SAST policy enforcement driven by policy packs
 - explicit artifact and container scan family detection
+- first-class SBOM, secret-detection, IaC, and DAST controls
+- multi-project graph ingestion through JSON context manifests
+- historical trend dashboards through a persistent JSON history store
 - OWASP SAMM v2 `Implementation` benchmark in GUI and exported reports
 - richer `Observed Detection Signals` and explicit auditor-to-SAMM rule mapping in the benchmark tab
 - question-level mapping for all 18 OWASP SAMM `Implementation` questions from the upstream `core` repository
@@ -16,6 +19,10 @@ Recent additions:
 - coverage reporting
 - SAST coverage
 - artifact scanning or image scanning
+- SBOM evidence for build outputs
+- secret detection
+- IaC and deployment-policy scanning
+- DAST against deployed environments
 - automated deployment to a test environment
 - baseline security policy compliance
 - OWASP SAMM v2 `Implementation` benchmark alignment
@@ -30,6 +37,7 @@ The auditor evaluates the full local pipeline graph, not just the root file:
 - scans child/downstream pipelines started by `trigger: include: - local: ...`
 - follows nested local child pipelines as long as the referenced files are available locally
 - can import external or artifact-based downstream pipelines through local YAML snapshot manifests
+- can join multiple repositories into one graph through a JSON context manifest
 
 If a downstream pipeline depends on `project`, `artifact`, `template`, or another external mechanism, the report marks the analysis as partial and explains the gap with remediation guidance.
 
@@ -98,8 +106,95 @@ In the GUI and exported reports, the detected security tooling is broken out int
 - SAST families
 - artifact or dependency scan families
 - image scan families
+- SBOM families
+- secret-detection families
+- IaC scan families
+- DAST families
 - secret-management signals
 - integrity-verification signals
+
+## SBOM, Secret Detection, IaC, and DAST Heuristics
+
+The extended control set is now policy-aware and visible in both scenario scoring and category scoring.
+
+Accepted SBOM signals include:
+
+- `syft`
+- `cdxgen`
+- `trivy sbom`
+- `snyk sbom`
+- CycloneDX or SPDX artifacts in `artifacts.paths`
+
+Accepted secret-detection signals include:
+
+- GitLab Secret Detection
+- `gitleaks`
+- `trufflehog`
+- `detect-secrets`
+
+Accepted IaC or deployment-policy signals include:
+
+- `checkov`
+- `tfsec`
+- `terrascan`
+- `kics`
+- `trivy config`
+- `conftest`
+- `kubeconform`
+- `kube-score`
+- `datree`
+- `ansible-lint`
+
+Accepted DAST signals include:
+
+- GitLab DAST
+- `OWASP ZAP` via `zap-baseline.py` or `zap-full-scan.py`
+- `StackHawk`
+- `Burp`
+- `Nikto`
+
+Applicability is not binary across every repository:
+
+- SBOM is only required when the pipeline shows build-output or package-production signals
+- IaC is only required when the pipeline shows deployment-configuration or infrastructure-code signals
+- DAST is only required when a deployable or web-facing surface is visible
+- secret detection is treated as a generally applicable repository baseline
+
+## Multi-Project Context
+
+For cases where the application pipeline, deployment pipeline, or delivery repository live in separate Git repositories, use `--context-file` with a JSON manifest that maps projects and links jobs between them.
+
+Minimal example:
+
+```json
+{
+  "root_project": "application",
+  "projects": [
+    { "name": "delivery", "root": "delivery/.gitlab-ci.yml" }
+  ],
+  "links": [
+    {
+      "from_project": "application",
+      "to_project": "delivery",
+      "trigger_job_name": "handoff_to_delivery",
+      "kind": "multi_project_context"
+    }
+  ]
+}
+```
+
+This lets the graph show a single end-to-end flow even when build evidence, deployment evidence, and DAST or IaC checks come from different repositories.
+
+## Historical Trends
+
+Use `--history-file` to append each scan to a persistent JSON store. When a history file is present, the report adds a `Trends` tab with:
+
+- recent runs
+- previous score and score delta
+- category drift
+- benchmark drift
+
+This is useful for tracking whether SSDLC posture is improving over time rather than only looking at the latest point-in-time scan.
 
 ## OWASP SAMM v2 Benchmark
 
@@ -183,6 +278,22 @@ JSON bundle export:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format json-bundle --output report.bundle.json
 ```
 
+Multi-project scan:
+
+```bash
+./bin/gitlab-ci-auditor scan examples/pipelines/multi_project_app.gitlab-ci.yml \
+  --context-file examples/pipelines/multi_project_context.json
+```
+
+Trend-enabled scan:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml \
+  --history-file .gitlab-ci-audit-history.json \
+  --format html \
+  --output report.html
+```
+
 GUI:
 
 ```bash
@@ -192,12 +303,49 @@ gem install webrick
 
 If you only use `scan` and report export modes, `webrick` is not required.
 
-The GUI supports three input modes:
+The GUI supports these input modes:
 
 - direct filesystem path to the root pipeline
+- pasted root `.gitlab-ci.yml` content for fast ad-hoc analysis
+- pasted root `.gitlab-ci.yml` plus pasted include or template files with bundle-relative paths
 - ZIP bundle upload containing `.gitlab-ci.yml` or `root.gitlabci.yml`
 - root `.gitlab-ci.yml` upload plus a few additional include or template files
 - whole-directory upload for repositories that split CI logic across many local `include` files
+- optional filesystem paths for a downstream snapshot manifest, a multi-project context manifest, and a trend history store
+
+For fast ad-hoc reviews, you can paste the full root `.gitlab-ci.yml` directly into the GUI. The server writes it into a temporary workspace, runs the same parser and analyzer, and immediately returns:
+
+- static lint status
+- flow graph
+- SSDLC findings
+- best-practice recommendations
+- OWASP SAMM benchmark
+
+Paste mode can now also cover a small multi-file pipeline without ZIP. Add each included YAML file in the `Pasted include or template files` section and set the exact bundle-relative path used by the root pipeline, for example `.gitlab/ci/templates/prepare.yml`.
+
+Use pasted support files when:
+
+- you want a quick lint and graph for a root file plus a few local templates
+- the repository is not available on disk
+- ZIP upload would be overkill for the current review
+
+Prefer ZIP or directory upload when:
+
+- the include tree is large
+- hidden directories such as `.gitlab/` must be preserved exactly
+- the pipeline also depends on local shell scripts or many nested files
+- you want the closest possible match to the original repository layout
+
+Example pasted setup:
+
+1. Paste the root `.gitlab-ci.yml` into the main textarea.
+2. Keep `Pasted root filename` as `.gitlab-ci.yml`.
+3. Click `Add pasted support file`.
+4. Set the support path to `.gitlab/ci/templates/prepare.yml`.
+5. Paste the YAML content of that included file into the support textarea.
+6. Run the analysis.
+
+The regression example in `examples/pipelines/upload_bundle_demo/` can be analyzed this way as well: paste `examples/pipelines/upload_bundle_demo/.gitlab-ci.yml` as the root content, then add the matching files from `examples/pipelines/upload_bundle_demo/.gitlab/ci/`.
 
 For multi-file pipelines, ZIP is now the recommended format because it preserves nested paths and hidden directories such as `.gitlab/`.
 
@@ -217,6 +365,14 @@ When GUI analysis fails during upload-based parsing, the error panel now shows e
 - the detected root candidates inside the uploaded bundle
 - the hidden templates found in the uploaded YAML files
 - YAML anchor definitions and alias references, so alias problems are separated from missing-template problems
+
+The HTML report also includes a dedicated `Lint` tab. This view focuses on structural issues such as:
+
+- loader and parser warnings
+- unresolved includes
+- deprecated `only/except` usage
+- jobs assigned to undefined stages
+- unresolved downstream triggers
 
 Example bundle for regression testing:
 

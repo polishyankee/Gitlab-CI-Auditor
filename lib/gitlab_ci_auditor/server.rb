@@ -30,12 +30,14 @@ module GitlabCiAuditor
       "root.gitlab-ci.yaml"
     ].freeze
 
-    def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil)
+    def initialize(host:, port:, policy_path: nil, policy_pack: PolicyLoader::DEFAULT_PACK, snapshot_file: nil, context_file: nil, history_file: nil)
       @host = host
       @port = port
       @policy_path = policy_path
       @policy_pack = policy_pack
       @snapshot_file = snapshot_file
+      @context_file = context_file
+      @history_file = history_file
     end
 
     def start
@@ -51,6 +53,8 @@ module GitlabCiAuditor
         selected_policy_pack = @policy_pack
         custom_policy_locked = !@policy_path.nil?
         default_snapshot_file = @snapshot_file.to_s
+        default_context_file = @context_file.to_s
+        default_history_file = @history_file.to_s
         res["Content-Type"] = "text/html; charset=utf-8"
         res.body = ERB.new(File.read(File.join(GitlabCiAuditor.root_dir, "templates", "index.html.erb"))).result(binding)
       end
@@ -78,24 +82,44 @@ module GitlabCiAuditor
 
     def analyze_request(req)
       snapshot_file = resolved_snapshot_file(req.query["snapshot_file_path"])
+      requested_context = req.query["context_file_path"]
+      requested_history = req.query["history_file_path"]
 
       if req.query["pipeline_path"] && !req.query["pipeline_path"].to_s.strip.empty?
         pipeline_path = File.expand_path(req.query["pipeline_path"].to_s.strip)
-        pipeline = PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
+        context_file = resolve_optional_file(requested_context, nil, @context_file)
+        history_file = resolve_optional_file(requested_history, nil, @history_file)
+        pipeline = ContextLoader.new(snapshot_file: snapshot_file, context_file: context_file).load(pipeline_path)
+      elsif pasted_pipeline_present?(req)
+        pipeline, context_file, history_file = load_pasted_pipeline(req, snapshot_file, requested_context, requested_history)
       elsif uploaded_pipeline_bundle_present?(req)
-        pipeline = load_uploaded_pipeline(req, snapshot_file)
+        pipeline, context_file, history_file = load_uploaded_pipeline(req, snapshot_file, requested_context, requested_history)
       else
-        raise ArgumentError, "Provide a pipeline path, upload a root `.gitlab-ci.yml`, or upload a pipeline directory bundle"
+        raise ArgumentError, "Provide a pipeline path, paste a root `.gitlab-ci.yml`, upload a root `.gitlab-ci.yml`, or upload a pipeline directory bundle"
       end
 
       policy = load_policy(req.query["policy_pack"])
-      Analyzer.new(pipeline, policy).analyze
+      report = Analyzer.new(pipeline, policy).analyze
+      history_file ? HistoryStore.new(history_file).attach(report) : report
     end
 
     def resolved_snapshot_file(request_value)
       candidate = request_value.to_s.strip
       candidate = @snapshot_file.to_s.strip if candidate.empty?
       candidate.empty? ? nil : candidate
+    end
+
+    def resolve_optional_file(request_value, workspace = nil, default_value = nil)
+      candidate = request_value.to_s.strip
+      candidate = default_value.to_s.strip if candidate.empty?
+      return nil if candidate.empty?
+
+      if workspace && !candidate.start_with?("/")
+        workspace_candidate = File.expand_path(candidate, workspace)
+        return workspace_candidate if File.exist?(workspace_candidate)
+      end
+
+      File.expand_path(candidate)
     end
 
     def load_policy(requested_pack)
@@ -110,12 +134,50 @@ module GitlabCiAuditor
       end
     end
 
-    def load_uploaded_pipeline(req, snapshot_file)
+    def pasted_pipeline_present?(req)
+      !req.query["pipeline_text"].to_s.strip.empty?
+    end
+
+    def load_pasted_pipeline(req, snapshot_file, requested_context = nil, requested_history = nil)
+      Dir.mktmpdir(".gitlab-ci-paste-") do |workspace|
+        filename = req.query["pipeline_text_filename"].to_s.strip
+        relative_path = sanitized_upload_relative_path(filename, ".gitlab-ci.yml")
+        pipeline_path = File.join(workspace, relative_path)
+        FileUtils.mkdir_p(File.dirname(pipeline_path))
+        File.write(pipeline_path, req.query["pipeline_text"].to_s)
+        persist_pasted_support_files(workspace, req)
+
+        context_file = resolve_optional_file(requested_context, workspace, @context_file)
+        history_file = resolve_optional_file(requested_history, workspace, @history_file)
+        pipeline = ContextLoader.new(snapshot_file: snapshot_file, context_file: context_file).load(pipeline_path)
+        return [pipeline, context_file, history_file]
+      end
+    end
+
+    def persist_pasted_support_files(workspace, req)
+      paths = normalized_string_entries(req.query["pipeline_text_support_paths"])
+      contents = normalized_string_entries(req.query["pipeline_text_support_contents"])
+
+      [paths.length, contents.length].max.times do |index|
+        content = contents[index].to_s
+        next if content.strip.empty?
+
+        relative_path = sanitized_upload_relative_path(paths[index], "support_#{index}.yml")
+        absolute_path = File.join(workspace, relative_path)
+        FileUtils.mkdir_p(File.dirname(absolute_path))
+        File.write(absolute_path, content)
+      end
+    end
+
+    def load_uploaded_pipeline(req, snapshot_file, requested_context = nil, requested_history = nil)
       diagnostics = nil
 
       with_uploaded_pipeline_workspace(req) do |pipeline_path, workspace|
         diagnostics = build_upload_diagnostics(workspace, pipeline_path)
-        PipelineLoader.new(snapshot_file: snapshot_file).load(pipeline_path)
+        context_file = resolve_optional_file(requested_context, workspace, @context_file)
+        history_file = resolve_optional_file(requested_history, workspace, @history_file)
+        pipeline = ContextLoader.new(snapshot_file: snapshot_file, context_file: context_file).load(pipeline_path)
+        [pipeline, context_file, history_file]
       end
     rescue ArgumentError => error
       raise rewrite_upload_error(error, diagnostics)

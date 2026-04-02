@@ -9,3 +9,12 @@ deploy_test:
   script:
     - bash scripts/argocd-sync.sh
 
+dast:
+  stage: deploy
+  needs:
+    - deploy_test
+  script:
+    - zap-baseline.py -t https://test.example.internal -J gl-dast-report.json
+  artifacts:
+    paths:
+      - gl-dast-report.json
