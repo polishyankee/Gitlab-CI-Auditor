@@ -210,6 +210,40 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_equal ".../pipelines/library_package.gitlab-ci.yml", graph_node[:pipeline_short_label]
   end
 
+  def test_policy_can_tune_finding_severity_per_organization
+    policy = GitlabCiAuditor.deep_copy(GitlabCiAuditor::PolicyLoader.load(pack: "balanced"))
+    policy["severity_tuning"] = {
+      "ssdlc" => {
+        "exact" => {
+          "SAST gate is not complete" => "high"
+        }
+      }
+    }
+
+    pipeline = @loader.load(fixture("mismatched_sast.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline, policy).analyze
+    sast_finding = report[:ssdlc_findings].find { |finding| finding[:title] == "SAST gate is not complete" }
+
+    refute_nil sast_finding
+    assert_equal "high", sast_finding[:severity]
+    assert_equal "medium", sast_finding[:base_severity]
+    assert_equal "policy_tuning", sast_finding[:severity_source]
+  end
+
+  def test_graph_includes_gate_overlays_legend_and_critical_path
+    pipeline = @loader.load(fixture("good_pipeline.yml"))
+    report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+    graph = report[:graph]
+    critical_nodes = graph[:nodes].select { |node| node[:critical_path] }
+
+    assert graph.dig(:legend, :node_variants).any?
+    assert graph.dig(:legend, :edge_variants).any? { |item| item[:edge_type] == "critical" }
+    assert graph.dig(:legend, :gate_overlays).any? { |item| item[:state] == "blocking" }
+    assert critical_nodes.any?
+    assert critical_nodes.any? { |node| node[:gate_overlays].any? }
+    assert_equal true, graph[:edges].any? { |edge| edge[:critical_path] }
+  end
+
   def test_downstream_child_pipeline_is_scanned_as_part_of_whole_pipeline
     pipeline = @loader.load(fixture("root_with_downstream.yml"))
     report = GitlabCiAuditor::Analyzer.new(pipeline).analyze

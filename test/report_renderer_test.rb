@@ -41,7 +41,6 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, "Lint and Best Practices"
     assert_includes html, "Analysis Scope"
     assert_includes html, "Image scan families: none detected"
-    assert_includes html, "blue dashed: multi-project context link"
     assert_includes html, "OWASP SAMM rules:"
     assert_includes html, "Upstream question mapping:"
     assert_includes html, "Observability:"
@@ -50,5 +49,21 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, "pipeline_short_label"
     assert_includes html, "minmax(320px, 1fr)"
     assert_includes html, "edge-context"
+    assert_includes html, "Critical Path"
+    assert_includes html, "Gate overlays"
+    assert_includes html, "edge-critical"
+  end
+
+  def test_render_html_includes_diff_tab_when_diff_data_exists
+    baseline_pipeline = GitlabCiAuditor::PipelineLoader.new.load(example_path("pipelines/legacy_monolith.gitlab-ci.yml"))
+    baseline_report = GitlabCiAuditor::Analyzer.new(baseline_pipeline).analyze
+    @report[:diff] = GitlabCiAuditor::ReportDiff.build(@report, baseline_report)
+
+    html = GitlabCiAuditor::ReportRenderer.new(@report).render_html
+
+    assert_includes html, 'data-tab="diff"'
+    assert_includes html, "Pipeline Revision Diff"
+    assert_includes html, "Diff Summary"
+    assert_includes html, "Category Changes"
   end
 end

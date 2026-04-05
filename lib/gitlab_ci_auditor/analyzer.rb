@@ -566,7 +566,7 @@ module GitlabCiAuditor
         end
       end
 
-      security_findings = security_policy_findings
+      security_findings = apply_severity_tuning("security", security_policy_findings)
       maintainability = maintainability_findings
       coverage = coverage_summary(active_scenarios)
       categories = build_categories(active_scenarios, coverage, security_findings, maintainability)
@@ -576,7 +576,7 @@ module GitlabCiAuditor
       max_score = categories.sum { |category| category[:max_score] }
       strengths = strengths(active_scenarios, security_findings, maintainability)
       recommendations = recommendations(coverage, security_findings, maintainability, inactive_scenarios)
-      ssdlc_findings = build_ssdlc_findings(active_scenarios, coverage, inactive_scenarios)
+      ssdlc_findings = apply_severity_tuning("ssdlc", build_ssdlc_findings(active_scenarios, coverage, inactive_scenarios))
       pipeline_files = all_pipelines
       resolved_downstreams = pipeline_files.flat_map(&:downstream_references).select { |reference| reference.pipeline }.map(&:pipeline_path).compact.uniq
       unresolved_downstreams = unresolved_downstream_references
@@ -2793,7 +2793,7 @@ module GitlabCiAuditor
         end
       end
 
-      {
+      graph = {
         stages: stages,
         pipelines: pipelines.map.with_index do |pipeline, idx|
           {
@@ -2804,6 +2804,10 @@ module GitlabCiAuditor
         nodes: nodes.sort_by { |node| [node[:stage_index], node[:pipeline_index], node[:label]] },
         edges: edges.uniq
       }
+
+      apply_graph_highlighting(graph)
+      graph[:legend] = graph_legend
+      graph
     end
 
     def build_graph_node(pipeline, pipeline_idx, job_name, job, stage_index)
@@ -2834,9 +2838,189 @@ module GitlabCiAuditor
         allow_failure: job["allow_failure"] == true,
         environment: environment_name,
         needs: job_needs(job),
+        gate_overlays: graph_gate_overlays(classifications, job, trigger_refs),
         has_trigger: trigger_refs.any?,
         unresolved_downstream: trigger_refs.any? { |reference| reference.pipeline.nil? },
-        notes: graph_job_notes(pipeline, job, artifact_strings, script_lines)
+        notes: graph_job_notes(pipeline, job, artifact_strings, script_lines),
+        critical_path: false
+      }
+    end
+
+    def graph_gate_overlays(classifications, job, trigger_refs)
+      overlays = []
+      gate_state = if job["when"].to_s == "manual"
+                     "manual"
+                   elsif job["allow_failure"] == true
+                     "optional"
+                   else
+                     "blocking"
+                   end
+
+      {
+        "unit_tests" => "TEST",
+        "coverage_report" => "COV",
+        "sast" => "SAST",
+        "artifact_scan" => "SCAN",
+        "image_scan" => "IMAGE",
+        "sbom" => "SBOM",
+        "secret_detection" => "SECRET",
+        "iac" => "IAC",
+        "dast" => "DAST",
+        "deploy_test" => "DEPLOY"
+      }.each do |classification, label|
+        next unless classifications.include?(classification)
+
+        overlays << {
+          key: classification,
+          label: label,
+          state: gate_state
+        }
+      end
+
+      if trigger_refs.any?
+        overlays << {
+          key: "trigger",
+          label: trigger_refs.any? { |reference| reference.kind.to_s == "multi_project_context" } ? "CTX" : "TRIGGER",
+          state: "trigger"
+        }
+      end
+
+      overlays.first(6)
+    end
+
+    def apply_graph_highlighting(graph)
+      critical_path = build_graph_critical_path(graph)
+      graph[:critical_path] = critical_path
+      critical_node_ids = critical_path[:node_ids].to_a
+      critical_edge_pairs = critical_path[:edge_pairs].to_a.map { |pair| pair.is_a?(Array) ? pair : Array(pair) }
+
+      graph[:nodes].each do |node|
+        node[:critical_path] = critical_node_ids.include?(node[:id])
+      end
+
+      graph[:edges].each do |edge|
+        edge[:critical_path] = critical_edge_pairs.include?([edge[:from], edge[:to]])
+      end
+    end
+
+    def build_graph_critical_path(graph)
+      nodes = Array(graph[:nodes])
+      edges = Array(graph[:edges])
+      return empty_graph_critical_path if nodes.empty?
+
+      node_map = nodes.each_with_object({}) { |node, memo| memo[node[:id]] = node }
+      explicit_edge_pairs = edges.map { |edge| [edge[:from], edge[:to]] }
+      inferred_edge_pairs = infer_graph_stage_flow_edges(nodes, explicit_edge_pairs)
+      all_edge_pairs = (explicit_edge_pairs + inferred_edge_pairs).uniq
+
+      incoming = Hash.new { |hash, key| hash[key] = [] }
+      outgoing = Hash.new { |hash, key| hash[key] = [] }
+      all_edge_pairs.each do |from, to|
+        incoming[to] << from
+        outgoing[from] << to
+      end
+
+      sorted_ids = nodes.sort_by { |node| [node[:stage_index], node[:pipeline_index], node[:label]] }.map { |node| node[:id] }
+      distances = {}
+      previous = {}
+
+      sorted_ids.each do |node_id|
+        current_weight = graph_node_weight(node_map[node_id])
+        distances[node_id] ||= current_weight
+
+        incoming[node_id].each do |from_id|
+          next unless distances[from_id]
+
+          candidate = distances[from_id] + current_weight
+          next unless candidate > distances[node_id]
+
+          distances[node_id] = candidate
+          previous[node_id] = from_id
+        end
+
+        outgoing[node_id].each do |to_id|
+          next unless node_map[to_id]
+
+          distances[to_id] ||= graph_node_weight(node_map[to_id])
+        end
+      end
+
+      end_id = sorted_ids.max_by { |node_id| distances[node_id].to_f }
+      return empty_graph_critical_path unless end_id
+
+      node_ids = []
+      cursor = end_id
+      while cursor
+        node_ids.unshift(cursor)
+        cursor = previous[cursor]
+      end
+
+      {
+        node_ids: node_ids,
+        edge_pairs: node_ids.each_cons(2).to_a,
+        total_weight: distances[end_id].to_f.round(2),
+        labels: node_ids.map { |node_id| node_map[node_id][:label] },
+        pipelines: node_ids.map { |node_id| node_map[node_id][:pipeline_label] }.uniq
+      }
+    end
+
+    def infer_graph_stage_flow_edges(nodes, explicit_edge_pairs)
+      incoming_targets = explicit_edge_pairs.each_with_object({}) do |(_from, to), memo|
+        memo[to] = true
+      end
+
+      nodes.group_by { |node| node[:pipeline_label] }.each_with_object([]) do |(_pipeline, pipeline_nodes), edges|
+        stage_groups = pipeline_nodes.group_by { |node| node[:stage_index] }.sort_by(&:first)
+        stage_groups.each_cons(2) do |(_previous_stage, previous_nodes), (_current_stage, current_nodes)|
+          current_nodes.each do |node|
+            next if incoming_targets[node[:id]]
+
+            previous_nodes.each do |previous_node|
+              edges << [previous_node[:id], node[:id]]
+            end
+          end
+        end
+      end
+    end
+
+    def graph_node_weight(node)
+      weight = 1.0
+      weight += 1.0 if Array(node[:gate_overlays]).any? { |overlay| overlay[:state] == "blocking" }
+      weight += 0.7 if node[:has_trigger]
+      weight -= 0.25 if node[:manual] || node[:allow_failure]
+      weight
+    end
+
+    def empty_graph_critical_path
+      {
+        node_ids: [],
+        edge_pairs: [],
+        total_weight: 0.0,
+        labels: [],
+        pipelines: []
+      }
+    end
+
+    def graph_legend
+      {
+        node_variants: [
+          { label: "Strong step", variant: "good", description: "Job contributes clear SSDLC value without obvious weaknesses." },
+          { label: "Mixed step", variant: "mixed", description: "Job contributes value but still has risk signals or optional behavior." },
+          { label: "Weak step", variant: "risk", description: "Job has notable weaknesses and no compensating strong signals." },
+          { label: "Trigger step", variant: "trigger", description: "Job orchestrates downstream or multi-project execution." }
+        ],
+        edge_variants: [
+          { label: "Needs dependency", edge_type: "needs", description: "Solid dependency flow within the pipeline." },
+          { label: "Trigger dependency", edge_type: "trigger", description: "Downstream pipeline or child pipeline link." },
+          { label: "Context dependency", edge_type: "context", description: "Multi-project context link from an external delivery flow." },
+          { label: "Critical path", edge_type: "critical", description: "Longest weighted route through the pipeline graph." }
+        ],
+        gate_overlays: [
+          { label: "Blocking gate", state: "blocking", description: "Quality or security control blocks progression." },
+          { label: "Optional gate", state: "optional", description: "Control exists but does not block progression because it is optional." },
+          { label: "Manual gate", state: "manual", description: "Control exists but requires manual intervention." },
+          { label: "Trigger overlay", state: "trigger", description: "Node hands off flow to another pipeline or repository." }
+        ]
       }
     end
 
@@ -3082,6 +3266,68 @@ module GitlabCiAuditor
       TOOL_LABELS.fetch(family, family.to_s.tr("_", " "))
     end
 
+    def apply_severity_tuning(section, findings)
+      Array(findings).map { |finding| tune_finding_severity(section, finding) }
+    end
+
+    def tune_finding_severity(section, finding)
+      tuned_severity = tuned_severity_for(section, finding)
+      return finding.merge(severity_source: "default") unless tuned_severity && tuned_severity != finding[:severity]
+
+      finding.merge(
+        severity: tuned_severity,
+        base_severity: finding[:severity],
+        severity_source: "policy_tuning"
+      )
+    end
+
+    def tuned_severity_for(section, finding)
+      title = finding[:title].to_s.downcase
+      global_rules = severity_tuning_rules("all")
+      section_rules = severity_tuning_rules(section)
+
+      exact_match = global_rules[:exact][title] || section_rules[:exact][title]
+      return exact_match if exact_match
+
+      contains_match = global_rules[:contains].find { |needle, _severity| title.include?(needle) }
+      return contains_match.last if contains_match
+
+      contains_match = section_rules[:contains].find { |needle, _severity| title.include?(needle) }
+      return contains_match.last if contains_match
+
+      nil
+    end
+
+    def severity_tuning_rules(section)
+      raw = @policy.fetch("severity_tuning", {}).fetch(section.to_s, {})
+      {
+        exact: normalize_severity_map(raw["exact"] || raw["exact_titles"]),
+        contains: normalize_severity_map(raw["contains"] || raw["title_contains"])
+      }
+    end
+
+    def normalize_severity_map(value)
+      return {} unless value.is_a?(Hash)
+
+      value.each_with_object({}) do |(key, severity), memo|
+        normalized_severity = normalize_severity_value(severity)
+        next unless normalized_severity
+
+        memo[key.to_s.downcase] = normalized_severity
+      end
+    end
+
+    def normalize_severity_value(value)
+      case value.to_s.strip.downcase
+      when "critical", "high", "blocker"
+        "high"
+      when "warning", "warn", "medium", "moderate"
+        "medium"
+      when "low", "info", "minor"
+        "low"
+      end
+    end
+
     def job_reference(job_name, pipeline)
       "#{job_name} [#{relative_pipeline_path(pipeline.path)}]"
     end
@@ -3089,6 +3335,8 @@ module GitlabCiAuditor
     def finding(severity, title, issue, recommendation = nil, how_to_fix = nil, evidence = [])
       {
         severity: severity,
+        base_severity: severity,
+        severity_source: "default",
         title: title,
         issue: issue,
         recommendation: recommendation,

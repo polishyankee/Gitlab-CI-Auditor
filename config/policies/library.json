@@ -26,6 +26,7 @@
     "forbid_inline_secrets": true,
     "forbid_remote_script_piping": true
   },
+  "severity_tuning": {},
   "stack_sast_requirements": {
     "dotnet": {
       "label": ".NET",

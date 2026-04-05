@@ -39,5 +39,16 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes readme, "## Docker"
     assert_includes readme, "docker build --pull -t gitlab-ci-ssdlc-auditor ."
     assert_includes readme, "ghcr.io/polishyankee/gitlab-ci-auditor:latest"
+    assert_includes readme, "./scripts/prepare_release.sh v0.1.0"
+  end
+
+  def test_release_guide_and_prepare_script_exist
+    release_guide = File.read(File.join(GitlabCiAuditor.root_dir, "RELEASE.md"))
+    prepare_script = File.read(File.join(GitlabCiAuditor.root_dir, "scripts", "prepare_release.sh"))
+
+    assert_includes release_guide, "## First Release Checklist"
+    assert_includes release_guide, "git push origin v0.1.0"
+    assert_includes prepare_script, "docker build --pull"
+    assert_includes prepare_script, "docker run --rm"
   end
 end

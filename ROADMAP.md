@@ -8,6 +8,9 @@
 - [x] first-class SBOM, secret-detection, IaC, and DAST controls with policy-pack support
 - [x] multi-project graph ingestion through JSON context manifests
 - [x] historical trend dashboards backed by a persistent JSON history store
+- [x] diff mode for comparing two pipeline revisions through CLI and report views
+- [x] organization-specific severity tuning through policy files
+- [x] graph legend, gate overlays, and critical-path highlighting in the HTML report
 - [x] OWASP SAMM v2 `Implementation` benchmark for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - [x] report and GUI support for benchmark views, detected security tooling, and remediation context
 - [x] explicit benchmark detection signals and per-practice rule mapping in the `OWASP SAMM` tab
@@ -25,9 +28,9 @@
 
 - [ ] rule DSL for adding new checks without editing core analyzer code
 - [ ] SARIF or JUnit style output for CI integration
-- [ ] diff mode to compare two pipeline revisions
-- [ ] policy severity tuning per organization
-- [ ] graph legend, gate overlays, and critical path highlighting
+- [x] diff mode to compare two pipeline revisions
+- [x] policy severity tuning per organization
+- [x] graph legend, gate overlays, and critical path highlighting
 - [ ] stack-aware policy rules for artifact scanning, container scanning, and package-manager specific dependency analysis
 - [ ] benchmark expansion beyond SAMM `Implementation` into additional SAMM business functions where CI/CD evidence is meaningful
   Reviewed: not checked yet. `Implementation` is now covered down to the upstream question level, but additional business functions still need dedicated source mapping and heuristics before the benchmark can be expanded honestly.

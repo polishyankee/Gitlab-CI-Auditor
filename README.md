@@ -6,6 +6,9 @@ Recent additions:
 
 - stack-aware SAST policy enforcement driven by policy packs
 - explicit artifact and container scan family detection
+- diff mode for comparing two pipeline revisions
+- organization-specific severity tuning through policy files
+- graph legend, gate overlays, and critical-path highlighting in the HTML report
 - first-class SBOM, secret-detection, IaC, and DAST controls
 - multi-project graph ingestion through JSON context manifests
 - historical trend dashboards through a persistent JSON history store
@@ -467,6 +470,12 @@ Use a bundled pack:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --policy-pack strict
 ```
 
+Compare two pipeline revisions:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --compare-to .gitlab-ci.previous.yml --format html --output pipeline-diff.html
+```
+
 Use imported downstream snapshots:
 
 ```bash
@@ -505,7 +514,48 @@ Custom policies can override:
 - `test_environments`
 - `production_environments`
 - `security_policies`
+- `severity_tuning`
 - `stack_sast_requirements`
+
+Severity tuning lets one organization raise or lower the importance of a finding without editing analyzer code. Example:
+
+```json
+{
+  "meta": {
+    "label": "Platform Policy"
+  },
+  "severity_tuning": {
+    "ssdlc": {
+      "exact": {
+        "SAST gate is not complete": "high"
+      }
+    },
+    "security": {
+      "contains": {
+        "latest image tag": "high"
+      }
+    }
+  }
+}
+```
+
+Supported keys:
+
+- `severity_tuning.all.exact`
+- `severity_tuning.all.contains`
+- `severity_tuning.ssdlc.exact`
+- `severity_tuning.ssdlc.contains`
+- `severity_tuning.security.exact`
+- `severity_tuning.security.contains`
+
+Supported aliases normalize to `high`, `medium`, or `low`.
+
+The HTML report also includes richer graph support now:
+
+- legend cards for node, edge, and overlay semantics
+- gate overlay badges on graph nodes
+- critical-path highlighting across nodes and edges
+- a `Diff` tab when `--compare-to` is used
 
 ## Unit Tests
 
@@ -552,11 +602,19 @@ The published image target is:
 ghcr.io/polishyankee/gitlab-ci-auditor
 ```
 
+For the first release checklist and local Docker-based release preparation, see [`RELEASE.md`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/RELEASE.md).
+
+Prepare a release-ready local image before pushing the tag:
+
+```bash
+./scripts/prepare_release.sh v0.1.0
+```
+
 To cut a release manually after pushing the workflow changes, create and push a version tag:
 
 ```bash
-git tag v0.3.0
-git push origin v0.3.0
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.

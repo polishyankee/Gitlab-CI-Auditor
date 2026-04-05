@@ -29,11 +29,14 @@ module GitlabCiAuditor
         policy_pack: PolicyLoader::DEFAULT_PACK,
         snapshot_file: nil,
         context_file: nil,
-        history_file: nil
+        history_file: nil,
+        compare_to: nil,
+        compare_snapshot_file: nil,
+        compare_context_file: nil
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]"
+        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]"
         opts.on("--format FORMAT", "text, json, json-bundle, html, csv, pdf") { |value| options[:format] = value }
         opts.on("--output FILE", "Write report to file") { |value| options[:output] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
@@ -41,6 +44,9 @@ module GitlabCiAuditor
         opts.on("--snapshot-file FILE", "Load downstream snapshot mappings from JSON") { |value| options[:snapshot_file] = value }
         opts.on("--context-file FILE", "Load a multi-project context manifest from JSON") { |value| options[:context_file] = value }
         opts.on("--history-file FILE", "Append this scan to a history store JSON file and include trend data") { |value| options[:history_file] = value }
+        opts.on("--compare-to PATH", "Compare the current pipeline revision against another pipeline path") { |value| options[:compare_to] = value }
+        opts.on("--compare-snapshot-file FILE", "Downstream snapshot manifest for the comparison pipeline") { |value| options[:compare_snapshot_file] = value }
+        opts.on("--compare-context-file FILE", "Multi-project context manifest for the comparison pipeline") { |value| options[:compare_context_file] = value }
       end
       parser.parse!(argv)
 
@@ -51,6 +57,14 @@ module GitlabCiAuditor
       policy = load_policy(options)
       pipeline = ContextLoader.new(snapshot_file: options[:snapshot_file], context_file: options[:context_file]).load(path)
       report = Analyzer.new(pipeline, policy).analyze
+      if options[:compare_to]
+        baseline_pipeline = ContextLoader.new(
+          snapshot_file: options[:compare_snapshot_file] || options[:snapshot_file],
+          context_file: options[:compare_context_file] || options[:context_file]
+        ).load(options[:compare_to])
+        baseline_report = Analyzer.new(baseline_pipeline, policy).analyze
+        report[:diff] = ReportDiff.build(report, baseline_report)
+      end
       report = HistoryStore.new(options[:history_file]).attach(report) if options[:history_file]
       renderer = ReportRenderer.new(report)
       output =
@@ -129,7 +143,7 @@ module GitlabCiAuditor
     def usage
       <<~TEXT
         Usage:
-          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
+          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]
           gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
           gitlab-ci-auditor list-packs
       TEXT

@@ -115,6 +115,13 @@ module GitlabCiAuditor
       lines << "Status: #{@report[:summary][:status]}"
       lines << "Policy Pack: #{@report[:summary][:policy_pack_label]} (#{@report[:summary][:policy_source]})"
       lines << "Scope: #{@report[:summary][:analysis_scope]} (pipeline_files=#{@report[:summary][:total_pipeline_files]}, downstream_resolved=#{@report[:summary][:resolved_downstream_pipelines]}, downstream_unresolved=#{@report[:summary][:unresolved_downstream_pipelines]})"
+      if @report[:diff].is_a?(Hash) && @report[:diff][:enabled]
+        diff = @report[:diff]
+        lines << "Diff vs: #{diff.dig(:baseline, :pipeline_path)}"
+        lines << "Score Delta: #{diff[:score_delta]}"
+        lines << "Baseline Grade: #{diff.dig(:baseline, :grade)}"
+        lines << "Current Grade: #{diff.dig(:current, :grade)}"
+      end
       if @report.dig(:metadata, :context_manifest)
         lines << "Context Manifest: #{@report.dig(:metadata, :context_manifest)}"
         lines << "Context Projects: #{Array(@report.dig(:metadata, :context_projects)).join(', ')}" if Array(@report.dig(:metadata, :context_projects)).any?
@@ -129,6 +136,26 @@ module GitlabCiAuditor
         end
         lines << ""
       end
+      lines << ""
+      if @report[:diff].is_a?(Hash) && @report[:diff][:enabled]
+        diff = @report[:diff]
+        lines << "Diff Summary:"
+        Array(diff[:highlights]).each do |item|
+          lines << "  - #{item}"
+        end
+        Array(diff[:category_deltas]).first(8).each do |delta|
+          lines << "  - category #{delta[:title]}: current=#{delta[:current_score]}/#{delta[:current_max_score]} baseline=#{delta[:baseline_score]}/#{delta[:baseline_max_score]} delta=#{delta[:delta]}"
+        end
+        diff.fetch(:finding_deltas, {}).each do |section, finding_delta|
+          lines << "  - #{section} added: #{Array(finding_delta[:added]).map { |item| item[:title] }.join(' | ')}" if Array(finding_delta[:added]).any?
+          lines << "  - #{section} resolved: #{Array(finding_delta[:resolved]).map { |item| item[:title] }.join(' | ')}" if Array(finding_delta[:resolved]).any?
+          Array(finding_delta[:severity_changed]).each do |change|
+            lines << "  - #{section} severity changed: #{change[:title]} #{change[:baseline_severity]} -> #{change[:current_severity]}"
+          end
+        end
+        lines << ""
+      end
+
       lines << ""
       lines << "Categories:"
       @report[:categories].each do |category|
@@ -210,6 +237,24 @@ module GitlabCiAuditor
       CSV.generate do |csv|
         csv << %w[row_type section key label status severity score max_score summary issue recommendation how_to_fix evidence]
         csv << ["summary", "report", "overall", @report[:pipeline_path], @report[:summary][:status], nil, @report[:summary][:overall_score], @report[:summary][:max_score], "grade=#{@report[:summary][:grade]}; policy_pack=#{@report[:summary][:policy_pack_label]}; scope=#{@report[:summary][:analysis_scope]}", nil, nil, nil, nil]
+        if @report[:diff].is_a?(Hash) && @report[:diff][:enabled]
+          diff = @report[:diff]
+          csv << ["diff", "diff", "summary", diff.dig(:baseline, :pipeline_path), diff.dig(:current, :status), nil, diff[:score_delta], diff[:max_score_delta], "baseline_grade=#{diff.dig(:baseline, :grade)}; current_grade=#{diff.dig(:current, :grade)}", nil, nil, nil, nil]
+          Array(diff[:category_deltas]).each do |delta|
+            csv << ["diff_category", "diff", delta[:key], delta[:title], delta[:current_status], nil, delta[:current_score], delta[:current_max_score], "baseline_score=#{delta[:baseline_score]}; baseline_status=#{delta[:baseline_status]}; delta=#{delta[:delta]}", nil, nil, nil, nil]
+          end
+          diff.fetch(:finding_deltas, {}).each do |section, finding_delta|
+            Array(finding_delta[:added]).each do |finding|
+              csv << ["diff_finding", "diff_#{section}", "added", finding[:title], nil, finding[:severity], nil, nil, finding[:issue], nil, nil, nil, nil]
+            end
+            Array(finding_delta[:resolved]).each do |finding|
+              csv << ["diff_finding", "diff_#{section}", "resolved", finding[:title], nil, finding[:severity], nil, nil, finding[:issue], nil, nil, nil, nil]
+            end
+            Array(finding_delta[:severity_changed]).each do |change|
+              csv << ["diff_finding", "diff_#{section}", "severity_changed", change[:title], nil, change[:current_severity], nil, nil, "baseline_severity=#{change[:baseline_severity]}; current_severity=#{change[:current_severity]}", change[:baseline_issue], change[:current_issue], nil, nil]
+            end
+          end
+        end
 
         if @report[:lint].is_a?(Hash)
           csv << ["lint", "lint", "summary", @report[:lint][:title], @report[:lint][:status], nil, @report[:lint][:score], @report[:lint][:max_score], @report[:lint][:summary], nil, nil, nil, nil]

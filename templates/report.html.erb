@@ -264,6 +264,8 @@
 
       .score-row,
       .metric-grid,
+      .diff-grid,
+      .legend-grid,
       .category-grid,
       .controls {
         display: grid;
@@ -280,6 +282,12 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
+      .diff-grid,
+      .legend-grid {
+        margin-top: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       .card {
         padding: 18px;
         border-radius: 18px;
@@ -292,6 +300,21 @@
         margin: 10px 0 6px;
         color: #f0f6fc;
         font-size: 1.45rem;
+      }
+
+      .legend-card,
+      .diff-card {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.07), rgba(255, 255, 255, 0.02));
+      }
+
+      .legend-card strong,
+      .diff-card strong {
+        display: block;
+        margin: 10px 0 6px;
+        color: #fff3eb;
       }
 
       .section {
@@ -633,6 +656,54 @@
         font-size: 0.75rem;
       }
 
+      .graph-overlay-row {
+        margin-top: 10px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .graph-overlay-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 3px 8px;
+        border: 1px solid var(--border);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .graph-overlay-badge.blocking {
+        background: rgba(46, 160, 67, 0.12);
+        border-color: rgba(46, 160, 67, 0.28);
+        color: #8ef0a5;
+      }
+
+      .graph-overlay-badge.optional {
+        background: rgba(215, 163, 62, 0.12);
+        border-color: rgba(215, 163, 62, 0.28);
+        color: #ffd27c;
+      }
+
+      .graph-overlay-badge.manual {
+        background: rgba(248, 81, 73, 0.12);
+        border-color: rgba(248, 81, 73, 0.24);
+        color: #ffaea9;
+      }
+
+      .graph-overlay-badge.trigger {
+        background: rgba(137, 87, 229, 0.12);
+        border-color: rgba(137, 87, 229, 0.24);
+        color: #d0b0ff;
+      }
+
+      .graph-overlay-badge.critical {
+        background: rgba(252, 109, 38, 0.16);
+        border-color: rgba(252, 109, 38, 0.35);
+        color: #ffd7bf;
+      }
+
       .graph-empty {
         padding: 14px;
         border: 1px dashed var(--border);
@@ -706,6 +777,34 @@
         stroke-dasharray: 2 8;
       }
 
+      .edge-critical {
+        stroke: rgba(252, 109, 38, 0.92);
+        stroke-width: 3;
+      }
+
+      .graph-node.critical-path {
+        box-shadow: 0 0 0 1px rgba(252, 109, 38, 0.42), 0 18px 40px rgba(252, 109, 38, 0.12);
+      }
+
+      .legend-swatch,
+      .edge-swatch {
+        display: inline-flex;
+        width: 42px;
+        height: 12px;
+        border-radius: 999px;
+        flex: none;
+      }
+
+      .legend-swatch.good { background: rgba(46, 160, 67, 0.3); border: 1px solid rgba(46, 160, 67, 0.5); }
+      .legend-swatch.mixed { background: rgba(215, 163, 62, 0.28); border: 1px solid rgba(215, 163, 62, 0.5); }
+      .legend-swatch.risk { background: rgba(248, 81, 73, 0.26); border: 1px solid rgba(248, 81, 73, 0.45); }
+      .legend-swatch.trigger { background: rgba(137, 87, 229, 0.24); border: 1px solid rgba(137, 87, 229, 0.45); }
+
+      .edge-swatch.needs { background: rgba(252, 109, 38, 0.42); }
+      .edge-swatch.trigger { background: linear-gradient(90deg, rgba(137, 87, 229, 0.7), rgba(137, 87, 229, 0.25)); }
+      .edge-swatch.context { background: linear-gradient(90deg, rgba(124, 180, 255, 0.7), rgba(124, 180, 255, 0.2)); }
+      .edge-swatch.critical { background: linear-gradient(90deg, rgba(252, 109, 38, 0.95), rgba(252, 163, 38, 0.4)); }
+
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.93em;
@@ -713,6 +812,8 @@
 
       @media (max-width: 1120px) {
         .metric-grid,
+        .diff-grid,
+        .legend-grid,
         .category-grid,
         .controls,
         .benchmark-grid {
@@ -871,6 +972,9 @@
         <button class="tab-btn active" data-tab="overview">Overview</button>
         <button class="tab-btn" data-tab="lint">Lint</button>
         <button class="tab-btn" data-tab="trends">Trends</button>
+        <% if @report[:diff].is_a?(Hash) && @report[:diff][:enabled] %>
+          <button class="tab-btn" data-tab="diff">Diff</button>
+        <% end %>
         <button class="tab-btn" data-tab="benchmark">OWASP SAMM</button>
         <button class="tab-btn" data-tab="graph">Pipeline Graph</button>
         <button class="tab-btn" data-tab="ssdlc">SSDLC</button>
@@ -1079,6 +1183,73 @@
         <% end %>
       </section>
 
+      <% if @report[:diff].is_a?(Hash) && @report[:diff][:enabled] %>
+        <% diff = @report[:diff] %>
+        <section class="section tab-panel" data-panel="diff" hidden>
+          <h2>Pipeline Revision Diff</h2>
+          <div class="finding-copy">
+            Comparing the current report against baseline <code><%= ERB::Util.html_escape(diff.dig(:baseline, :pipeline_path).to_s) %></code>.
+          </div>
+
+          <div class="diff-grid">
+            <article class="diff-card">
+              <span class="muted">Current Revision</span>
+              <strong><%= diff.dig(:current, :score) %>/<%= diff.dig(:current, :max_score) %></strong>
+              <div class="muted">Grade <%= diff.dig(:current, :grade) %> · <%= diff.dig(:current, :status) %></div>
+            </article>
+            <article class="diff-card">
+              <span class="muted">Baseline Revision</span>
+              <strong><%= diff.dig(:baseline, :score) %>/<%= diff.dig(:baseline, :max_score) %></strong>
+              <div class="muted">Grade <%= diff.dig(:baseline, :grade) %> · <%= diff.dig(:baseline, :status) %></div>
+            </article>
+            <article class="diff-card">
+              <span class="muted">Score Delta</span>
+              <strong><%= diff[:score_delta] %></strong>
+              <div class="muted">Current versus baseline overall score change</div>
+            </article>
+          </div>
+
+          <div class="list">
+            <div class="list-item">
+              <strong>Diff Summary</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                <% Array(diff[:highlights]).each do |item| %>
+                  <span class="mini-pill"><%= item %></span>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <strong>Category Changes</strong>
+              <div class="job-pills" style="margin-top:12px;">
+                <% Array(diff[:category_deltas]).each do |delta| %>
+                  <span class="mini-pill"><%= "#{delta[:title]}: #{delta[:baseline_score]} -> #{delta[:current_score]} (#{delta[:delta] >= 0 ? '+' : ''}#{delta[:delta]})" %></span>
+                <% end %>
+              </div>
+            </div>
+
+            <% diff.fetch(:finding_deltas, {}).each do |section, finding_delta| %>
+              <div class="list-item">
+                <strong><%= section.to_s.upcase %> Finding Changes</strong>
+                <% if Array(finding_delta[:added]).empty? && Array(finding_delta[:resolved]).empty? && Array(finding_delta[:severity_changed]).empty? %>
+                  <div class="finding-copy">No changes detected for this finding group.</div>
+                <% else %>
+                  <% if Array(finding_delta[:added]).any? %>
+                    <div class="finding-copy"><strong>Added:</strong> <%= finding_delta[:added].map { |finding| "#{finding[:title]} [#{finding[:severity]}]" }.join(" | ") %></div>
+                  <% end %>
+                  <% if Array(finding_delta[:resolved]).any? %>
+                    <div class="finding-copy"><strong>Resolved:</strong> <%= finding_delta[:resolved].map { |finding| "#{finding[:title]} [#{finding[:severity]}]" }.join(" | ") %></div>
+                  <% end %>
+                  <% if Array(finding_delta[:severity_changed]).any? %>
+                    <div class="finding-copy"><strong>Severity changed:</strong> <%= finding_delta[:severity_changed].map { |finding| "#{finding[:title]} (#{finding[:baseline_severity]} -> #{finding[:current_severity]})" }.join(" | ") %></div>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+
       <section class="section tab-panel benchmark-panel" data-panel="benchmark" hidden>
         <h2>OWASP SAMM v2 Benchmark</h2>
         <div class="finding-copy">
@@ -1162,16 +1333,46 @@
       <section class="section tab-panel graph-panel" data-panel="graph" hidden>
         <h2>Pipeline Flow Graph</h2>
         <div class="finding-copy">
-          Columns represent stages, and edges show <code>needs</code> and <code>trigger</code> relationships.
-          Hover over a job to inspect weak spots and strengths for that step.
+          Columns represent stages, edges show dependency flow, and overlay badges identify whether a control behaves as a blocking gate, an optional gate, or a manual gate.
+          Hover over a job to inspect weak spots, strengths, and critical-path placement.
         </div>
 
-        <div class="job-pills" style="margin-top: 14px;">
-          <span class="mini-pill">green: strong step</span>
-          <span class="mini-pill">yellow: mixed</span>
-          <span class="mini-pill">red: weak spot</span>
-          <span class="mini-pill">violet: trigger/downstream</span>
-          <span class="mini-pill">blue dashed: multi-project context link</span>
+        <% if @report.dig(:graph, :critical_path, :labels).to_a.any? %>
+          <div class="list" style="margin-top:16px;">
+            <div class="list-item">
+              <strong>Critical Path</strong>
+              <div class="finding-copy">
+                <%= @report.dig(:graph, :critical_path, :labels).join(" -> ") %>
+              </div>
+              <div class="finding-copy">
+                Weighted path score: <%= @report.dig(:graph, :critical_path, :total_weight) %> · Pipelines: <%= @report.dig(:graph, :critical_path, :pipelines).join(", ") %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="legend-grid">
+          <% Array(@report.dig(:graph, :legend, :node_variants)).each do |item| %>
+            <div class="legend-card">
+              <span class="legend-swatch <%= item[:variant] %>"></span>
+              <strong><%= item[:label] %></strong>
+              <div class="muted"><%= item[:description] %></div>
+            </div>
+          <% end %>
+          <% Array(@report.dig(:graph, :legend, :edge_variants)).each do |item| %>
+            <div class="legend-card">
+              <span class="edge-swatch <%= item[:edge_type] %>"></span>
+              <strong><%= item[:label] %></strong>
+              <div class="muted"><%= item[:description] %></div>
+            </div>
+          <% end %>
+          <% Array(@report.dig(:graph, :legend, :gate_overlays)).each do |item| %>
+            <div class="legend-card">
+              <span class="graph-overlay-badge <%= item[:state] %>"><%= item[:label] %></span>
+              <strong><%= item[:label] %></strong>
+              <div class="muted"><%= item[:description] %></div>
+            </div>
+          <% end %>
         </div>
 
         <div class="graph-shell">
@@ -1198,6 +1399,9 @@
                 <div class="finding-copy"><strong>Issue:</strong> <%= finding[:issue] %></div>
                 <% if finding[:evidence].any? %>
                   <div class="finding-copy"><strong>Evidence:</strong> <%= finding[:evidence].join(" | ") %></div>
+                <% end %>
+                <% if finding[:base_severity] && finding[:base_severity] != finding[:severity] %>
+                  <div class="finding-copy"><strong>Severity policy:</strong> tuned from <%= finding[:base_severity] %> to <%= finding[:severity] %> by the selected organization policy.</div>
                 <% end %>
                 <% if finding[:recommendation] %>
                   <div class="finding-copy"><strong>Recommendation:</strong> <%= finding[:recommendation] %></div>
@@ -1267,6 +1471,9 @@
                   <strong><%= finding[:title] %></strong>
                 </div>
                 <div class="finding-copy"><strong>Issue:</strong> <%= finding[:issue] %></div>
+                <% if finding[:base_severity] && finding[:base_severity] != finding[:severity] %>
+                  <div class="finding-copy"><strong>Severity policy:</strong> tuned from <%= finding[:base_severity] %> to <%= finding[:severity] %> by the selected organization policy.</div>
+                <% end %>
                 <% if finding[:recommendation] %>
                   <div class="finding-copy"><strong>Recommendation:</strong> <%= finding[:recommendation] %></div>
                 <% end %>
@@ -1343,6 +1550,16 @@
             "</ul></div>";
         }
 
+        function gateOverlayMarkup(overlays, criticalPath) {
+          var markup = (overlays || []).map(function (overlay) {
+            return '<span class="graph-overlay-badge ' + escapeHtml(overlay.state || "blocking") + '">' + escapeHtml(overlay.label) + "</span>";
+          }).join("");
+          if (criticalPath) {
+            markup += '<span class="graph-overlay-badge critical">CRITICAL</span>';
+          }
+          return markup;
+        }
+
         function showTooltip(node, event) {
           var tooltip = document.getElementById("graph-tooltip");
           tooltip.hidden = false;
@@ -1350,6 +1567,8 @@
             "<h4>" + escapeHtml(node.label) + "</h4>" +
             '<div class="tooltip-section"><strong>Pipeline:</strong> ' + escapeHtml(node.pipeline_label) + "</div>" +
             '<div class="tooltip-section"><strong>Stage:</strong> ' + escapeHtml(node.stage) + "</div>" +
+            (node.critical_path ? '<div class="tooltip-section"><strong>Critical path:</strong> This node is part of the longest weighted delivery route.</div>' : "") +
+            ((node.gate_overlays || []).length ? '<div class="tooltip-section"><strong>Gate overlays:</strong> ' + gateOverlayMarkup(node.gate_overlays, false) + "</div>" : "") +
             (node.environment ? '<div class="tooltip-section"><strong>Environment:</strong> ' + escapeHtml(node.environment) + "</div>" : "") +
             tooltipList("Strengths", node.strengths, "No clear positive signals") +
             tooltipList("Weak spots", node.weaknesses, "No obvious weak spots") +
@@ -1426,11 +1645,12 @@
             } else {
               stageNodes.forEach(function (node) {
                 var card = document.createElement("div");
-                card.className = "graph-node " + (node.variant || "neutral");
+                card.className = "graph-node " + (node.variant || "neutral") + (node.critical_path ? " critical-path" : "");
                 card.dataset.nodeId = node.id;
                 card.innerHTML =
                   "<h3>" + escapeHtml(node.label) + "</h3>" +
                   "<small>" + escapeHtml(node.pipeline_short_label || node.pipeline_label) + "</small>" +
+                  '<div class="graph-overlay-row">' + gateOverlayMarkup(node.gate_overlays || [], node.critical_path) + "</div>" +
                   '<div class="graph-badges">' +
                     (node.classifications || []).slice(0, 4).map(function (item) {
                       return '<span class="graph-chip">' + escapeHtml(item) + "</span>";
@@ -1506,6 +1726,9 @@
               edgeClass = "edge-context";
             }
             path.setAttribute("class", edgeClass);
+            if (edge.critical_path) {
+              path.setAttribute("class", edgeClass + " edge-critical");
+            }
             svg.appendChild(path);
           });
         }
