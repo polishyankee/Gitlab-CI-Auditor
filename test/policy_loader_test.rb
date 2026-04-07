@@ -24,4 +24,54 @@ class PolicyLoaderTest < Minitest::Test
       assert_equal "file", policy.dig("meta", "source")
     end
   end
+
+  def test_rejects_unsupported_top_level_policy_keys
+    Dir.mktmpdir do |dir|
+      custom_path = File.join(dir, "custom.json")
+      File.write(custom_path, JSON.pretty_generate({ "unknown_section" => true }))
+
+      error = assert_raises(ArgumentError) do
+        GitlabCiAuditor::PolicyLoader.load(path: custom_path)
+      end
+
+      assert_includes error.message, "unsupported policy key"
+      assert_includes error.message, "unknown_section"
+    end
+  end
+
+  def test_rejects_invalid_boolean_policy_values
+    Dir.mktmpdir do |dir|
+      custom_path = File.join(dir, "custom.json")
+      File.write(custom_path, JSON.pretty_generate({ "required_controls" => { "unit_tests" => "yes" } }))
+
+      error = assert_raises(ArgumentError) do
+        GitlabCiAuditor::PolicyLoader.load(path: custom_path)
+      end
+
+      assert_includes error.message, "required_controls.unit_tests"
+      assert_includes error.message, "must be a boolean"
+    end
+  end
+
+  def test_rejects_invalid_severity_tuning_values
+    Dir.mktmpdir do |dir|
+      custom_path = File.join(dir, "custom.json")
+      File.write(custom_path, JSON.pretty_generate({
+        "severity_tuning" => {
+          "security" => {
+            "contains" => {
+              "allow_failure" => "urgent"
+            }
+          }
+        }
+      }))
+
+      error = assert_raises(ArgumentError) do
+        GitlabCiAuditor::PolicyLoader.load(path: custom_path)
+      end
+
+      assert_includes error.message, "unsupported severity"
+      assert_includes error.message, "urgent"
+    end
+  end
 end

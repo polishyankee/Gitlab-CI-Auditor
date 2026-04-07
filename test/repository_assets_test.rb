@@ -37,9 +37,14 @@ class RepositoryAssetsTest < Minitest::Test
     readme = File.read(File.join(GitlabCiAuditor.root_dir, "README.md"))
 
     assert_includes readme, "## Docker"
+    assert_includes readme, "## Quick Start"
+    assert_includes readme, "## Why Teams Use It"
+    assert_includes readme, "docs/assets/readme-preview.svg"
     assert_includes readme, "docker build --pull -t gitlab-ci-ssdlc-auditor ."
     assert_includes readme, "ghcr.io/polishyankee/gitlab-ci-auditor:latest"
     assert_includes readme, "./scripts/prepare_release.sh v0.1.0"
+    assert_includes readme, "--format sarif"
+    assert_includes readme, "--format junit"
   end
 
   def test_release_guide_and_prepare_script_exist
@@ -50,5 +55,16 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes release_guide, "git push origin v0.1.0"
     assert_includes prepare_script, "docker build --pull"
     assert_includes prepare_script, "docker run --rm"
+  end
+
+  def test_github_metadata_pack_and_preview_asset_exist
+    metadata = File.read(File.join(GitlabCiAuditor.root_dir, "docs", "GITHUB_METADATA.md"))
+    preview_svg = File.read(File.join(GitlabCiAuditor.root_dir, "docs", "assets", "readme-preview.svg"))
+
+    assert_includes metadata, "## About Description"
+    assert_includes metadata, "## Suggested Topics"
+    assert_includes metadata, "## Social Preview"
+    assert_includes preview_svg, "GitLab CI SSDLC Auditor"
+    assert_includes preview_svg, "Pipeline Flow Graph"
   end
 end

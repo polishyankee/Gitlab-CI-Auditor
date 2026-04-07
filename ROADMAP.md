@@ -11,6 +11,8 @@
 - [x] diff mode for comparing two pipeline revisions through CLI and report views
 - [x] organization-specific severity tuning through policy files
 - [x] graph legend, gate overlays, and critical-path highlighting in the HTML report
+- [x] fail-fast policy-pack validation for unsupported keys and malformed overrides
+- [x] machine-readable `SARIF` and `JUnit` exports for CI integration
 - [x] OWASP SAMM v2 `Implementation` benchmark for `Secure Build`, `Secure Deployment`, and `Defect Management`
 - [x] report and GUI support for benchmark views, detected security tooling, and remediation context
 - [x] explicit benchmark detection signals and per-practice rule mapping in the `OWASP SAMM` tab
@@ -27,7 +29,7 @@
 ## Mid Term
 
 - [ ] rule DSL for adding new checks without editing core analyzer code
-- [ ] SARIF or JUnit style output for CI integration
+- [x] SARIF or JUnit style output for CI integration
 - [x] diff mode to compare two pipeline revisions
 - [x] policy severity tuning per organization
 - [x] graph legend, gate overlays, and critical path highlighting

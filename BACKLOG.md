@@ -8,7 +8,7 @@ This backlog turns the high-level rule catalog into implementable work items.
 - Expand downstream support for imported YAML snapshots from external child and multi-project pipelines.
 - Add a persistent scan-history storage backend and trend dashboard views.
 - Add a rule DSL so new rules can be added without editing the core analyzer for every change.
-- Add policy-pack validation to fail fast on malformed JSON or unsupported keys.
+- [x] Add policy-pack validation to fail fast on malformed JSON or unsupported keys.
 
 ## P1
 
@@ -19,7 +19,7 @@ This backlog turns the high-level rule catalog into implementable work items.
 ## P2
 
 - Add diff mode to compare two `.gitlab-ci.yml` revisions.
-- Export findings as SARIF and JUnit-style machine-readable outputs.
+- [x] Export findings as SARIF and JUnit-style machine-readable outputs.
 - Highlight critical path and gate locations directly on the pipeline graph.
 - Add organizational severity overrides per rule pack.
 - Extend trend reporting with repository baselines, branch comparisons, and release milestone snapshots.

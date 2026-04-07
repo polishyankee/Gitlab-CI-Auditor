@@ -36,8 +36,8 @@ module GitlabCiAuditor
       }
 
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]"
-        opts.on("--format FORMAT", "text, json, json-bundle, html, csv, pdf") { |value| options[:format] = value }
+        opts.banner = "Usage: gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf|sarif|junit] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]"
+        opts.on("--format FORMAT", "text, json, json-bundle, html, csv, pdf, sarif, junit") { |value| options[:format] = value }
         opts.on("--output FILE", "Write report to file") { |value| options[:output] = value }
         opts.on("--policy FILE", "Load custom policy JSON") { |value| options[:policy] = value }
         opts.on("--policy-pack NAME", "Use a bundled policy pack (default: #{PolicyLoader::DEFAULT_PACK})") { |value| options[:policy_pack] = value }
@@ -79,6 +79,10 @@ module GitlabCiAuditor
           renderer.render_csv
         when "pdf"
           renderer.render_pdf
+        when "sarif"
+          renderer.render_sarif
+        when "junit", "junit-xml", "xml"
+          renderer.render_junit
         else
           renderer.render_text
         end
@@ -143,7 +147,7 @@ module GitlabCiAuditor
     def usage
       <<~TEXT
         Usage:
-          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]
+          gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf|sarif|junit] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]
           gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
           gitlab-ci-auditor list-packs
       TEXT

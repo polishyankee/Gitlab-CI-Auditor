@@ -1,9 +1,68 @@
 # GitLab CI SSDLC Auditor
 
-Self-contained tool for evaluating `.gitlab-ci.yml` quality against SSDLC expectations, security policies, and long-term maintainability. The analysis engine is stdlib-first and easy to extend. The optional GUI server uses `webrick` on modern Ruby releases.
+[![CI](https://github.com/polishyankee/Gitlab-CI-Auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/polishyankee/Gitlab-CI-Auditor/actions/workflows/ci.yml)
+[![Release](https://github.com/polishyankee/Gitlab-CI-Auditor/actions/workflows/release.yml/badge.svg)](https://github.com/polishyankee/Gitlab-CI-Auditor/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/polishyankee/Gitlab-CI-Auditor?display_name=tag)](https://github.com/polishyankee/Gitlab-CI-Auditor/releases)
+[![Container](https://img.shields.io/badge/GHCR-gitlab--ci--auditor-orange)](https://github.com/polishyankee/Gitlab-CI-Auditor/pkgs/container/gitlab-ci-auditor)
 
-Recent additions:
+Audit GitLab CI pipelines for SSDLC, OWASP SAMM, SAST/SBOM/DAST coverage, policy compliance, and maintainability. The tool inspects `.gitlab-ci.yml`, local includes, multi-project context, downstream snapshots, and script-backed evidence, then produces actionable findings, flow graphs, benchmark views, and machine-readable exports.
 
+![GitLab CI SSDLC Auditor preview](docs/assets/readme-preview.svg)
+
+## Why Teams Use It
+
+- detect missing unit tests, coverage, SAST, SBOM, secret-detection, IaC, DAST, and test deployment gates
+- verify every reachable pipeline path derived from `workflow`, `rules`, `rules:changes`, `only/except`, branches, tags, and downstreams
+- benchmark pipeline evidence against OWASP SAMM v2 `Implementation`
+- visualize the real pipeline flow graph with gate overlays and critical path highlighting
+- export reports for people and automation through `HTML`, `PDF`, `CSV`, `JSON bundle`, `SARIF`, and `JUnit`
+
+## Quick Start
+
+Run the auditor in Docker against the current repository and generate an HTML report in one command:
+
+```bash
+docker pull ghcr.io/polishyankee/gitlab-ci-auditor:latest
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/workspace" \
+  ghcr.io/polishyankee/gitlab-ci-auditor:latest \
+  scan /workspace/.gitlab-ci.yml --format html --output /workspace/report.html
+```
+
+Open the local GUI:
+
+```bash
+docker run --rm -p 4567:4567 ghcr.io/polishyankee/gitlab-ci-auditor:latest
+```
+
+Or use the local checkout directly:
+
+```bash
+chmod +x ./bin/gitlab-ci-auditor
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml
+```
+
+## What You Get
+
+- SSDLC findings with issue, recommendation, and concrete remediation
+- security-policy findings with organization-specific severity tuning
+- static lint and best-practices feedback for `.gitlab-ci.yml`
+- interactive flow graph and multi-project context visualization
+- OWASP SAMM `Secure Build`, `Secure Deployment`, and `Defect Management` benchmark mapping
+- CI-ready exports for `SARIF` and `JUnit`
+
+## Sample Inputs and Reports
+
+- browse pipeline examples and bundled report artifacts in [examples/README.md](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/README.md)
+- inspect the strong baseline input in [examples/pipelines/compliant_service.gitlab-ci.yml](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/compliant_service.gitlab-ci.yml)
+- inspect the intentionally weak baseline input in [examples/pipelines/legacy_monolith.gitlab-ci.yml](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/examples/pipelines/legacy_monolith.gitlab-ci.yml)
+- use [docs/GITHUB_METADATA.md](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/docs/GITHUB_METADATA.md) for the exact GitHub `About`, topics, and social-preview settings
+
+## Highlights
+
+- fail-fast validation for malformed or unsupported custom policy packs
+- machine-readable `SARIF` and `JUnit` exports for CI integration
 - stack-aware SAST policy enforcement driven by policy packs
 - explicit artifact and container scan family detection
 - diff mode for comparing two pipeline revisions
@@ -281,6 +340,18 @@ JSON bundle export:
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format json-bundle --output report.bundle.json
 ```
 
+SARIF export:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format sarif --output report.sarif.json
+```
+
+JUnit export:
+
+```bash
+./bin/gitlab-ci-auditor scan .gitlab-ci.yml --format junit --output report.junit.xml
+```
+
 Multi-project scan:
 
 ```bash
@@ -516,6 +587,16 @@ Custom policies can override:
 - `security_policies`
 - `severity_tuning`
 - `stack_sast_requirements`
+
+Custom policy files are now validated before the scan starts. The loader fails fast on:
+
+- unsupported top-level policy keys
+- unsupported nested keys inside `required_controls`, `security_policies`, `severity_tuning`, and `stack_sast_requirements`
+- non-boolean control toggles
+- non-string environment lists
+- unsupported severity override values
+
+This keeps broken policy packs from silently producing misleading audit output.
 
 Severity tuning lets one organization raise or lower the importance of a finding without editing analyzer code. Example:
 

@@ -297,6 +297,80 @@ module GitlabCiAuditor
       end
     end
 
+    def render_sarif
+      entries = sarif_entries
+
+      JSON.pretty_generate(
+        {
+          "$schema" => "https://json.schemastore.org/sarif-2.1.0.json",
+          "version" => "2.1.0",
+          "runs" => [
+            {
+              "tool" => {
+                "driver" => {
+                  "name" => "GitLab CI SSDLC Auditor",
+                  "informationUri" => "https://github.com/polishyankee/Gitlab-CI-Auditor",
+                  "version" => GitlabCiAuditor::VERSION,
+                  "rules" => sarif_rules(entries)
+                }
+              },
+              "results" => entries.map { |entry| sarif_result(entry) },
+              "properties" => {
+                "pipeline_path" => @report[:pipeline_path],
+                "generated_at" => @report[:generated_at],
+                "overall_score" => @report.dig(:summary, :overall_score),
+                "max_score" => @report.dig(:summary, :max_score),
+                "grade" => @report.dig(:summary, :grade),
+                "status" => @report.dig(:summary, :status),
+                "policy_pack" => @report.dig(:summary, :policy_pack_name),
+                "analysis_scope" => @report.dig(:summary, :analysis_scope)
+              }
+            }
+          ]
+        }
+      )
+    end
+
+    def render_junit
+      suites = junit_suites
+      testcases = suites.flat_map { |suite| suite[:testcases] }
+      tests = testcases.size
+      failures = testcases.count { |testcase| testcase[:status] == "fail" }
+      skipped = testcases.count { |testcase| testcase[:status] == "warn" }
+
+      lines = []
+      lines << %(<?xml version="1.0" encoding="UTF-8"?>)
+      lines << %(<testsuites name="GitLab CI SSDLC Auditor" tests="#{tests}" failures="#{failures}" skipped="#{skipped}">)
+      suites.each do |suite|
+        suite_tests = suite[:testcases].size
+        suite_failures = suite[:testcases].count { |testcase| testcase[:status] == "fail" }
+        suite_skipped = suite[:testcases].count { |testcase| testcase[:status] == "warn" }
+        lines << %(  <testsuite name="#{xml_escape(suite[:name])}" tests="#{suite_tests}" failures="#{suite_failures}" skipped="#{suite_skipped}" time="0">)
+        properties = suite[:properties].to_h.reject { |_key, value| value.nil? }
+        if properties.any?
+          lines << %(    <properties>)
+          properties.each do |key, value|
+            lines << %(      <property name="#{xml_escape(key)}" value="#{xml_escape(value)}"/>)
+          end
+          lines << %(    </properties>)
+        end
+        suite[:testcases].each do |testcase|
+          lines << %(    <testcase classname="#{xml_escape(testcase[:classname])}" name="#{xml_escape(testcase[:name])}" time="0">)
+          case testcase[:status]
+          when "fail"
+            lines << %(      <failure type="#{xml_escape(testcase[:type])}" message="#{xml_escape(testcase[:message])}"/>)
+          when "warn"
+            lines << %(      <skipped message="#{xml_escape(testcase[:message])}"/>)
+          end
+          lines << %(      <system-out>#{xml_escape(testcase[:detail])}</system-out>) unless testcase[:detail].to_s.empty?
+          lines << %(    </testcase>)
+        end
+        lines << %(  </testsuite>)
+      end
+      lines << %(</testsuites>)
+      lines.join("\n")
+    end
+
     def render_html
       template = File.read(File.join(GitlabCiAuditor.root_dir, "templates", "report.html.erb"))
       ERB.new(template).result(binding)
@@ -304,6 +378,267 @@ module GitlabCiAuditor
 
     def render_pdf
       SimplePdfDocument.new(render_text).render
+    end
+
+    private
+
+    def sarif_entries
+      entries = []
+
+      Array(@report.dig(:lint, :findings)).each do |finding|
+        next if finding[:status].to_s == "pass"
+
+        entries << {
+          section: "lint",
+          title: finding[:message].to_s,
+          message: finding[:message].to_s,
+          level: sarif_level_for_status(finding[:status]),
+          severity: severity_for_lint_status(finding[:status]),
+          recommendation: "Resolve the structural pipeline issue and rerun the auditor.",
+          how_to_fix: Array(finding[:evidence]).any? ? "Inspect the attached evidence and reconcile the pipeline structure with the original repository layout." : nil,
+          evidence: Array(finding[:evidence])
+        }
+      end
+
+      %w[ssdlc security].each do |section|
+        Array(@report[:"#{section}_findings"]).each do |finding|
+          entries << {
+            section: section,
+            title: finding[:title].to_s,
+            message: finding[:issue].to_s.empty? ? finding[:title].to_s : finding[:issue].to_s,
+            level: sarif_level_for_severity(finding[:severity]),
+            severity: finding[:severity].to_s,
+            recommendation: finding[:recommendation],
+            how_to_fix: finding[:how_to_fix],
+            evidence: Array(finding[:evidence]),
+            severity_source: finding[:severity_source],
+            base_severity: finding[:base_severity]
+          }
+        end
+      end
+
+      entries.map do |entry|
+        entry.merge(rule_id: sarif_rule_id(entry[:section], entry[:title]))
+      end
+    end
+
+    def sarif_rules(entries)
+      entries.uniq { |entry| entry[:rule_id] }.map do |entry|
+        {
+          "id" => entry[:rule_id],
+          "name" => entry[:title],
+          "shortDescription" => { "text" => entry[:title] },
+          "fullDescription" => { "text" => entry[:message] },
+          "help" => { "text" => sarif_help_text(entry) },
+          "properties" => {
+            "section" => entry[:section],
+            "default_severity" => entry[:severity]
+          }
+        }
+      end
+    end
+
+    def sarif_result(entry)
+      {
+        "ruleId" => entry[:rule_id],
+        "level" => entry[:level],
+        "message" => { "text" => entry[:message] },
+        "locations" => [
+          {
+            "physicalLocation" => {
+              "artifactLocation" => { "uri" => @report[:pipeline_path] }
+            }
+          }
+        ],
+        "properties" => {
+          "section" => entry[:section],
+          "severity" => entry[:severity],
+          "severity_source" => entry[:severity_source],
+          "base_severity" => entry[:base_severity],
+          "recommendation" => entry[:recommendation],
+          "how_to_fix" => entry[:how_to_fix],
+          "evidence" => entry[:evidence]
+        }.reject { |_key, value| value.nil? || (value.respond_to?(:empty?) && value.empty?) }
+      }
+    end
+
+    def sarif_help_text(entry)
+      [
+        entry[:recommendation],
+        entry[:how_to_fix]
+      ].compact.join("\n\n")
+    end
+
+    def sarif_rule_id(section, title)
+      "#{section}/#{slugify(title)}"
+    end
+
+    def sarif_level_for_severity(severity)
+      case severity.to_s
+      when "high"
+        "error"
+      when "medium"
+        "warning"
+      else
+        "note"
+      end
+    end
+
+    def sarif_level_for_status(status)
+      case status.to_s
+      when "fail"
+        "error"
+      when "warn"
+        "warning"
+      else
+        "note"
+      end
+    end
+
+    def severity_for_lint_status(status)
+      case status.to_s
+      when "fail"
+        "high"
+      when "warn"
+        "medium"
+      else
+        "low"
+      end
+    end
+
+    def junit_suites
+      [
+        {
+          name: "summary",
+          properties: junit_common_properties,
+          testcases: [
+            {
+              classname: "summary",
+              name: "Overall Score",
+              status: junit_status_for_report(@report.dig(:summary, :status)),
+              type: "report_summary",
+              message: "Overall score #{@report.dig(:summary, :overall_score)}/#{@report.dig(:summary, :max_score)} (#{@report.dig(:summary, :grade)})",
+              detail: "policy_pack=#{@report.dig(:summary, :policy_pack_label)}; scope=#{@report.dig(:summary, :analysis_scope)}; pipeline=#{@report[:pipeline_path]}"
+            }
+          ]
+        },
+        {
+          name: "categories",
+          properties: junit_common_properties,
+          testcases: Array(@report[:categories]).map do |category|
+            {
+              classname: "category",
+              name: category[:title].to_s,
+              status: junit_status_for_report(category[:status]),
+              type: "category",
+              message: category[:summary].to_s,
+              detail: "score=#{category[:score]}/#{category[:max_score]}; key=#{category[:key]}; status=#{category[:status]}"
+            }
+          end
+        },
+        {
+          name: "lint",
+          properties: junit_common_properties,
+          testcases: junit_lint_testcases
+        },
+        {
+          name: "ssdlc",
+          properties: junit_common_properties,
+          testcases: junit_finding_testcases("ssdlc", Array(@report[:ssdlc_findings]))
+        },
+        {
+          name: "security",
+          properties: junit_common_properties,
+          testcases: junit_finding_testcases("security", Array(@report[:security_findings]))
+        }
+      ]
+    end
+
+    def junit_common_properties
+      {
+        "pipeline_path" => @report[:pipeline_path],
+        "generated_at" => @report[:generated_at],
+        "overall_score" => @report.dig(:summary, :overall_score),
+        "grade" => @report.dig(:summary, :grade),
+        "policy_pack" => @report.dig(:summary, :policy_pack_name)
+      }
+    end
+
+    def junit_lint_testcases
+      findings = Array(@report.dig(:lint, :findings))
+      return [junit_pass_placeholder("lint", "No lint findings")] if findings.empty?
+
+      findings.map do |finding|
+        {
+          classname: "lint",
+          name: finding[:message].to_s,
+          status: junit_status_for_report(finding[:status]),
+          type: "lint",
+          message: finding[:message].to_s,
+          detail: Array(finding[:evidence]).join(" | ")
+        }
+      end
+    end
+
+    def junit_finding_testcases(section, findings)
+      return [junit_pass_placeholder(section, "No #{section} findings")] if findings.empty?
+
+      findings.map do |finding|
+        {
+          classname: section,
+          name: finding[:title].to_s,
+          status: junit_status_for_severity(finding[:severity]),
+          type: finding[:severity].to_s,
+          message: finding[:issue].to_s.empty? ? finding[:title].to_s : finding[:issue].to_s,
+          detail: [
+            finding[:recommendation],
+            finding[:how_to_fix],
+            ("evidence=#{Array(finding[:evidence]).join(' | ')}" if Array(finding[:evidence]).any?)
+          ].compact.join("\n")
+        }
+      end
+    end
+
+    def junit_pass_placeholder(classname, name)
+      {
+        classname: classname,
+        name: name,
+        status: "pass",
+        type: classname,
+        message: name,
+        detail: ""
+      }
+    end
+
+    def junit_status_for_report(status)
+      case status.to_s
+      when "fail"
+        "fail"
+      when "warn"
+        "warn"
+      else
+        "pass"
+      end
+    end
+
+    def junit_status_for_severity(severity)
+      case severity.to_s
+      when "high", "medium"
+        "fail"
+      when "low"
+        "warn"
+      else
+        "pass"
+      end
+    end
+
+    def slugify(value)
+      normalized = value.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_+|_+\z/, "")
+      normalized.empty? ? "unnamed_rule" : normalized
+    end
+
+    def xml_escape(value)
+      value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'", "&apos;")
     end
   end
 end
