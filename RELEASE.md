@@ -1,10 +1,10 @@
 # Release Guide
 
-This repository already contains a release workflow in [`.github/workflows/release.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/.github/workflows/release.yml). The first release mainly requires repository settings, a version tag, and one local verification pass.
+This repository already contains a release workflow in [`.github/workflows/release.yml`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/.github/workflows/release.yml). A release cut mainly requires repository settings, a version tag, and one local verification pass.
 
-## First Release Checklist
+## Release Checklist
 
-Before cutting the first public release, verify these GitHub settings:
+Before cutting a public release, verify these GitHub settings:
 
 1. In `Settings -> Actions -> General -> Workflow permissions`, set `Read and write permissions`.
 2. In `Settings -> Actions -> General`, allow workflows to create releases and publish packages through `GITHUB_TOKEN`.
@@ -22,18 +22,18 @@ The release workflow publishes:
 Use the helper script to run the unit tests, build a versioned Docker image locally, and smoke-test the CLI image before tagging:
 
 ```bash
-./scripts/prepare_release.sh v0.1.0
+./scripts/prepare_release.sh v0.3.0
 ```
 
 The script builds:
 
-- `gitlab-ci-auditor:v0.1.0`
-- `ghcr.io/polishyankee/gitlab-ci-auditor:v0.1.0`
+- `gitlab-ci-auditor:v0.3.0`
+- `ghcr.io/polishyankee/gitlab-ci-auditor:v0.3.0`
 
 It also smoke-tests the image with:
 
 ```bash
-docker run --rm gitlab-ci-auditor:v0.1.0 scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
+docker run --rm gitlab-ci-auditor:v0.3.0 scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
 ```
 
 ## Cut The Release
@@ -41,8 +41,8 @@ docker run --rm gitlab-ci-auditor:v0.1.0 scan /app/examples/pipelines/compliant_
 After the local checks pass:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 That tag triggers the `Release` workflow automatically.
@@ -51,7 +51,7 @@ You can also trigger the workflow manually in GitHub:
 
 1. Open `Actions -> Release`.
 2. Click `Run workflow`.
-3. Provide the version string, for example `v0.1.0`.
+3. Provide the version string, for example `v0.3.0`.
 
 ## Post-Release Verification
 
@@ -59,13 +59,13 @@ After GitHub Actions completes, verify:
 
 1. The GitHub Release exists and contains generated example reports.
 2. The GHCR image exists for:
-   `ghcr.io/polishyankee/gitlab-ci-auditor:v0.1.0`
+   `ghcr.io/polishyankee/gitlab-ci-auditor:v0.3.0`
 3. The `latest` tag was updated.
 4. Pull and run the image:
 
 ```bash
-docker pull ghcr.io/polishyankee/gitlab-ci-auditor:v0.1.0
-docker run --rm ghcr.io/polishyankee/gitlab-ci-auditor:v0.1.0 scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
+docker pull ghcr.io/polishyankee/gitlab-ci-auditor:v0.3.0
+docker run --rm ghcr.io/polishyankee/gitlab-ci-auditor:v0.3.0 scan /app/examples/pipelines/compliant_service.gitlab-ci.yml
 ```
 
 ## Notes

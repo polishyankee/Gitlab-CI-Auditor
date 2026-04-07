@@ -42,7 +42,7 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes readme, "docs/assets/readme-preview.svg"
     assert_includes readme, "docker build --pull -t gitlab-ci-ssdlc-auditor ."
     assert_includes readme, "ghcr.io/polishyankee/gitlab-ci-auditor:latest"
-    assert_includes readme, "./scripts/prepare_release.sh v0.1.0"
+    assert_includes readme, "./scripts/prepare_release.sh v0.3.0"
     assert_includes readme, "--format sarif"
     assert_includes readme, "--format junit"
   end
@@ -51,8 +51,8 @@ class RepositoryAssetsTest < Minitest::Test
     release_guide = File.read(File.join(GitlabCiAuditor.root_dir, "RELEASE.md"))
     prepare_script = File.read(File.join(GitlabCiAuditor.root_dir, "scripts", "prepare_release.sh"))
 
-    assert_includes release_guide, "## First Release Checklist"
-    assert_includes release_guide, "git push origin v0.1.0"
+    assert_includes release_guide, "## Release Checklist"
+    assert_includes release_guide, "git push origin v0.3.0"
     assert_includes prepare_script, "docker build --pull"
     assert_includes prepare_script, "docker run --rm"
   end
@@ -66,5 +66,13 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes metadata, "## Social Preview"
     assert_includes preview_svg, "GitLab CI SSDLC Auditor"
     assert_includes preview_svg, "Pipeline Flow Graph"
+  end
+
+  def test_changelog_includes_current_release_target
+    changelog = File.read(File.join(GitlabCiAuditor.root_dir, "CHANGELOG.md"))
+
+    assert_includes changelog, "## v0.3.0"
+    assert_includes changelog, "SARIF"
+    assert_includes changelog, "JUnit"
   end
 end

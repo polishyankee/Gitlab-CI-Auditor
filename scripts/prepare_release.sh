@@ -19,7 +19,7 @@ fi
 VERSION="$1"
 
 if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Expected a semantic version tag such as v0.1.0, got: ${VERSION}" >&2
+  echo "Expected a semantic version tag such as v0.3.0, got: ${VERSION}" >&2
   exit 1
 fi
 

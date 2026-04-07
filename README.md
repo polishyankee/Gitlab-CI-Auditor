@@ -683,19 +683,19 @@ The published image target is:
 ghcr.io/polishyankee/gitlab-ci-auditor
 ```
 
-For the first release checklist and local Docker-based release preparation, see [`RELEASE.md`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/RELEASE.md).
+For the release checklist and local Docker-based release preparation, see [`RELEASE.md`](/Users/polishyankee/Desktop/Devops-1/projects/gitlab-ci-ssdlc-auditor/RELEASE.md).
 
 Prepare a release-ready local image before pushing the tag:
 
 ```bash
-./scripts/prepare_release.sh v0.1.0
+./scripts/prepare_release.sh v0.3.0
 ```
 
 To cut a release manually after pushing the workflow changes, create and push a version tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.
