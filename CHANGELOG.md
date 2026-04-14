@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.4.0
+
+Release date target: April 2026
+
+### Highlights
+
+- Simplified GUI input flow to a single-root model (path, paste YAML, or one root upload) with clearer guidance for large pipelines.
+- Added a repository helper script `./scripts/flatten_pipeline.sh` for flatten-first auditing of large include trees.
+- Improved detection quality for real-world enterprise pipelines:
+  - variable-aware image tag evaluation to reduce false "Image has no explicit tag" findings,
+  - better guidance when hidden templates exist but concrete jobs are not instantiated,
+  - lint detection for undefined `needs` dependencies.
+
+### Verification
+
+- `ruby -I lib:test test/run_all.rb`
+- `./scripts/flatten_pipeline.sh examples/pipelines/upload_bundle_demo/.gitlab-ci.yml --output /tmp/flat-upload-bundle.yml`
+
 ## v0.3.0
 
 Release date target: April 2026
