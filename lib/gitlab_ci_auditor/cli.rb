@@ -55,13 +55,14 @@ module GitlabCiAuditor
       raise ArgumentError, "PDF output requires --output FILE" if options[:format] == "pdf" && options[:output].nil?
 
       policy = load_policy(options)
-      pipeline = ContextLoader.new(snapshot_file: options[:snapshot_file], context_file: options[:context_file]).load(path)
+      pipeline = load_pipeline_with_diagnostics(path, options[:snapshot_file], options[:context_file])
       report = Analyzer.new(pipeline, policy).analyze
       if options[:compare_to]
-        baseline_pipeline = ContextLoader.new(
-          snapshot_file: options[:compare_snapshot_file] || options[:snapshot_file],
-          context_file: options[:compare_context_file] || options[:context_file]
-        ).load(options[:compare_to])
+        baseline_pipeline = load_pipeline_with_diagnostics(
+          options[:compare_to],
+          options[:compare_snapshot_file] || options[:snapshot_file],
+          options[:compare_context_file] || options[:context_file]
+        )
         baseline_report = Analyzer.new(baseline_pipeline, policy).analyze
         report[:diff] = ReportDiff.build(report, baseline_report)
       end
@@ -142,6 +143,98 @@ module GitlabCiAuditor
 
     def load_policy(options)
       PolicyLoader.load(path: options[:policy], pack: options[:policy_pack])
+    end
+
+    def load_pipeline_with_diagnostics(path, snapshot_file, context_file)
+      ContextLoader.new(snapshot_file: snapshot_file, context_file: context_file).load(path)
+    rescue ArgumentError => e
+      raise enrich_scan_error(e, path)
+    end
+
+    def enrich_scan_error(error, path)
+      message = error.message.to_s
+      workspace = File.dirname(File.expand_path(path))
+      diagnostics = build_scan_diagnostics(workspace, path)
+      guidance = "If this pipeline depends on `include:project`, place every referenced YAML snapshot in the same bundle directory as the root file, or preserve the original nested repository paths inside that bundle."
+
+      if message.include?("Unknown YAML alias `")
+        return ArgumentError.new(([message] + scan_diagnostic_lines(diagnostics) + [guidance]).join("\n"))
+      end
+
+      if message.include?("extends unknown template")
+        missing_template = message[/extends unknown template\s+(.+)$/, 1]
+        template_files = missing_template ? diagnostics[:template_locations][missing_template].to_a : []
+        template_hint =
+          if template_files.any?
+            "Template `#{missing_template}` was found in workspace file(s): #{template_files.join(', ')}. This usually means the template exists locally but is not part of the resolved include graph."
+          elsif diagnostics[:template_locations].any?
+            "Hidden templates detected in workspace: #{diagnostics[:template_locations].keys.sort.first(20).join(', ')}"
+          end
+
+        return ArgumentError.new(([message, template_hint] + scan_diagnostic_lines(diagnostics) + [guidance]).compact.join("\n"))
+      end
+
+      if message.include?("Pipeline file not found")
+        return ArgumentError.new(([message] + scan_diagnostic_lines(diagnostics) + [guidance]).join("\n"))
+      end
+
+      error
+    end
+
+    def build_scan_diagnostics(workspace, selected_path)
+      yaml_files = Dir.glob(File.join(workspace, "**", "*"), File::FNM_DOTMATCH).select do |candidate|
+        File.file?(candidate) && %w[.yml .yaml].include?(File.extname(candidate))
+      end
+
+      template_locations = Hash.new { |hash, key| hash[key] = [] }
+      alias_definitions = []
+      alias_references = []
+
+      yaml_files.each do |yaml_file|
+        relative_path = relative_to_workspace(workspace, yaml_file)
+        extract_template_definitions(File.read(yaml_file)).each do |template_name|
+          template_locations[template_name] << relative_path
+        end
+        alias_definitions.concat(extract_anchor_definitions(File.read(yaml_file)))
+        alias_references.concat(extract_anchor_references(File.read(yaml_file)))
+      end
+
+      {
+        selected_root: relative_to_workspace(workspace, File.expand_path(selected_path)),
+        workspace_files: yaml_files.map { |yaml_file| relative_to_workspace(workspace, yaml_file) }.sort.first(20),
+        template_locations: template_locations.transform_values { |paths| paths.uniq.sort.first(6) },
+        alias_definitions: alias_definitions.uniq.sort.first(20),
+        alias_references: alias_references.uniq.sort.first(20)
+      }
+    end
+
+    def scan_diagnostic_lines(diagnostics)
+      return [] unless diagnostics
+
+      lines = []
+      lines << "Selected root pipeline: #{diagnostics[:selected_root]}" if diagnostics[:selected_root]
+      lines << "YAML files detected in workspace: #{diagnostics[:workspace_files].join(', ')}" if diagnostics[:workspace_files].any?
+      template_names = diagnostics[:template_locations].keys.sort.first(20)
+      lines << "Hidden templates detected in workspace: #{template_names.join(', ')}" if template_names.any?
+      lines << "Anchor definitions detected: #{diagnostics[:alias_definitions].join(', ')}" if diagnostics[:alias_definitions].any?
+      lines << "Alias references detected: #{diagnostics[:alias_references].join(', ')}" if diagnostics[:alias_references].any?
+      lines
+    end
+
+    def relative_to_workspace(workspace, path)
+      path.to_s.delete_prefix("#{workspace}/")
+    end
+
+    def extract_template_definitions(content)
+      content.scan(/^(\.[A-Za-z0-9_.:-]+):(?:\s*(?:$|#))/).flatten
+    end
+
+    def extract_anchor_definitions(content)
+      content.scan(/&([A-Za-z0-9_-]+)/).flatten
+    end
+
+    def extract_anchor_references(content)
+      content.scan(/\*([A-Za-z0-9_-]+)/).flatten
     end
 
     def usage

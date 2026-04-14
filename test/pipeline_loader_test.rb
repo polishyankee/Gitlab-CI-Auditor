@@ -30,7 +30,7 @@ class PipelineLoaderTest < Minitest::Test
         File.join(dir, "gitlab-ci.yml"),
         <<~YAML
           include:
-            - project: "assecoars/gitlab-ci"
+            - project: "example-org/ci-templates"
               ref: main
               file: "templates/templates_dependency-policy.yml"
 
@@ -68,7 +68,7 @@ class PipelineLoaderTest < Minitest::Test
         File.join(dir, ".gitlab-ci.yml"),
         <<~YAML
           include:
-            - project: "assecoars/gitlab-ci"
+            - project: "example-org/ci-templates"
               ref: main
               file: "templates/templates_dependency-policy.yml"
 

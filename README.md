@@ -700,6 +700,28 @@ git push origin v0.3.0
 
 Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.
 
+## Troubleshooting
+
+If the CLI fails with an error such as:
+
+```text
+Job .maven_build_with_policy_template extends unknown template .maven_build_template
+```
+
+the auditor now prints extra diagnostics for local bundle scans, including:
+
+- the selected root pipeline file
+- YAML files detected in the workspace
+- hidden templates detected in the workspace
+- whether the missing template was found somewhere in the bundle but not in the resolved include graph
+
+For `include:project`-style snapshots, this usually means one of two things:
+
+- the bundle is missing one referenced file such as `templates_maven.yml`
+- the missing template exists locally, but the root pipeline or nested include chain does not actually merge that file into the final pipeline
+
+The safest layout is to keep the root file plus every referenced snapshot in a dedicated directory such as `.gitlab-ci-auditor/`, then point the scanner at the root file inside that directory.
+
 ## Contribution Flow
 
 Repository changes should go through pull requests rather than direct pushes to `main`.

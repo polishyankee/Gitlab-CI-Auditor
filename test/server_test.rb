@@ -512,7 +512,7 @@ class ServerTest < Minitest::Test
   def root_pipeline_with_project_include_snapshot
     <<~YAML
       include:
-        - project: "assecoars/gitlab-ci"
+        - project: "example-org/ci-templates"
           ref: main
           file: "templates/templates_dependency-policy.yml"
 
