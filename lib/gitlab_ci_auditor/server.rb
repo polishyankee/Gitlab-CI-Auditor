@@ -95,7 +95,7 @@ module GitlabCiAuditor
       elsif uploaded_pipeline_bundle_present?(req)
         pipeline, context_file, history_file = load_uploaded_pipeline(req, snapshot_file, requested_context, requested_history)
       else
-        raise ArgumentError, "Provide a pipeline path, paste a root `.gitlab-ci.yml`, upload a root `.gitlab-ci.yml`, or upload a pipeline directory bundle"
+        raise ArgumentError, "Provide a pipeline path, paste a root `.gitlab-ci.yml`, or upload a root `.gitlab-ci.yml`."
       end
 
       policy = load_policy(req.query["policy_pack"])
@@ -171,7 +171,7 @@ module GitlabCiAuditor
     end
 
     def normalize_pasted_yaml(content)
-      normalized = content.to_s.sub(/\A\uFEFF/, "")
+      normalized = GitlabCiAuditor.sanitize_yaml_content(content)
       if normalized.lstrip.start_with?("#!")
         raise ArgumentError, "The pasted root pipeline looks like a shell script, not `.gitlab-ci.yml` content. Paste YAML only, or first run `gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml` and then analyze the generated YAML."
       end
@@ -400,7 +400,7 @@ module GitlabCiAuditor
 
     def rewrite_upload_error(error, diagnostics = nil)
       message = error.message.to_s
-      guidance = "Upload the root `.gitlab-ci.yml` together with every local include/template file, upload the whole pipeline directory and set `Root pipeline path inside uploaded bundle`, or upload a `.zip` archive that contains `.gitlab-ci.yml` or `root.gitlabci.yml`. For nested support files, provide bundle-relative paths that match the original repository layout."
+      guidance = "For large multi-file pipelines in GUI, flatten first with `./scripts/flatten_pipeline.sh PATH --output flat.gitlab-ci.yml` (or `gitlab-ci-auditor flatten`) and analyze the flattened file. Use CLI workflows for advanced multi-file or ZIP ingestion."
       diagnostics_lines = upload_diagnostics_lines(diagnostics)
 
       if message.include?("Unknown YAML alias `")

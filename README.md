@@ -388,70 +388,30 @@ The GUI supports these input modes:
 
 - direct filesystem path to the root pipeline
 - pasted root `.gitlab-ci.yml` content for fast ad-hoc analysis
-- pasted root `.gitlab-ci.yml` plus pasted include or template files with bundle-relative paths
-- ZIP bundle upload containing `.gitlab-ci.yml` or `root.gitlabci.yml`
-- root `.gitlab-ci.yml` upload plus a few additional include or template files
-- whole-directory upload for repositories that split CI logic across many local `include` files
+- single root `.gitlab-ci.yml` upload
 - optional filesystem paths for a downstream snapshot manifest, a multi-project context manifest, and a trend history store
 
-For fast ad-hoc reviews, you can paste the full root `.gitlab-ci.yml` directly into the GUI. The server writes it into a temporary workspace, runs the same parser and analyzer, and immediately returns:
+For large repositories with many local `include` files, use the flatten helper first and then analyze one merged file in GUI:
 
-- static lint status
-- flow graph
-- SSDLC findings
-- best-practice recommendations
-- OWASP SAMM benchmark
+```bash
+./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml
+```
 
-Paste mode can now also cover a small multi-file pipeline without ZIP. Add each included YAML file in the `Pasted include or template files` section and set the exact bundle-relative path used by the root pipeline, for example `.gitlab/ci/templates/prepare.yml`.
+Then paste or upload `flat.gitlab-ci.yml` in the GUI.
 
-Use pasted support files when:
+For advanced multi-file ingestion workflows, stay in CLI:
 
-- you want a quick lint and graph for a root file plus a few local templates
-- the repository is not available on disk
-- ZIP upload would be overkill for the current review
+```bash
+./bin/gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml
+./bin/gitlab-ci-auditor scan flat.gitlab-ci.yml --format html --output report.html
+```
 
-Prefer ZIP or directory upload when:
+The flattened output is audit-focused: it resolves local includes, strips problematic BOM/control characters, and produces one deterministic YAML artifact for lint, flow graph generation, and SSDLC evaluation.
 
-- the include tree is large
-- hidden directories such as `.gitlab/` must be preserved exactly
-- the pipeline also depends on local shell scripts or many nested files
-- you want the closest possible match to the original repository layout
-
-For very large repositories with many local or snapshot-style includes, the simplest workflow is now:
-
-1. run `gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml`
-2. analyze `flat.gitlab-ci.yml` with the CLI, or paste that generated YAML into the GUI
-
-The flattened output is meant for auditing. It removes `include` directives and writes the merged YAML into one file so the auditor can analyze a single artifact more predictably.
-
-Example pasted setup:
-
-1. Paste the root `.gitlab-ci.yml` into the main textarea.
-2. Keep `Pasted root filename` as `.gitlab-ci.yml`.
-3. Click `Add pasted support file`.
-4. Set the support path to `.gitlab/ci/templates/prepare.yml`.
-5. Paste the YAML content of that included file into the support textarea.
-6. Run the analysis.
-
-The regression example in `examples/pipelines/upload_bundle_demo/` can be analyzed this way as well: paste `examples/pipelines/upload_bundle_demo/.gitlab-ci.yml` as the root content, then add the matching files from `examples/pipelines/upload_bundle_demo/.gitlab/ci/`.
-
-For multi-file pipelines, ZIP is now the recommended format because it preserves nested paths and hidden directories such as `.gitlab/`.
-
-When an uploaded bundle contains files that match `include:project` entries, the auditor now treats them as local snapshot includes. For example, if the root pipeline references `file: templates/templates_dependency-policy.yml` from another project and the uploaded ZIP contains `templates/templates_dependency-policy.yml`, that file is merged into the analysis graph.
-
-For root-file uploads with only a few support files, the analyzer can also fall back to a unique basename match. That means an uploaded support file named `templates_dependency-policy.yml` can still satisfy `file: templates/templates_dependency-policy.yml` as long as that basename is unique inside the selected bundle.
-
-The same principle applies to local shell scripts referenced by jobs. If the uploaded bundle contains `ci/trivy.sh` or `scripts/argocd-sync.sh`, the analyzer can use those files as evidence for scanner and deployment detection.
-
-For complex include trees, prefer directory upload. The server now strips the selected directory prefix automatically, so when the uploaded folder contains `repo/.gitlab-ci.yml`, the correct root value is usually just `.gitlab-ci.yml`.
-
-If you use root-file upload plus additional support files, the GUI now shows editable bundle-relative paths for those support files. Set them to the repository-relative locations used by `include`, for example `.gitlab/ci/templates/build.yml`.
-
-When GUI analysis fails during upload-based parsing, the error panel now shows extra diagnostics:
+When GUI analysis fails during parsing, the error panel now shows extra diagnostics:
 
 - the root pipeline file that was actually selected
-- the detected root candidates inside the uploaded bundle
-- the hidden templates found in the uploaded YAML files
+- the hidden templates found in the loaded YAML files
 - YAML anchor definitions and alias references, so alias problems are separated from missing-template problems
 
 The HTML report also includes a dedicated `Lint` tab. This view focuses on structural issues such as:
@@ -461,23 +421,6 @@ The HTML report also includes a dedicated `Lint` tab. This view focuses on struc
 - deprecated `only/except` usage
 - jobs assigned to undefined stages
 - unresolved downstream triggers
-
-Example bundle for regression testing:
-
-```bash
-./bin/gitlab-ci-auditor scan examples/pipelines/upload_bundle_demo/.gitlab-ci.yml --policy-pack balanced
-```
-
-The same example can be used in the GUI by uploading the whole `examples/pipelines/upload_bundle_demo/` directory and keeping `Root pipeline path inside uploaded bundle` set to `.gitlab-ci.yml`.
-
-ZIP example:
-
-```bash
-cd examples/pipelines/upload_bundle_demo
-zip -qr /tmp/upload_bundle_demo.zip .
-```
-
-Then upload `/tmp/upload_bundle_demo.zip` in the GUI. If the archive root file is named `.gitlab-ci.yml` or `root.gitlabci.yml`, the auditor can resolve it automatically.
 
 ## Docker
 

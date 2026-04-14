@@ -1,4 +1,5 @@
 require_relative "test_helper"
+require "tmpdir"
 
 class GitlabCiAuditorIntegrationTest < Minitest::Test
   def setup
@@ -91,6 +92,94 @@ class GitlabCiAuditorIntegrationTest < Minitest::Test
     assert_includes sonarqube_job[:classifications], "sast"
     assert_includes sonarqube_job[:sast_tools], "sonar_scanner"
     assert_includes report.dig(:metadata, :detected_security_tools, :sast), "SonarQube / sonar-scanner"
+  end
+
+  def test_variable_backed_images_are_resolved_for_pinning_checks
+    Dir.mktmpdir("gitlab-ci-image-vars") do |dir|
+      pipeline_path = File.join(dir, ".gitlab-ci.yml")
+      File.write(
+        pipeline_path,
+        <<~YAML
+          workflow:
+            rules:
+              - if: '$CI_COMMIT_BRANCH'
+
+          variables:
+            MAVEN_IMAGE: "maven:3.9.6-eclipse-temurin-17"
+
+          stages:
+            - build
+            - security
+
+          maven_build:
+            stage: build
+            image: "$MAVEN_IMAGE"
+            script:
+              - mvn -B clean verify
+
+          sonarqube_scan:
+            stage: security
+            image:
+              name: "${MAVEN_IMAGE}"
+            script:
+              - sonar-scanner -Dsonar.qualitygate.timeout=2000
+        YAML
+      )
+
+      pipeline = @loader.load(pipeline_path)
+      report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+      versioning_findings = report[:security_findings].select { |finding| finding[:title].include?("is not versioned") }
+      image_weaknesses = report[:graph][:nodes].flat_map { |node| node[:weaknesses] }
+
+      assert_equal "pass", report[:categories].find { |category| category[:key] == "unit_tests" }[:status]
+      assert_equal "pass", report[:categories].find { |category| category[:key] == "sast" }[:status]
+      assert_empty versioning_findings
+      refute_includes image_weaknesses, "Image has no explicit tag"
+    end
+  end
+
+  def test_reports_template_instantiation_gaps_and_undefined_needs
+    Dir.mktmpdir("gitlab-ci-template-gap") do |dir|
+      pipeline_path = File.join(dir, ".gitlab-ci.yml")
+      File.write(
+        pipeline_path,
+        <<~YAML
+          workflow:
+            rules:
+              - if: '$CI_COMMIT_BRANCH'
+
+          stages:
+            - build
+            - test
+
+          .maven_build_template:
+            stage: build
+            script:
+              - mvn -B clean verify
+
+          .sonarqube_template:
+            stage: test
+            script:
+              - sonar-scanner -Dsonar.qualitygate.timeout=2000
+
+          build_adapters:
+            stage: build
+            script:
+              - echo build adapters
+            needs:
+              - maven_build
+        YAML
+      )
+
+      pipeline = @loader.load(pipeline_path)
+      report = GitlabCiAuditor::Analyzer.new(pipeline).analyze
+      lint_messages = report.dig(:lint, :findings).map { |finding| finding[:message] }
+
+      assert report[:recommendations].any? { |item| item.include?("maven_build*") && item.include?("sonarqube_check*") }
+      assert report[:recommendations].any? { |item| item.include?("undefined `needs` dependencies") }
+      assert lint_messages.any? { |message| message.include?("`needs` dependencies point to undefined jobs") }
+      assert report.dig(:maintainability, :findings).any? { |item| item.include?("undefined needs dependencies") }
+    end
   end
 
   def test_local_shell_script_content_is_used_for_trivy_scan_detection

@@ -43,6 +43,7 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes readme, "docker build --pull -t gitlab-ci-ssdlc-auditor ."
     assert_includes readme, "ghcr.io/polishyankee/gitlab-ci-auditor:latest"
     assert_includes readme, "./scripts/prepare_release.sh v0.3.0"
+    assert_includes readme, "./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml"
     assert_includes readme, "--format sarif"
     assert_includes readme, "--format junit"
   end
@@ -55,6 +56,14 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes release_guide, "git push origin v0.3.0"
     assert_includes prepare_script, "docker build --pull"
     assert_includes prepare_script, "docker run --rm"
+  end
+
+  def test_flatten_pipeline_helper_script_exists
+    helper_script = File.read(File.join(GitlabCiAuditor.root_dir, "scripts", "flatten_pipeline.sh"))
+
+    assert_includes helper_script, "Usage: ./scripts/flatten_pipeline.sh ROOT_PIPELINE"
+    assert_includes helper_script, "--output flat.gitlab-ci.yml"
+    assert_includes helper_script, "ruby \"$cli_path\" flatten \"$@\""
   end
 
   def test_github_metadata_pack_and_preview_asset_exist

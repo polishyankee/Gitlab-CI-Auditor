@@ -700,10 +700,10 @@ module GitlabCiAuditor
       script_lines = collect_script_lines(pipeline, job)
       script_evidence = expand_local_script_evidence(pipeline, script_lines)
       environment_name = extract_environment_name(job)
-      image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])
+      image_name = extract_image_name(job["image"] || pipeline.raw_config["image"], resolved_job_variables(pipeline, job))
       artifact_strings = collect_artifact_strings(job["artifacts"])
-      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
-      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
+      classifications = classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence, image_name)
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence, image_name)
       inherited_manual = inherited_gate[:manual] == true
       inherited_allow_failure = inherited_gate[:allow_failure] == true
 
@@ -852,19 +852,63 @@ module GitlabCiAuditor
       nil
     end
 
-    def extract_image_name(image)
-      case image
+    def extract_image_name(image, variables = {})
+      raw =
+        case image
+        when Hash
+          image["name"].to_s
+        when nil
+          nil
+        else
+          image.to_s
+        end
+
+      return nil if raw.nil?
+
+      resolve_ci_variables(raw, variables).strip
+    end
+
+    def normalize_ci_variable_value(value)
+      case value
       when Hash
-        image["name"].to_s
+        value["value"] || value[:value] || value["default"] || value[:default]
       when nil
         nil
       else
-        image.to_s
+        value
       end
     end
 
-    def classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil)
-      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence)
+    def resolved_job_variables(pipeline, job = nil)
+      variables = {}
+
+      pipeline.variables.each do |key, value|
+        normalized = normalize_ci_variable_value(value)
+        variables[key.to_s] = normalized.to_s unless normalized.nil?
+      end
+
+      if job.is_a?(Hash) && job["variables"].is_a?(Hash)
+        job["variables"].each do |key, value|
+          normalized = normalize_ci_variable_value(value)
+          variables[key.to_s] = normalized.to_s unless normalized.nil?
+        end
+      end
+
+      variables
+    end
+
+    def resolve_ci_variables(text, variables)
+      return text.to_s if text.nil?
+      return text.to_s if variables.nil? || variables.empty?
+
+      text.to_s.gsub(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/) do |match|
+        key = Regexp.last_match(1) || Regexp.last_match(2)
+        variables.fetch(key, match).to_s
+      end
+    end
+
+    def classify_job(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil, image_name = nil)
+      text = classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence, image_name)
 
       classifications = []
       classifications << "unit_tests" if unit_test_job?(script_lines, artifact_strings, text)
@@ -881,13 +925,13 @@ module GitlabCiAuditor
       classifications
     end
 
-    def classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil)
+    def classification_text(job_name, job, script_lines, artifact_strings, environment_name, script_evidence = nil, image_name = nil)
       evidence = script_evidence || expand_local_script_evidence(@pipeline, script_lines)
       [
         job_name,
         job["stage"],
         environment_name,
-        extract_image_name(job["image"]),
+        image_name || extract_image_name(job["image"]),
         artifact_strings.join("\n"),
         script_lines.join("\n"),
         evidence[:files].join("\n"),
@@ -1410,7 +1454,7 @@ module GitlabCiAuditor
     def each_job_with_image
       all_pipelines.each do |pipeline|
         pipeline.jobs.each do |job_name, job|
-          image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])
+          image_name = extract_image_name(job["image"] || pipeline.raw_config["image"], resolved_job_variables(pipeline, job))
           yield pipeline, job_name, image_name if image_name && !image_name.empty?
         end
       end
@@ -1425,6 +1469,7 @@ module GitlabCiAuditor
       long_script_jobs = collect_long_job_names
       deprecated_jobs = deprecated_only_except_jobs
       undefined_stage_jobs = undefined_stage_jobs()
+      undefined_needs = undefined_needs_dependencies
 
       workflowless = all_pipelines.select { |pipeline| pipeline.workflow.empty? }
       findings << "#{workflowless.size} pipeline files are missing a workflow section, so execution governance depends only on job-level rules" if workflowless.any?
@@ -1434,6 +1479,11 @@ module GitlabCiAuditor
       findings << "Long jobs detected: #{long_script_jobs.join(', ')}" if long_script_jobs.any?
       findings << "Deprecated only/except syntax is still used in jobs: #{deprecated_jobs.join(', ')}" if deprecated_jobs.any?
       findings << "Jobs use stages outside the declared stage list: #{undefined_stage_jobs.join(', ')}" if undefined_stage_jobs.any?
+      if undefined_needs.any?
+        sample = undefined_needs.first(6).join(", ")
+        suffix = undefined_needs.size > 6 ? ", ..." : ""
+        findings << "Jobs reference undefined needs dependencies (#{undefined_needs.size}): #{sample}#{suffix}"
+      end
       findings << "The pipeline contains #{job_count} active jobs, which raises maintenance cost" if job_count > 12
       findings << "#{unresolved_downstream_references.size} downstream triggers could not be resolved, so full-pipeline analysis is partial" if unresolved_downstream_references.any?
 
@@ -1445,6 +1495,7 @@ module GitlabCiAuditor
       score -= 1 if long_script_jobs.any?
       score -= 1 if deprecated_jobs.any?
       score -= 1 if undefined_stage_jobs.any?
+      score -= 1 if undefined_needs.any?
       score -= 1 if job_count > 12
       score -= 1 if unresolved_downstream_references.any?
       score = 0 if score.negative?
@@ -1463,6 +1514,7 @@ module GitlabCiAuditor
       unresolved_includes = all_pipelines.flat_map { |pipeline| Array(pipeline.include_metadata[:unresolved_includes]) }
       deprecated_jobs = deprecated_only_except_jobs
       undefined_jobs = undefined_stage_jobs
+      undefined_needs = undefined_needs_dependencies
       total_jobs = total_job_count
 
       findings = []
@@ -1472,6 +1524,7 @@ module GitlabCiAuditor
       findings << lint_finding("warn", "#{unresolved_includes.size} include entries could not be resolved statically.", unresolved_includes.first(6).map(&:inspect)) if unresolved_includes.any?
       findings << lint_finding("warn", "Deprecated `only/except` syntax is still present in #{deprecated_jobs.size} job(s).", deprecated_jobs.first(6)) if deprecated_jobs.any?
       findings << lint_finding("warn", "#{undefined_jobs.size} job(s) use stages outside the declared stage list.", undefined_jobs.first(6)) if undefined_jobs.any?
+      findings << lint_finding("warn", "#{undefined_needs.size} `needs` dependencies point to undefined jobs.", undefined_needs.first(6)) if undefined_needs.any?
       findings << lint_finding("warn", "#{unresolved_downstream_references.size} downstream trigger(s) remain unresolved.", unresolved_downstream_references.first(6).map { |reference| "#{reference.trigger_job_name}: #{reference.warning}" }) if unresolved_downstream_references.any?
 
       strengths = []
@@ -1541,6 +1594,19 @@ module GitlabCiAuditor
           jobs << job_reference(job_name, pipeline) if pipeline.stages.any? && !pipeline.stages.include?(stage)
         end
       end
+    end
+
+    def undefined_needs_dependencies
+      all_pipelines.each_with_object([]) do |pipeline, missing|
+        known_jobs = pipeline.jobs.keys
+        pipeline.jobs.each do |job_name, job|
+          job_needs(job).each do |need_name|
+            next if known_jobs.include?(need_name)
+
+            missing << "#{job_reference(job_name, pipeline)} -> #{need_name}"
+          end
+        end
+      end.uniq
     end
 
     def max_rule_complexity
@@ -1789,6 +1855,8 @@ module GitlabCiAuditor
       items << "Move environment-specific global variables into a configuration file or policy pack" if all_pipelines.sum { |pipeline| pipeline.variables.size } > 15
       items << "Review scenarios blocked by workflow rules if they should remain business-supported paths" if inactive_scenarios.any?
       items << "Provide local child pipelines through `trigger: include: - local:` or export their YAML into the audit input if you want full downstream coverage" if unresolved_downstream_references.any?
+      items << "The analyzed file contains reusable templates, but key build or security jobs are missing; include the module files that define concrete jobs like `maven_build*` and `sonarqube_check*`, or flatten from the real repository root" if template_instantiation_gap?
+      items << "Resolve undefined `needs` dependencies before auditing controls, because missing upstream jobs make SSDLC coverage look weaker than the real pipeline" if undefined_needs_dependencies.any?
 
       items.uniq
     end
@@ -3081,7 +3149,7 @@ module GitlabCiAuditor
       items << "Declares explicit needs dependencies" if job_needs(job).any?
       items << "Orchestrates a local child/downstream pipeline" if trigger_refs.any? { |reference| reference.pipeline }
 
-      image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])
+      image_name = extract_image_name(job["image"] || pipeline.raw_config["image"], resolved_job_variables(pipeline, job))
       if image_name && !image_name.empty? && !image_name.include?(":latest") && (image_name.include?(":") || image_name.include?("@sha256:"))
         items << "Uses a pinned image"
       end
@@ -3098,7 +3166,8 @@ module GitlabCiAuditor
       items << "Triggers downstream content outside the analysis scope" if trigger_refs.any? { |reference| reference.pipeline.nil? }
       items << "Disables Maven tests through skip flags" if script_lines.any? { |line| line.downcase.match?(/-dskiptests(?:=(?!false\b)[^\s]+)?\b| -dmaven\.test\.skip/i) }
       items << "Disables Gradle tests through -x test" if script_lines.any? { |line| line.downcase.match?(/(?:^|\s)-x\s+test(?:\s|$)|--exclude-task(?:=|\s+)test(?:\s|$)/) }
-      items << "Uses a latest image tag" if (image_name = extract_image_name(job["image"] || pipeline.raw_config["image"])) && image_name.include?(":latest")
+      image_name = extract_image_name(job["image"] || pipeline.raw_config["image"], resolved_job_variables(pipeline, job))
+      items << "Uses a latest image tag" if image_name && image_name.include?(":latest")
       items << "Image has no explicit tag" if image_name && !image_name.empty? && !image_name.include?(":") && !image_name.include?("@sha256:")
       items << "Does not contribute a direct SSDLC control" if critical_gate == false && trigger_refs.empty?
       items.uniq
@@ -3172,7 +3241,7 @@ module GitlabCiAuditor
       @analysis_corpus ||= all_pipelines.flat_map do |pipeline|
         items = []
         items << pipeline.path
-        items << extract_image_name(pipeline.raw_config["image"])
+        items << extract_image_name(pipeline.raw_config["image"], resolved_job_variables(pipeline))
         items.concat(pipeline.global_before_script)
         items.concat(pipeline.global_after_script)
 
@@ -3181,7 +3250,7 @@ module GitlabCiAuditor
           script_evidence = expand_local_script_evidence(pipeline, script_lines)
           items << job_name
           items << job["stage"]
-          items << extract_image_name(job["image"])
+          items << extract_image_name(job["image"], resolved_job_variables(pipeline, job))
           items << extract_environment_name(job)
           items.concat(script_lines)
           items.concat(script_evidence[:lines])
@@ -3189,6 +3258,24 @@ module GitlabCiAuditor
         end
         items
       end.compact.join("\n").downcase
+    end
+
+    def template_instantiation_gap?
+      template_names = all_pipelines.flat_map { |pipeline| pipeline.templates.keys }
+      return false if template_names.empty?
+
+      has_maven_template = template_names.include?(".maven_build_template")
+      has_sonar_template = template_names.include?(".sonarqube_template")
+      return false unless has_maven_template || has_sonar_template
+
+      raw_job_definitions = all_pipelines.flat_map do |pipeline|
+        pipeline.raw_config.select { |name, value| GitlabCiAuditor.job_definition?(name, value) }.values
+      end
+
+      maven_instantiated = raw_job_definitions.any? { |job| Array(job["extends"]).map(&:to_s).include?(".maven_build_template") }
+      sonar_instantiated = raw_job_definitions.any? { |job| Array(job["extends"]).map(&:to_s).include?(".sonarqube_template") }
+
+      (has_maven_template && !maven_instantiated) || (has_sonar_template && !sonar_instantiated)
     end
 
     def detect_stacks

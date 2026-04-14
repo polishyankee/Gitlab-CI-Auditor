@@ -309,52 +309,6 @@
         line-height: 1.5;
       }
 
-      .generated-path-list {
-        display: grid;
-        gap: 10px;
-        padding: 12px;
-        border: 1px solid rgba(48, 54, 61, 0.9);
-        border-radius: 12px;
-        background: rgba(1, 4, 9, 0.35);
-      }
-
-      .paste-support-list {
-        display: grid;
-        gap: 12px;
-      }
-
-      .paste-support-card {
-        display: grid;
-        gap: 10px;
-        padding: 14px;
-        border: 1px solid rgba(48, 54, 61, 0.9);
-        border-radius: 14px;
-        background: rgba(1, 4, 9, 0.35);
-      }
-
-      .paste-support-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .paste-support-head strong {
-        color: #f0f6fc;
-      }
-
-      .generated-path-item {
-        display: grid;
-        gap: 6px;
-      }
-
-      .generated-path-source {
-        color: var(--muted);
-        font-size: 0.82rem;
-        font-weight: 500;
-        word-break: break-all;
-      }
-
       input::file-selector-button {
         margin-right: 12px;
         border: 1px solid var(--border-strong);
@@ -379,16 +333,6 @@
         color: white;
         font: inherit;
         font-weight: 700;
-        cursor: pointer;
-      }
-
-      .mini-button {
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 8px 12px;
-        background: rgba(110, 118, 129, 0.08);
-        color: var(--ink);
-        font: inherit;
         cursor: pointer;
       }
 
@@ -526,69 +470,34 @@
           <div class="section-head">
             <span class="section-kicker">Audit Workspace</span>
             <h2>Open one clear audit session</h2>
-            <p>Provide a repository path, paste the root pipeline, add pasted include files, or upload a ZIP bundle. The HTML report and the GUI use the same analysis engine and produce the same flow graph, findings, and benchmark output.</p>
+            <p>Use one root pipeline input. For complex include trees, flatten first and paste or upload the flattened YAML. The HTML report and the GUI use the same analysis engine and produce the same flow graph, findings, and benchmark output.</p>
           </div>
         </div>
 
-          <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
-            <label>
-              Pipeline file path
-              <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
-            </label>
+        <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
+          <label>
+            Pipeline file path
+            <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
+            <span class="field-note">Best when the repository is available on disk.</span>
+          </label>
 
-            <div class="field-block">
-              <label>
-                Or paste a root pipeline file
-                <textarea name="pipeline_text" placeholder="Paste .gitlab-ci.yml here for immediate lint, graph generation, and SSDLC feedback"></textarea>
-                <span class="field-note">Best for quick analysis. Paste YAML only, not a helper shell script. For large multi-file pipelines, prefer <code>gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml</code> and analyze the generated file.</span>
-              </label>
-              <label>
-                Pasted root filename
-                <input type="text" name="pipeline_text_filename" placeholder=".gitlab-ci.yml" value=".gitlab-ci.yml">
-                <span class="field-note">Optional. Keep <code>.gitlab-ci.yml</code> unless you need a different root filename for relative context.</span>
-              </label>
-              <div class="field-block">
-                <div class="paste-support-head">
-                  <strong>Pasted include or template files</strong>
-                  <button id="add-paste-support" class="mini-button" type="button">Add pasted support file</button>
-                </div>
-                <span class="field-note">Use bundle-relative paths such as <code>.gitlab/ci/templates/build.yml</code> and paste the exact YAML content of each included file.</span>
-                <div id="paste-support-list" class="paste-support-list"></div>
-              </div>
-            </div>
+          <label>
+            Or paste a root pipeline file
+            <textarea name="pipeline_text" placeholder="Paste .gitlab-ci.yml or flattened pipeline YAML here"></textarea>
+            <span class="field-note">Paste YAML only, not helper shell scripts. For large multi-file pipelines run <code>./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml</code>, then paste <code>flat.gitlab-ci.yml</code>.</span>
+          </label>
 
-            <label>
-              Recommended: pipeline ZIP bundle
-              <input type="file" name="pipeline_archive" accept=".zip,application/zip">
-              <span class="field-note">Best option for multi-file pipelines, especially when local includes live under hidden paths such as <code>.gitlab/</code>. The archive should contain <code>.gitlab-ci.yml</code> or <code>root.gitlabci.yml</code>.</span>
-            </label>
+          <label>
+            Or upload a root pipeline file
+            <input type="file" name="pipeline_file" accept=".yml,.yaml">
+            <span class="field-note">Upload a single root file (raw or flattened).</span>
+          </label>
 
-            <label>
-              Root pipeline file
-              <input type="file" name="pipeline_file" accept=".yml,.yaml">
-              <span class="field-note">Fallback for simpler cases. Upload the main <code>.gitlab-ci.yml</code> here when you want the GUI to anchor the analysis to a specific root file.</span>
-            </label>
-
-            <div class="field-block">
-              <label>
-                Additional include or template files
-                <input id="pipeline-support-files" type="file" name="pipeline_support_files" accept=".yml,.yaml" multiple>
-                <span class="field-note">Use this when the root pipeline depends on a limited set of local files. If nested include paths matter, edit the bundle-relative paths below or prefer directory upload.</span>
-              </label>
-              <div id="pipeline-support-paths" class="generated-path-list" hidden></div>
-            </div>
-
-            <label>
-              Or upload a pipeline directory
-              <input id="pipeline-directory-files" type="file" name="pipeline_directory_files" accept=".yml,.yaml" webkitdirectory directory multiple>
-              <span class="field-note">Fallback for direct folder uploads. Some browsers can still be inconsistent with hidden folders, so ZIP remains the safer option for complex repositories.</span>
-            </label>
-
-            <label>
-              Root pipeline path inside uploaded bundle
-              <input type="text" name="pipeline_bundle_root" placeholder=".gitlab-ci.yml or .gitlab/ci/root.yml">
-              <span class="field-note">Optional. Use this when you upload a whole folder and the root pipeline is not the top-level `.gitlab-ci.yml`, or when multiple root candidates exist.</span>
-            </label>
+          <label>
+            Pasted root filename
+            <input type="text" name="pipeline_text_filename" placeholder=".gitlab-ci.yml" value=".gitlab-ci.yml">
+            <span class="field-note">Used only for pasted content. Keep <code>.gitlab-ci.yml</code> unless you intentionally use a different root name.</span>
+          </label>
 
             <label>
               Downstream snapshot manifest
@@ -627,7 +536,7 @@
               <button type="submit">Analyze Pipeline</button>
               <button type="button" class="ghost" onclick="window.location.reload()">Reset Form</button>
             </div>
-          </form>
+        </form>
       </section>
 
       <section class="panel section-panel">
@@ -747,130 +656,5 @@
         </div>
       </section>
     </main>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        var form = document.getElementById("analysis-form");
-        var directoryInput = document.getElementById("pipeline-directory-files");
-        var supportInput = document.getElementById("pipeline-support-files");
-        var supportPaths = document.getElementById("pipeline-support-paths");
-        var pasteSupportList = document.getElementById("paste-support-list");
-        var addPasteSupportButton = document.getElementById("add-paste-support");
-
-        if (!form || !directoryInput || !supportInput || !supportPaths || !pasteSupportList || !addPasteSupportButton) {
-          return;
-        }
-
-        function renderSupportPathEditors() {
-          supportPaths.innerHTML = "";
-
-          var files = Array.prototype.slice.call(supportInput.files || []);
-          supportPaths.hidden = files.length === 0;
-          if (files.length === 0) {
-            return;
-          }
-
-          var intro = document.createElement("span");
-          intro.className = "field-note";
-          intro.textContent = "Bundle-relative paths for the selected support files. Edit these when the original repository layout uses nested directories such as .gitlab/ci/templates/job.yml.";
-          supportPaths.appendChild(intro);
-
-          files.forEach(function(file) {
-            var item = document.createElement("div");
-            item.className = "generated-path-item";
-
-            var source = document.createElement("span");
-            source.className = "generated-path-source";
-            source.textContent = "Selected file: " + file.name;
-            item.appendChild(source);
-
-            var input = document.createElement("input");
-            input.type = "text";
-            input.name = "pipeline_support_paths";
-            input.value = file.webkitRelativePath || file.name;
-            input.placeholder = ".gitlab/ci/templates/job.yml";
-            item.appendChild(input);
-
-            supportPaths.appendChild(item);
-          });
-        }
-
-        supportInput.addEventListener("change", renderSupportPathEditors);
-        renderSupportPathEditors();
-
-        function escapeHtml(value) {
-          return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;");
-        }
-
-        function escapeAttribute(value) {
-          return escapeHtml(value).replace(/"/g, "&quot;");
-        }
-
-        function refreshPasteSupportLabels() {
-          Array.prototype.slice.call(pasteSupportList.querySelectorAll(".paste-support-card")).forEach(function(card, index) {
-            var label = card.querySelector(".paste-support-head strong");
-            if (label) {
-              label.textContent = "Support file " + (index + 1);
-            }
-          });
-        }
-
-        function buildPasteSupportCard(index, pathValue, contentValue) {
-          var card = document.createElement("div");
-          card.className = "paste-support-card";
-          card.innerHTML =
-            '<div class="paste-support-head">' +
-              "<strong>Support file " + (index + 1) + "</strong>" +
-              '<button type="button" class="mini-button" data-remove-paste-support="true">Remove</button>' +
-            "</div>" +
-            '<label>Bundle-relative path' +
-              '<input type="text" name="pipeline_text_support_paths" placeholder=".gitlab/ci/templates/prepare.yml" value="' + escapeAttribute(pathValue || "") + '">' +
-            "</label>" +
-            '<label>YAML content' +
-              '<textarea name="pipeline_text_support_contents" placeholder="Paste included YAML here">' + escapeHtml(contentValue || "") + "</textarea>" +
-            "</label>";
-
-          card.querySelector('[data-remove-paste-support="true"]').addEventListener("click", function() {
-            card.remove();
-            refreshPasteSupportLabels();
-          });
-
-          return card;
-        }
-
-        addPasteSupportButton.addEventListener("click", function() {
-          pasteSupportList.appendChild(buildPasteSupportCard(
-            pasteSupportList.querySelectorAll(".paste-support-card").length,
-            "",
-            ""
-          ));
-          refreshPasteSupportLabels();
-        });
-
-        if (!pasteSupportList.querySelector(".paste-support-card")) {
-          pasteSupportList.appendChild(buildPasteSupportCard(0, "", ""));
-          refreshPasteSupportLabels();
-        }
-
-        form.addEventListener("submit", function() {
-          form.querySelectorAll("input[data-generated-path='true']").forEach(function(node) {
-            node.remove();
-          });
-
-          Array.prototype.forEach.call(directoryInput.files || [], function(file) {
-            var hidden = document.createElement("input");
-            hidden.type = "hidden";
-            hidden.name = "pipeline_directory_paths";
-            hidden.value = file.webkitRelativePath || file.name;
-            hidden.setAttribute("data-generated-path", "true");
-            form.appendChild(hidden);
-          });
-        });
-      });
-    </script>
   </body>
 </html>

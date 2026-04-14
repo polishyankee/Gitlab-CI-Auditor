@@ -542,7 +542,8 @@ module GitlabCiAuditor
     end
 
     def parse_yaml(content, path)
-      sanitized = content.gsub(/!reference\s+\[[^\]\n]+\]/, '"__gitlab_reference__"')
+      sanitized = GitlabCiAuditor.sanitize_yaml_content(content)
+      sanitized = sanitized.gsub(/!reference\s+\[[^\]\n]+\]/, '"__gitlab_reference__"')
       YAML.safe_load(sanitized, aliases: true) || {}
     rescue Psych::BadAlias => error
       alias_name = error.message.to_s[/Unknown alias:\s+(.+)$/, 1] || "unknown"

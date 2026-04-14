@@ -32,6 +32,7 @@ module GitlabCiAuditor
   ].freeze
 
   SENSITIVE_KEY_PATTERN = /(token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key|secret[_-]?key|auth[_-]?pass|bootstrap[_-]?password)/i
+  YAML_CONTROL_CHAR_PATTERN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/
 
   def self.root_dir
     File.expand_path("..", __dir__)
@@ -74,6 +75,11 @@ module GitlabCiAuditor
     else
       [value.to_s]
     end
+  end
+
+  def self.sanitize_yaml_content(content)
+    normalized = content.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+    normalized.delete("\uFEFF").gsub(YAML_CONTROL_CHAR_PATTERN, "")
   end
 
   def self.job_definition?(name, value)

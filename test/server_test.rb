@@ -122,6 +122,35 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_analyze_request_supports_pasted_workflow_first_pipeline_with_mid_document_bom
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_text" => pasted_workflow_pipeline_with_mid_document_bom,
+          "pipeline_text_filename" => ".gitlab-ci.yml",
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    assert_equal "complete", report[:summary][:analysis_scope]
+    assert_equal "pass", report.dig(:lint, :status)
+    assert report[:graph][:nodes].any?
+    prepare_job_node = report[:graph][:nodes].find { |node| node[:label] == "prepare_job" }
+    refute_nil prepare_job_node
+    assert_equal "build", prepare_job_node[:stage]
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_supports_context_manifest_and_history_store
     GitlabCiAuditor.require_server!
 
@@ -323,7 +352,7 @@ class ServerTest < Minitest::Test
     assert_includes error.message, "extends unknown template"
     assert_includes error.message, "Selected root pipeline: .gitlab-ci.yml"
     assert_includes error.message, "YAML files detected in upload: .gitlab-ci.yml"
-    assert_includes error.message, "upload the whole pipeline directory"
+    assert_includes error.message, "./scripts/flatten_pipeline.sh"
   rescue LoadError => error
     skip(error.message)
   end
@@ -450,6 +479,26 @@ class ServerTest < Minitest::Test
         artifacts:
           paths:
             - gl-dast-report.json
+    YAML
+  end
+
+  def pasted_workflow_pipeline_with_mid_document_bom
+    <<~YAML.sub(".prepare_template:", "\uFEFF.prepare_template:")
+      workflow:
+        rules:
+          - if: '$CI_COMMIT_BRANCH'
+            when: always
+
+      stages:
+        - build
+
+      prepare_job:
+        extends: .prepare_template
+
+      .prepare_template:
+        stage: build
+        script:
+          - echo prepare
     YAML
   end
 

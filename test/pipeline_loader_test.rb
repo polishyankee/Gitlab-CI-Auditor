@@ -107,8 +107,16 @@ class PipelineLoaderTest < Minitest::Test
       File.write(
         File.join(dir, ".gitlab-ci.yml"),
         <<~YAML
+          workflow:
+            rules:
+              - if: '$CI_COMMIT_BRANCH'
+                when: always
+
           include:
             - local: ".gitlab/ci/templates/prepare.yml"
+
+          stages:
+            - prepare
 
           prepare_job:
             extends: .prepare_template
@@ -131,8 +139,42 @@ class PipelineLoaderTest < Minitest::Test
       refute_includes flattened.yaml, "\ninclude:"
 
       parsed = YAML.safe_load(flattened.yaml.lines.reject { |line| line.start_with?("#") }.join, aliases: true)
+      assert_equal "$CI_COMMIT_BRANCH", parsed.fetch("workflow").fetch("rules").first.fetch("if")
       assert_equal "prepare", parsed.fetch(".prepare_template").fetch("stage")
       assert_equal ".prepare_template", parsed.fetch("prepare_job").fetch("extends")
+    end
+  end
+
+  def test_load_sanitizes_mid_document_bom_in_workflow_first_flattened_pipeline
+    Dir.mktmpdir("gitlab-ci-mid-bom") do |dir|
+      pipeline_path = File.join(dir, ".gitlab-ci.yml")
+
+      File.binwrite(
+        pipeline_path,
+        <<~YAML.sub(".prepare_template:", "\uFEFF.prepare_template:").encode("UTF-8")
+          workflow:
+            rules:
+              - if: '$CI_COMMIT_BRANCH'
+                when: always
+
+          stages:
+            - prepare
+
+          prepare_job:
+            extends: .prepare_template
+
+          .prepare_template:
+            stage: prepare
+            script:
+              - echo prepare
+        YAML
+      )
+
+      pipeline = GitlabCiAuditor::PipelineLoader.new.load(pipeline_path)
+
+      assert_equal "$CI_COMMIT_BRANCH", pipeline.workflow.fetch("rules").first.fetch("if")
+      assert_equal "prepare", pipeline.jobs.fetch("prepare_job").fetch("stage")
+      assert_includes pipeline.templates.keys, ".prepare_template"
     end
   end
 end
