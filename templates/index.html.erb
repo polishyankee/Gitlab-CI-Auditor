@@ -540,7 +540,7 @@
               <label>
                 Or paste a root pipeline file
                 <textarea name="pipeline_text" placeholder="Paste .gitlab-ci.yml here for immediate lint, graph generation, and SSDLC feedback"></textarea>
-                <span class="field-note">Best for quick analysis. You can also add pasted include or template files below when the root YAML uses local includes or hidden templates.</span>
+                <span class="field-note">Best for quick analysis. Paste YAML only, not a helper shell script. For large multi-file pipelines, prefer <code>gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml</code> and analyze the generated file.</span>
               </label>
               <label>
                 Pasted root filename

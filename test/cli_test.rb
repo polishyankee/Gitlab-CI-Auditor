@@ -3,6 +3,47 @@ require "fileutils"
 require "tmpdir"
 
 class CliTest < Minitest::Test
+  def test_flatten_writes_single_yaml_output_file
+    Dir.mktmpdir("gitlab-ci-cli-flatten") do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".gitlab", "ci", "templates"))
+
+      root_path = File.join(dir, ".gitlab-ci.yml")
+      output_path = File.join(dir, "flat.gitlab-ci.yml")
+
+      File.write(
+        root_path,
+        <<~YAML
+          include:
+            - local: ".gitlab/ci/templates/prepare.yml"
+
+          prepare_job:
+            extends: .prepare_template
+        YAML
+      )
+
+      File.write(
+        File.join(dir, ".gitlab", "ci", "templates", "prepare.yml"),
+        <<~YAML
+          .prepare_template:
+            stage: prepare
+            script:
+              - echo prepare
+        YAML
+      )
+
+      stdout, = capture_io do
+        GitlabCiAuditor::CLI.new.send(:flatten, [root_path, "--output", output_path])
+      end
+
+      assert_includes stdout, "Flattened pipeline written"
+      flattened_content = File.read(output_path)
+      refute_includes flattened_content, "\ninclude:"
+      parsed = YAML.safe_load(flattened_content.lines.reject { |line| line.start_with?("#") }.join, aliases: true)
+      assert_equal "prepare", parsed.fetch(".prepare_template").fetch("stage")
+      assert_equal ".prepare_template", parsed.fetch("prepare_job").fetch("extends")
+    end
+  end
+
   def test_scan_enriches_unknown_template_errors_with_workspace_diagnostics
     Dir.mktmpdir("gitlab-ci-cli-diagnostics") do |dir|
       File.write(

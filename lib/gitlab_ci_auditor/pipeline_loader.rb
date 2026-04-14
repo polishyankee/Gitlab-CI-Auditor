@@ -1,5 +1,14 @@
 module GitlabCiAuditor
   class PipelineLoader
+    FlattenedPipeline = Struct.new(
+      :path,
+      :config,
+      :yaml,
+      :include_metadata,
+      :warnings,
+      keyword_init: true
+    )
+
     Pipeline = Struct.new(
       :path,
       :base_dir,
@@ -42,7 +51,36 @@ module GitlabCiAuditor
       load_internal(path, [])
     end
 
+    def flatten(path)
+      @workspace_root_dir = File.dirname(File.expand_path(path))
+      @workspace_file_index = nil
+      prepare_snapshot_catalog(path)
+
+      absolute_path = File.expand_path(path)
+      config, include_metadata, warnings = load_with_includes(absolute_path, [])
+      FlattenedPipeline.new(
+        path: absolute_path,
+        config: config,
+        yaml: render_flattened_yaml(absolute_path, config, include_metadata, warnings),
+        include_metadata: include_metadata,
+        warnings: warnings
+      )
+    end
+
     private
+
+    def render_flattened_yaml(path, config, include_metadata, warnings)
+      header = []
+      header << "# Flattened audit-friendly pipeline for GitLab CI SSDLC Auditor."
+      header << "# Source root: #{path}"
+      header << "# Resolved local includes: #{Array(include_metadata[:resolved_local_includes]).size}"
+      header << "# Resolved project snapshot includes: #{Array(include_metadata[:resolved_project_includes]).size}"
+      header << "# Warnings: #{warnings.size}" if warnings.any?
+      header << "# This file is intended for auditing and analysis, not as a source-of-truth replacement for the original repository layout."
+      header << ""
+
+      header.join("\n") + YAML.dump(config)
+    end
 
     def load_internal(path, graph_stack)
       absolute_path = File.expand_path(path)

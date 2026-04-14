@@ -9,6 +9,8 @@ module GitlabCiAuditor
       case command
       when "scan"
         scan(argv)
+      when "flatten"
+        flatten(argv)
       when "serve"
         serve(argv)
       when "list-packs"
@@ -96,6 +98,33 @@ module GitlabCiAuditor
       end
     end
 
+    def flatten(argv)
+      options = {
+        output: nil,
+        snapshot_file: nil
+      }
+
+      parser = OptionParser.new do |opts|
+        opts.banner = "Usage: gitlab-ci-auditor flatten PATH [--snapshot-file FILE] [--output FILE]"
+        opts.on("--snapshot-file FILE", "Load downstream snapshot mappings from JSON before flattening includes") { |value| options[:snapshot_file] = value }
+        opts.on("--output FILE", "Write flattened YAML to file") { |value| options[:output] = value }
+      end
+      parser.parse!(argv)
+
+      path = argv.shift
+      raise ArgumentError, "Pipeline path is required" unless path
+
+      flattened = flatten_pipeline_with_diagnostics(path, options[:snapshot_file])
+      output = flattened.yaml
+
+      if options[:output]
+        File.write(File.expand_path(options[:output]), output)
+        puts "Flattened pipeline written to #{File.expand_path(options[:output])}"
+      else
+        puts output
+      end
+    end
+
     def serve(argv)
       options = {
         host: "127.0.0.1",
@@ -143,6 +172,12 @@ module GitlabCiAuditor
 
     def load_policy(options)
       PolicyLoader.load(path: options[:policy], pack: options[:policy_pack])
+    end
+
+    def flatten_pipeline_with_diagnostics(path, snapshot_file)
+      PipelineLoader.new(snapshot_file: snapshot_file).flatten(path)
+    rescue ArgumentError => e
+      raise enrich_scan_error(e, path)
     end
 
     def load_pipeline_with_diagnostics(path, snapshot_file, context_file)
@@ -241,6 +276,7 @@ module GitlabCiAuditor
       <<~TEXT
         Usage:
           gitlab-ci-auditor scan PATH [--format text|json|json-bundle|html|csv|pdf|sarif|junit] [--output FILE] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE] [--compare-to PATH]
+          gitlab-ci-auditor flatten PATH [--snapshot-file FILE] [--output FILE]
           gitlab-ci-auditor serve [--host HOST] [--port PORT] [--policy FILE] [--policy-pack NAME] [--snapshot-file FILE] [--context-file FILE] [--history-file FILE]
           gitlab-ci-auditor list-packs
       TEXT

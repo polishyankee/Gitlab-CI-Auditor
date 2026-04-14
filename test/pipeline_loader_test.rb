@@ -99,4 +99,40 @@ class PipelineLoaderTest < Minitest::Test
       assert pipeline.include_metadata[:resolved_project_includes].first["path"].end_with?("templates_dependency-policy.yml")
     end
   end
+
+  def test_flatten_produces_single_audit_friendly_yaml_file
+    Dir.mktmpdir("gitlab-ci-flatten") do |dir|
+      FileUtils.mkdir_p(File.join(dir, ".gitlab", "ci", "templates"))
+
+      File.write(
+        File.join(dir, ".gitlab-ci.yml"),
+        <<~YAML
+          include:
+            - local: ".gitlab/ci/templates/prepare.yml"
+
+          prepare_job:
+            extends: .prepare_template
+        YAML
+      )
+
+      File.write(
+        File.join(dir, ".gitlab", "ci", "templates", "prepare.yml"),
+        <<~YAML
+          .prepare_template:
+            stage: prepare
+            script:
+              - echo prepare
+        YAML
+      )
+
+      flattened = GitlabCiAuditor::PipelineLoader.new.flatten(File.join(dir, ".gitlab-ci.yml"))
+
+      assert_includes flattened.yaml, "Flattened audit-friendly pipeline"
+      refute_includes flattened.yaml, "\ninclude:"
+
+      parsed = YAML.safe_load(flattened.yaml.lines.reject { |line| line.start_with?("#") }.join, aliases: true)
+      assert_equal "prepare", parsed.fetch(".prepare_template").fetch("stage")
+      assert_equal ".prepare_template", parsed.fetch("prepare_job").fetch("extends")
+    end
+  end
 end

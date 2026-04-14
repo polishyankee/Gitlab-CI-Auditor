@@ -144,7 +144,8 @@ module GitlabCiAuditor
         relative_path = sanitized_upload_relative_path(filename, ".gitlab-ci.yml")
         pipeline_path = File.join(workspace, relative_path)
         FileUtils.mkdir_p(File.dirname(pipeline_path))
-        File.write(pipeline_path, req.query["pipeline_text"].to_s)
+        content = normalize_pasted_yaml(req.query["pipeline_text"].to_s)
+        File.write(pipeline_path, content)
         persist_pasted_support_files(workspace, req)
 
         context_file = resolve_optional_file(requested_context, workspace, @context_file)
@@ -165,8 +166,17 @@ module GitlabCiAuditor
         relative_path = sanitized_upload_relative_path(paths[index], "support_#{index}.yml")
         absolute_path = File.join(workspace, relative_path)
         FileUtils.mkdir_p(File.dirname(absolute_path))
-        File.write(absolute_path, content)
+        File.write(absolute_path, normalize_pasted_yaml(content))
       end
+    end
+
+    def normalize_pasted_yaml(content)
+      normalized = content.to_s.sub(/\A\uFEFF/, "")
+      if normalized.lstrip.start_with?("#!")
+        raise ArgumentError, "The pasted root pipeline looks like a shell script, not `.gitlab-ci.yml` content. Paste YAML only, or first run `gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml` and then analyze the generated YAML."
+      end
+
+      normalized
     end
 
     def load_uploaded_pipeline(req, snapshot_file, requested_context = nil, requested_history = nil)

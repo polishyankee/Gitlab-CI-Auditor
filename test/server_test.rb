@@ -95,6 +95,33 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_analyze_request_rejects_pasted_shell_script_instead_of_yaml
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    error = assert_raises(ArgumentError) do
+      server.send(
+        :analyze_request,
+        RequestStub.new(
+          {
+            "pipeline_text" => "#!/usr/bin/env sh\nset -eu\n",
+            "pipeline_text_filename" => ".gitlab-ci.yml",
+            "policy_pack" => "balanced"
+          }
+        )
+      )
+    end
+
+    assert_includes error.message, "looks like a shell script"
+    assert_includes error.message, "gitlab-ci-auditor flatten"
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_supports_context_manifest_and_history_store
     GitlabCiAuditor.require_server!
 

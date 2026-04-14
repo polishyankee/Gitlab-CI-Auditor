@@ -310,6 +310,13 @@ chmod +x ./bin/gitlab-ci-auditor
 ./bin/gitlab-ci-auditor scan .gitlab-ci.yml
 ```
 
+Flatten a complex multi-file pipeline into one audit-friendly YAML file:
+
+```bash
+./bin/gitlab-ci-auditor flatten .gitlab-ci.yml --output flat.gitlab-ci.yml
+./bin/gitlab-ci-auditor scan flat.gitlab-ci.yml --format html --output report.html
+```
+
 List bundled policy packs:
 
 ```bash
@@ -409,6 +416,13 @@ Prefer ZIP or directory upload when:
 - hidden directories such as `.gitlab/` must be preserved exactly
 - the pipeline also depends on local shell scripts or many nested files
 - you want the closest possible match to the original repository layout
+
+For very large repositories with many local or snapshot-style includes, the simplest workflow is now:
+
+1. run `gitlab-ci-auditor flatten PATH --output flat.gitlab-ci.yml`
+2. analyze `flat.gitlab-ci.yml` with the CLI, or paste that generated YAML into the GUI
+
+The flattened output is meant for auditing. It removes `include` directives and writes the merged YAML into one file so the auditor can analyze a single artifact more predictably.
 
 Example pasted setup:
 
