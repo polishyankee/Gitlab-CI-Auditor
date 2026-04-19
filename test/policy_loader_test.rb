@@ -25,6 +25,30 @@ class PolicyLoaderTest < Minitest::Test
     end
   end
 
+  def test_loads_inline_policy_json_with_gui_meta_defaults
+    policy = GitlabCiAuditor::PolicyLoader.load_json(
+      JSON.generate({ "required_controls" => { "unit_tests" => true } }),
+      source: "GUI settings",
+      name: "team_policy",
+      label: "Team Policy",
+      policy_source: "gui_policy"
+    )
+
+    assert_equal "team_policy", policy.dig("meta", "name")
+    assert_equal "Team Policy", policy.dig("meta", "label")
+    assert_equal "gui_policy", policy.dig("meta", "source")
+  end
+
+  def test_catalog_entries_expose_bundled_policy_json_for_gui
+    entries = GitlabCiAuditor::PolicyLoader.catalog_entries
+    balanced = entries.find { |entry| entry[:id] == "pack:balanced" }
+
+    refute_nil balanced
+    assert_equal "pack", balanced[:kind]
+    assert_includes balanced[:json], "\"required_controls\""
+    assert_includes balanced[:json], "\"meta\""
+  end
+
   def test_rejects_unsupported_top_level_policy_keys
     Dir.mktmpdir do |dir|
       custom_path = File.join(dir, "custom.json")

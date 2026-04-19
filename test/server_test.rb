@@ -34,6 +34,26 @@ class ServerTest < Minitest::Test
     skip(error.message)
   end
 
+  def test_render_index_page_includes_flat_pipeline_and_settings_editor
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    html = server.send(:render_index_page)
+
+    assert_includes html, "Flatten first, then analyze in one place"
+    assert_includes html, 'data-workspace-tab="settings"'
+    assert_includes html, "Policy Editor"
+    assert_includes html, "./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml"
+    assert_includes html, 'name="policy_ref"'
+    assert_includes html, 'id="settings-policy-json"'
+  rescue LoadError => error
+    skip(error.message)
+  end
+
   def test_analyze_request_supports_pasted_pipeline_yaml
     GitlabCiAuditor.require_server!
 
@@ -58,6 +78,108 @@ class ServerTest < Minitest::Test
     assert_equal "pass", report.dig(:lint, :status)
     assert report[:graph][:nodes].any?
     assert report[:recommendations].any?
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_analyze_request_supports_inline_custom_policy_json
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    custom_policy = {
+      meta: {
+        name: "frontend_custom",
+        label: "Frontend Custom"
+      },
+      required_controls: {
+        deploy_test: false
+      }
+    }
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_text" => pasted_single_file_pipeline,
+          "pipeline_text_filename" => "flat.gitlab-ci.yml",
+          "policy_ref" => "custom:frontend_custom",
+          "policy_json" => JSON.generate(custom_policy)
+        }
+      )
+    )
+
+    assert_equal "Frontend Custom", report.dig(:summary, :policy_pack_label)
+    assert_equal "gui_policy", report.dig(:summary, :policy_source)
+    deploy_test_control = report.dig(:scenarios, 0, :controls, :deploy_test)
+    assert_equal "disabled", deploy_test_control[:status]
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_validate_policy_request_returns_normalized_pretty_json
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    result = server.send(
+      :validate_policy_request,
+      RequestStub.new(
+        {
+          "policy_name" => "team_policy",
+          "policy_label" => "Team Policy",
+          "policy_json" => JSON.generate({ "required_controls" => { "unit_tests" => true } })
+        }
+      )
+    )
+
+    assert_equal "ok", result[:status]
+    assert_equal "team_policy", result[:policy_name]
+    assert_equal "Team Policy", result[:policy_label]
+    assert_includes result[:pretty_json], "\"required_controls\""
+    assert_includes result[:pretty_json], "\"source\": \"gui_policy\""
+  rescue LoadError => error
+    skip(error.message)
+  end
+
+  def test_build_export_response_returns_requested_report_format
+    GitlabCiAuditor.require_server!
+
+    server = GitlabCiAuditor::Server.new(
+      host: "127.0.0.1",
+      port: 4567
+    )
+
+    report = server.send(
+      :analyze_request,
+      RequestStub.new(
+        {
+          "pipeline_text" => pasted_single_file_pipeline,
+          "pipeline_text_filename" => "flat.gitlab-ci.yml",
+          "policy_pack" => "balanced"
+        }
+      )
+    )
+
+    export = server.send(
+      :build_export_response,
+      RequestStub.new(
+        {
+          "format" => "junit",
+          "report_payload" => Base64.strict_encode64(JSON.generate(report))
+        }
+      )
+    )
+
+    assert_equal "application/xml; charset=utf-8", export[:content_type]
+    assert_includes export[:content_disposition], ".junit.xml"
+    assert_includes export[:body], "<testsuites"
   rescue LoadError => error
     skip(error.message)
   end

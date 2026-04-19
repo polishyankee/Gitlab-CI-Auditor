@@ -88,6 +88,15 @@ class ReportRendererTest < Minitest::Test
     assert_includes html, "edge-critical"
   end
 
+  def test_render_html_can_include_gui_export_form
+    html = GitlabCiAuditor::ReportRenderer.new(@report, gui_export_enabled: true).render_html
+
+    assert_includes html, 'class="export-form"'
+    assert_includes html, 'name="report_payload"'
+    assert_includes html, '<option value="sarif">SARIF</option>'
+    assert_includes html, ">Export</button>"
+  end
+
   def test_render_html_includes_diff_tab_when_diff_data_exists
     baseline_pipeline = GitlabCiAuditor::PipelineLoader.new.load(example_path("pipelines/legacy_monolith.gitlab-ci.yml"))
     baseline_report = GitlabCiAuditor::Analyzer.new(baseline_pipeline).analyze

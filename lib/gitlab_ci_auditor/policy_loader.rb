@@ -33,28 +33,50 @@ module GitlabCiAuditor
         load_pack(pack || DEFAULT_PACK)
       end
 
+      def load_json(json, source: "inline policy", name: "gui_policy", label: "GUI Policy", policy_source: "gui_policy", force_meta: false)
+        policy = JSON.parse(json.to_s)
+        load_data(
+          policy,
+          source: source,
+          meta_defaults: {
+            "name" => name.to_s.strip.empty? ? "gui_policy" : name.to_s.strip,
+            "label" => label.to_s.strip.empty? ? "GUI Policy" : label.to_s.strip,
+            "source" => policy_source
+          },
+          force_meta: force_meta
+        )
+      rescue JSON::ParserError => e
+        raise ArgumentError, "Invalid policy JSON in #{source}: #{e.message}"
+      end
+
       def load_file(path)
         absolute_path = File.expand_path(path)
-        policy = parse_policy_json(absolute_path)
-        validate_policy!(policy, source: absolute_path)
-        apply_meta(policy, {
-          "name" => File.basename(absolute_path, File.extname(absolute_path)),
-          "label" => policy.dig("meta", "label") || "Custom Policy File",
-          "source" => "file"
-        })
+        load_data(
+          parse_policy_json(absolute_path),
+          source: absolute_path,
+          meta_defaults: {
+            "name" => File.basename(absolute_path, File.extname(absolute_path)),
+            "label" => "Custom Policy File",
+            "source" => "file"
+          },
+          force_meta: false
+        )
       end
 
       def load_pack(name)
         pack_path = pack_path_for(name)
         raise ArgumentError, "Unknown policy pack: #{name}" unless pack_path && File.exist?(pack_path)
 
-        policy = parse_policy_json(pack_path)
-        validate_policy!(policy, source: pack_path)
-        apply_meta(policy, {
-          "name" => name,
-          "label" => policy.dig("meta", "label") || name,
-          "source" => "policy_pack"
-        })
+        load_data(
+          parse_policy_json(pack_path),
+          source: pack_path,
+          meta_defaults: {
+            "name" => name,
+            "label" => name,
+            "source" => "policy_pack"
+          },
+          force_meta: false
+        )
       end
 
       def available_packs
@@ -66,6 +88,21 @@ module GitlabCiAuditor
             name: File.basename(path, ".json"),
             label: meta["label"] || File.basename(path, ".json"),
             description: meta["description"].to_s
+          }
+        end
+      end
+
+      def catalog_entries
+        available_packs.map do |pack|
+          policy = load_pack(pack[:name])
+          {
+            id: "pack:#{pack[:name]}",
+            kind: "pack",
+            name: policy.dig("meta", "name"),
+            label: policy.dig("meta", "label"),
+            description: policy.dig("meta", "description").to_s,
+            source: policy.dig("meta", "source"),
+            json: JSON.pretty_generate(policy)
           }
         end
       end
@@ -196,6 +233,16 @@ module GitlabCiAuditor
       def apply_meta(policy, defaults)
         policy["meta"] = defaults.merge(policy["meta"].is_a?(Hash) ? policy["meta"] : {})
         policy
+      end
+
+      def load_data(policy, source:, meta_defaults:, force_meta:)
+        validate_policy!(policy, source: source)
+        if force_meta
+          policy["meta"] = (policy["meta"].is_a?(Hash) ? policy["meta"] : {}).merge(meta_defaults)
+          policy
+        else
+          apply_meta(policy, meta_defaults.merge("label" => policy.dig("meta", "label") || meta_defaults["label"]))
+        end
       end
     end
   end

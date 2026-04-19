@@ -49,6 +49,8 @@ chmod +x ./bin/gitlab-ci-auditor
 - security-policy findings with organization-specific severity tuning
 - static lint and best-practices feedback for `.gitlab-ci.yml`
 - interactive flow graph and multi-project context visualization
+- GUI export after analysis for `HTML`, `Text`, `CSV`, `PDF`, `JSON bundle`, `SARIF`, and `JUnit`
+- in-browser policy preview, cloning, and custom policy editing through the `Settings` tab
 - OWASP SAMM `Secure Build`, `Secure Deployment`, and `Defect Management` benchmark mapping
 - CI-ready exports for `SARIF` and `JUnit`
 
@@ -384,20 +386,41 @@ gem install webrick
 
 If you only use `scan` and report export modes, `webrick` is not required.
 
-The GUI supports these input modes:
+The GUI now follows one narrow workflow on purpose:
 
-- direct filesystem path to the root pipeline
-- pasted root `.gitlab-ci.yml` content for fast ad-hoc analysis
-- single root `.gitlab-ci.yml` upload
-- optional filesystem paths for a downstream snapshot manifest, a multi-project context manifest, and a trend history store
+1. flatten the pipeline in the repository,
+2. paste or upload the generated flat YAML,
+3. choose a bundled or custom GUI policy,
+4. run analysis,
+5. export the report directly from the rendered result page.
 
-For large repositories with many local `include` files, use the flatten helper first and then analyze one merged file in GUI:
+Flatten first:
 
 ```bash
 ./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml
 ```
 
 Then paste or upload `flat.gitlab-ci.yml` in the GUI.
+
+The GUI no longer exposes bundle uploads, directory uploads, snapshot manifests, or multi-project manifests. Those advanced flows still exist in CLI, where they are easier to control and debug.
+
+The `Settings` tab in GUI lets you:
+
+- inspect bundled policies such as `balanced`, `strict`, and `library`
+- clone a bundled policy into a custom GUI policy
+- edit the full policy JSON in-browser
+- save the custom policy locally in browser storage
+- reuse that saved policy immediately from the analysis selector
+
+After analysis, the report page now includes a GUI `Export` action with:
+
+- `HTML`
+- `Text`
+- `CSV`
+- `PDF`
+- `JSON bundle`
+- `SARIF`
+- `JUnit`
 
 For advanced multi-file ingestion workflows, stay in CLI:
 
@@ -421,6 +444,24 @@ The HTML report also includes a dedicated `Lint` tab. This view focuses on struc
 - deprecated `only/except` usage
 - jobs assigned to undefined stages
 - unresolved downstream triggers
+
+## GitHub Pages Demo
+
+GitHub Pages is a good fit for a static product demo, but not for the full interactive application.
+
+Use GitHub Pages for:
+
+- a hosted sample report
+- screenshots and product overview pages
+- a lightweight landing page that links to Docker and local setup
+
+Do not use GitHub Pages for the real GUI runtime, because the app needs a Ruby server for:
+
+- pipeline analysis
+- policy validation
+- report export generation
+
+The right compromise is to publish static sample reports or screenshots on GitHub Pages, while the actual analyzer continues to run locally, in Docker, or on a small server.
 
 ## Docker
 
@@ -629,7 +670,7 @@ The repository includes GitHub Actions workflows for:
 - running the Ruby test suite on pushes and pull requests
 - building the Docker image on every push, pull request, and manual CI run
 - smoke-testing both the CLI and GUI container flows in CI
-- publishing a GitHub release and a multi-arch GHCR container image on version tags such as `v0.3.0`
+- publishing a GitHub release and a multi-arch GHCR container image on version tags such as `v0.5.0`
 - attaching generated example reports to each GitHub release
 
 The repository also includes a [`Dependabot`](.github/dependabot.yml) configuration for GitHub Actions and Docker base image updates.
@@ -645,14 +686,14 @@ For the release checklist and local Docker-based release preparation, see [`RELE
 Prepare a release-ready local image before pushing the tag:
 
 ```bash
-./scripts/prepare_release.sh v0.3.0
+./scripts/prepare_release.sh v0.5.0
 ```
 
 To cut a release manually after pushing the workflow changes, create and push a version tag:
 
 ```bash
-git tag v0.3.0
-git push origin v0.3.0
+git tag v0.5.0
+git push origin v0.5.0
 ```
 
 Or trigger the `Release` workflow manually in GitHub and provide the version tag as input. The workflow uses that value as the release tag and publishes the same version to GHCR.

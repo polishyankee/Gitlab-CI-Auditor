@@ -49,14 +49,8 @@ module GitlabCiAuditor
       )
 
       server.mount_proc("/") do |_req, res|
-        available_policy_packs = PolicyLoader.available_packs
-        selected_policy_pack = @policy_pack
-        custom_policy_locked = !@policy_path.nil?
-        default_snapshot_file = @snapshot_file.to_s
-        default_context_file = @context_file.to_s
-        default_history_file = @history_file.to_s
         res["Content-Type"] = "text/html; charset=utf-8"
-        res.body = ERB.new(File.read(File.join(GitlabCiAuditor.root_dir, "templates", "index.html.erb"))).result(binding)
+        res.body = render_index_page
       end
 
       server.mount_proc("/analyze") do |req, res|
@@ -65,11 +59,40 @@ module GitlabCiAuditor
         begin
           report = analyze_request(req)
           res["Content-Type"] = "text/html; charset=utf-8"
-          res.body = ReportRenderer.new(report).render_html
+          res.body = render_report_page(report, gui_export_enabled: true)
         rescue StandardError => error
           res.status = 422
           res["Content-Type"] = "text/html; charset=utf-8"
           res.body = render_error_page(error)
+        end
+      end
+
+      server.mount_proc("/export") do |req, res|
+        next unless req.request_method == "POST"
+
+        begin
+          export = build_export_response(req)
+          res["Content-Type"] = export[:content_type]
+          res["Content-Disposition"] = export[:content_disposition]
+          res.body = export[:body]
+        rescue StandardError => error
+          res.status = 422
+          res["Content-Type"] = "text/html; charset=utf-8"
+          res.body = render_error_page(error)
+        end
+      end
+
+      server.mount_proc("/validate-policy") do |req, res|
+        next unless req.request_method == "POST"
+
+        begin
+          validation = validate_policy_request(req)
+          res["Content-Type"] = "application/json; charset=utf-8"
+          res.body = JSON.generate(validation)
+        rescue StandardError => error
+          res.status = 422
+          res["Content-Type"] = "application/json; charset=utf-8"
+          res.body = JSON.generate({ status: "error", error: error.message })
         end
       end
 
@@ -98,7 +121,7 @@ module GitlabCiAuditor
         raise ArgumentError, "Provide a pipeline path, paste a root `.gitlab-ci.yml`, or upload a root `.gitlab-ci.yml`."
       end
 
-      policy = load_policy(req.query["policy_pack"])
+      policy = load_policy(req.query["policy_ref"] || req.query["policy_pack"], req.query["policy_json"])
       report = Analyzer.new(pipeline, policy).analyze
       history_file ? HistoryStore.new(history_file).attach(report) : report
     end
@@ -122,10 +145,166 @@ module GitlabCiAuditor
       File.expand_path(candidate)
     end
 
-    def load_policy(requested_pack)
+    def load_policy(requested_pack, inline_policy_json = nil)
       return PolicyLoader.load(path: @policy_path) if @policy_path
 
-      PolicyLoader.load(pack: requested_pack.to_s.strip.empty? ? @policy_pack : requested_pack)
+      inline_payload = inline_policy_json.to_s.strip
+      unless inline_payload.empty?
+        return PolicyLoader.load_json(
+          inline_payload,
+          source: "GUI policy editor",
+          name: "gui_policy",
+          label: "GUI Policy",
+          policy_source: "gui_policy"
+        )
+      end
+
+      selected_pack = requested_pack.to_s.strip
+      selected_pack = @policy_pack if selected_pack.empty?
+      selected_pack = selected_pack.delete_prefix("pack:") if selected_pack.start_with?("pack:")
+      PolicyLoader.load(pack: selected_pack)
+    end
+
+    def render_index_page
+      available_policy_entries = PolicyLoader.catalog_entries
+      custom_policy_locked = !@policy_path.nil?
+      default_policy_ref = "pack:#{@policy_pack}"
+      default_policy_entry = available_policy_entries.find { |entry| entry[:id] == default_policy_ref } || available_policy_entries.first
+      default_policy_catalog_json = JSON.generate(available_policy_entries).gsub("</", "<\\/")
+      default_policy_json = default_policy_entry ? default_policy_entry[:json] : "{}"
+
+      ERB.new(File.read(File.join(GitlabCiAuditor.root_dir, "templates", "index.html.erb"))).result(binding)
+    end
+
+    def render_report_page(report, gui_export_enabled: false)
+      ReportRenderer.new(
+        report,
+        gui_export_enabled: gui_export_enabled,
+        export_endpoint: "/export"
+      ).render_html
+    end
+
+    def validate_policy_request(req)
+      policy_name = sanitized_policy_name(req.query["policy_name"])
+      policy_label = req.query["policy_label"].to_s.strip
+      policy = PolicyLoader.load_json(
+        req.query["policy_json"].to_s,
+        source: "GUI policy editor",
+        name: policy_name,
+        label: policy_label.empty? ? policy_name : policy_label,
+        policy_source: "gui_policy",
+        force_meta: true
+      )
+
+      {
+        status: "ok",
+        policy_name: policy.dig("meta", "name"),
+        policy_label: policy.dig("meta", "label"),
+        pretty_json: JSON.pretty_generate(policy)
+      }
+    end
+
+    def build_export_response(req)
+      format = normalized_export_format(req.query["format"])
+      report = deserialize_report_payload(req.query["report_payload"])
+      renderer = ReportRenderer.new(report)
+      export_filename = "#{export_filename_base(report)}#{export_extension_for(format)}"
+
+      {
+        body: export_body_for(renderer, format),
+        content_type: export_content_type_for(format),
+        content_disposition: %(attachment; filename="#{export_filename}")
+      }
+    end
+
+    def export_body_for(renderer, format)
+      case format
+      when "text"
+        renderer.render_text
+      when "html"
+        renderer.render_html
+      when "csv"
+        renderer.render_csv
+      when "pdf"
+        renderer.render_pdf
+      when "json-bundle"
+        renderer.render_json_bundle
+      when "sarif"
+        renderer.render_sarif
+      when "junit"
+        renderer.render_junit
+      else
+        raise ArgumentError, "Unsupported export format `#{format}`"
+      end
+    end
+
+    def export_content_type_for(format)
+      case format
+      when "text"
+        "text/plain; charset=utf-8"
+      when "html"
+        "text/html; charset=utf-8"
+      when "csv"
+        "text/csv; charset=utf-8"
+      when "pdf"
+        "application/pdf"
+      when "json-bundle", "sarif"
+        "application/json; charset=utf-8"
+      when "junit"
+        "application/xml; charset=utf-8"
+      else
+        "application/octet-stream"
+      end
+    end
+
+    def export_extension_for(format)
+      case format
+      when "text"
+        ".txt"
+      when "html"
+        ".html"
+      when "csv"
+        ".csv"
+      when "pdf"
+        ".pdf"
+      when "json-bundle"
+        ".bundle.json"
+      when "sarif"
+        ".sarif.json"
+      when "junit"
+        ".junit.xml"
+      else
+        ".bin"
+      end
+    end
+
+    def normalized_export_format(value)
+      candidate = value.to_s.strip.downcase
+      candidate = "text" if candidate.empty?
+      return "json-bundle" if %w[json_bundle bundle json-bundle].include?(candidate)
+      return "junit" if %w[junit junit-xml xml].include?(candidate)
+
+      candidate
+    end
+
+    def deserialize_report_payload(payload)
+      decoded = Base64.strict_decode64(payload.to_s)
+      GitlabCiAuditor.deep_symbolize_keys(JSON.parse(decoded))
+    rescue ArgumentError, JSON::ParserError => e
+      raise ArgumentError, "Invalid report payload for export: #{e.message}"
+    end
+
+    def export_filename_base(report)
+      pipeline_name = File.basename(report[:pipeline_path].to_s.empty? ? "gitlab-ci-audit" : report[:pipeline_path].to_s)
+      sanitized = pipeline_name.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-+|-+\z/, "")
+      sanitized.empty? ? "gitlab-ci-audit" : sanitized
+    end
+
+    def sanitized_policy_name(value)
+      normalized = value.to_s.strip.downcase.gsub(/[^a-z0-9_-]+/, "_").gsub(/\A_+|_+\z/, "")
+      raise ArgumentError, "Policy name is required" if normalized.empty?
+
+      normalized
     end
 
     def uploaded_pipeline_bundle_present?(req)

@@ -87,8 +87,11 @@ module GitlabCiAuditor
       end
     end
 
-    def initialize(report)
+    def initialize(report, gui_export_enabled: false, export_endpoint: "/export")
       @report = report
+      @gui_export_enabled = gui_export_enabled
+      @export_endpoint = export_endpoint
+      @report_export_payload = Base64.strict_encode64(JSON.generate(@report))
     end
 
     def render_json_bundle

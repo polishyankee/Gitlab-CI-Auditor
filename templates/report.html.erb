@@ -67,6 +67,42 @@
         flex-wrap: wrap;
       }
 
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .export-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .export-form select,
+      .export-form button {
+        border-radius: 12px;
+        padding: 10px 12px;
+        font: inherit;
+      }
+
+      .export-form select {
+        min-width: 170px;
+        border: 1px solid var(--border);
+        background: rgba(252, 109, 38, 0.06);
+        color: var(--ink);
+      }
+
+      .export-form button {
+        border: 1px solid rgba(252, 109, 38, 0.45);
+        background: linear-gradient(180deg, var(--orange), var(--orange-strong));
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
       .repo-strip {
         display: flex;
         align-items: center;
@@ -866,6 +902,23 @@
           <span class="pill"><code><%= ERB::Util.html_escape(@report[:pipeline_path]) %></code></span>
           <span class="pill">Policy Pack: <strong><%= ERB::Util.html_escape(@report[:summary][:policy_pack_label]) %></strong></span>
         </div>
+        <% if @gui_export_enabled %>
+          <div class="topbar-actions">
+            <form class="export-form" action="<%= ERB::Util.html_escape(@export_endpoint) %>" method="post">
+              <input type="hidden" name="report_payload" value="<%= ERB::Util.html_escape(@report_export_payload) %>">
+              <select name="format" aria-label="Export format">
+                <option value="html">HTML</option>
+                <option value="text">Text</option>
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+                <option value="json-bundle">JSON Bundle</option>
+                <option value="sarif">SARIF</option>
+                <option value="junit">JUnit</option>
+              </select>
+              <button type="submit">Export</button>
+            </form>
+          </div>
+        <% end %>
       </div>
     </header>
 

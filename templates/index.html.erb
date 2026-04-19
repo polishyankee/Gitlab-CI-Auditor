@@ -325,6 +325,82 @@
         flex-wrap: wrap;
       }
 
+      .workspace-tabbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .workspace-tab {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 14px;
+        background: rgba(252, 109, 38, 0.06);
+        color: var(--muted);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .workspace-tab.active {
+        color: #fff3eb;
+        background: rgba(252, 109, 38, 0.16);
+        border-color: rgba(252, 109, 38, 0.42);
+      }
+
+      .workspace-panel[hidden] {
+        display: none;
+      }
+
+      .settings-layout {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      }
+
+      .settings-card {
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(252, 109, 38, 0.07), rgba(255, 255, 255, 0.02));
+      }
+
+      .settings-card h3 {
+        margin: 0 0 10px;
+        color: #f8fafc;
+        font-size: 1rem;
+      }
+
+      .settings-status {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(1, 4, 9, 0.35);
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .settings-status.success {
+        color: #8ef0a5;
+        border-color: rgba(63, 185, 80, 0.28);
+        background: rgba(46, 160, 67, 0.08);
+      }
+
+      .settings-status.error {
+        color: #ffaea9;
+        border-color: rgba(248, 81, 73, 0.28);
+        background: rgba(248, 81, 73, 0.08);
+      }
+
+      .divider-copy {
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px dashed var(--border);
+        background: rgba(1, 4, 9, 0.18);
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
       button {
         border: 1px solid rgba(252, 109, 38, 0.45);
         border-radius: 12px;
@@ -453,12 +529,12 @@
                 <span>The report shows the gap, the policy impact, and the concrete remediation path to move the pipeline toward the expected standard.</span>
               </div>
               <div class="hero-card">
-                <strong>Multi-Project Scope</strong>
-                <span>Optional context manifests let you stitch build, deploy, and delivery repositories into one graph when the release path spans multiple projects.</span>
+                <strong>Policy Settings</strong>
+                <span>Preview bundled policies, clone them, tune the JSON, and save custom GUI policies directly in the browser.</span>
               </div>
               <div class="hero-card">
-                <strong>Trend Memory</strong>
-                <span>Persist scan results into a history store and open score drift, category changes, and benchmark movement in the report.</span>
+                <strong>Export Ready</strong>
+                <span>After analysis, export the rendered report directly to HTML, text, CSV, PDF, JSON bundle, SARIF, or JUnit.</span>
               </div>
             </div>
           </div>
@@ -469,74 +545,116 @@
         <div class="workspace-head">
           <div class="section-head">
             <span class="section-kicker">Audit Workspace</span>
-            <h2>Open one clear audit session</h2>
-            <p>Use one root pipeline input. For complex include trees, flatten first and paste or upload the flattened YAML. The HTML report and the GUI use the same analysis engine and produce the same flow graph, findings, and benchmark output.</p>
+            <h2>Flatten first, then analyze in one place</h2>
+            <p>The GUI now focuses on one predictable input model: flattened pipeline YAML from <code>./scripts/flatten_pipeline.sh</code>. Advanced multi-file, snapshot, and multi-project ingestion stays in CLI, where it is easier to control and debug.</p>
           </div>
         </div>
 
-        <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
-          <label>
-            Pipeline file path
-            <input type="text" name="pipeline_path" placeholder="/Users/.../.gitlab-ci.yml">
-            <span class="field-note">Best when the repository is available on disk.</span>
-          </label>
+        <div class="workspace-tabbar" role="tablist" aria-label="Workspace views">
+          <button class="workspace-tab active" type="button" data-workspace-tab="analyze">Analyze</button>
+          <button class="workspace-tab" type="button" data-workspace-tab="settings">Settings</button>
+        </div>
 
-          <label>
-            Or paste a root pipeline file
-            <textarea name="pipeline_text" placeholder="Paste .gitlab-ci.yml or flattened pipeline YAML here"></textarea>
-            <span class="field-note">Paste YAML only, not helper shell scripts. For large multi-file pipelines run <code>./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml</code>, then paste <code>flat.gitlab-ci.yml</code>.</span>
-          </label>
+        <div class="workspace-panel" data-workspace-panel="analyze">
+          <form id="analysis-form" action="/analyze" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="pipeline_text_filename" value="flat.gitlab-ci.yml">
+            <input type="hidden" name="policy_json" id="analysis-policy-json">
 
-          <label>
-            Or upload a root pipeline file
-            <input type="file" name="pipeline_file" accept=".yml,.yaml">
-            <span class="field-note">Upload a single root file (raw or flattened).</span>
-          </label>
-
-          <label>
-            Pasted root filename
-            <input type="text" name="pipeline_text_filename" placeholder=".gitlab-ci.yml" value=".gitlab-ci.yml">
-            <span class="field-note">Used only for pasted content. Keep <code>.gitlab-ci.yml</code> unless you intentionally use a different root name.</span>
-          </label>
+            <div class="divider-copy">
+              Generate the flat file in your repository first:
+              <code>./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml</code>.
+              Then paste that YAML here or upload the generated file. This keeps the GUI fast and deterministic even for large include trees.
+            </div>
 
             <label>
-              Downstream snapshot manifest
-              <input type="text" name="snapshot_file_path" placeholder="/Users/.../.gitlab-ci-downstream-snapshots.json" value="<%= ERB::Util.html_escape(default_snapshot_file) %>">
-              <span class="field-note">Optional JSON manifest that maps external or artifact-based child pipelines to imported local YAML snapshots.</span>
+              Paste flattened pipeline YAML
+              <textarea name="pipeline_text" placeholder="Paste flat.gitlab-ci.yml here"></textarea>
+              <span class="field-note">Paste YAML only. The GUI expects the already-flattened pipeline content, not the shell helper that generated it.</span>
             </label>
 
             <label>
-              Multi-project context manifest
-              <input type="text" name="context_file_path" placeholder="/Users/.../pipeline-context.json" value="<%= ERB::Util.html_escape(default_context_file) %>">
-              <span class="field-note">Optional JSON manifest that links multiple repositories into one pipeline graph, for example application build -> ArgoCD delivery repo.</span>
+              Or upload flattened pipeline YAML
+              <input type="file" name="pipeline_file" accept=".yml,.yaml">
+              <span class="field-note">Upload the generated <code>flat.gitlab-ci.yml</code> or another single flattened YAML artifact.</span>
             </label>
 
             <label>
-              History store file
-              <input type="text" name="history_file_path" placeholder="/Users/.../gitlab-ci-audit-history.json" value="<%= ERB::Util.html_escape(default_history_file) %>">
-              <span class="field-note">Optional JSON file used to append this scan result and render the trend dashboard in the report.</span>
-            </label>
-
-            <label>
-              Policy pack
-              <select name="policy_pack" <%= custom_policy_locked ? "disabled" : "" %>>
-                <% available_policy_packs.each do |pack| %>
-                  <option value="<%= pack[:name] %>" <%= pack[:name] == selected_policy_pack ? "selected" : "" %>><%= pack[:label] %> (<%= pack[:name] %>)</option>
-                <% end %>
-              </select>
+              Policy for this analysis
+              <select name="policy_ref" id="analysis-policy-ref" <%= custom_policy_locked ? "disabled" : "" %>></select>
               <% if custom_policy_locked %>
-                <span class="field-note">This server instance was started with an explicit custom policy file, so bundled policy pack selection is locked.</span>
+                <span class="field-note">This server was started with an explicit policy file, so GUI policy selection is locked for analysis.</span>
               <% else %>
-                <% selected_pack = available_policy_packs.find { |pack| pack[:name] == selected_policy_pack } %>
-                <span class="field-note"><%= selected_pack ? selected_pack[:description] : "Choose a bundled policy pack for this audit run." %></span>
+                <span class="field-note" id="analysis-policy-note">Choose a bundled or custom GUI policy.</span>
               <% end %>
             </label>
 
+            <div class="divider-copy">
+              Need downstream snapshots, multi-project context, or historical tracking? Use CLI for those advanced workflows, then bring the flattened YAML back into the GUI when you want the visual report.
+            </div>
+
             <div class="cta-row">
               <button type="submit">Analyze Pipeline</button>
-              <button type="button" class="ghost" onclick="window.location.reload()">Reset Form</button>
+              <button type="button" class="ghost" id="reset-analysis-form">Reset Form</button>
             </div>
-        </form>
+          </form>
+        </div>
+
+        <div class="workspace-panel" data-workspace-panel="settings" hidden>
+          <div class="settings-layout">
+            <div class="settings-card">
+              <h3>Policy Editor</h3>
+              <div class="field-block">
+                <label>
+                  Policy catalog
+                  <select id="settings-policy-ref"></select>
+                  <span class="field-note">Bundled policies are read-only baselines. Clone one into a custom policy before changing it.</span>
+                </label>
+                <label>
+                  Custom policy name
+                  <input type="text" id="settings-policy-name" value="<%= ERB::Util.html_escape(default_policy_entry ? "#{default_policy_entry[:name]}_custom" : "custom_policy") %>">
+                  <span class="field-note">Used as the stable frontend identifier for the saved policy.</span>
+                </label>
+                <label>
+                  Custom policy label
+                  <input type="text" id="settings-policy-label" value="<%= ERB::Util.html_escape(default_policy_entry ? default_policy_entry[:label] : "Custom Policy") %>">
+                  <span class="field-note">Human-readable label shown in the analysis selector and reports.</span>
+                </label>
+                <label>
+                  Policy JSON
+                  <textarea id="settings-policy-json" spellcheck="false"><%= ERB::Util.html_escape(default_policy_json) %></textarea>
+                  <span class="field-note">Full policy document with live validation before save. Saved GUI policies are kept in browser storage and become immediately selectable for analysis.</span>
+                </label>
+              </div>
+
+              <div class="cta-row">
+                <button type="button" id="policy-new-button" class="ghost">New Draft</button>
+                <button type="button" id="policy-clone-button" class="ghost">Clone Selected</button>
+                <button type="button" id="policy-save-button">Save Custom Policy</button>
+                <button type="button" id="policy-delete-button" class="ghost">Delete Custom Policy</button>
+              </div>
+
+              <div id="policy-status" class="settings-status" hidden></div>
+            </div>
+
+            <div class="settings-card">
+              <h3>How policy settings work</h3>
+              <div class="list" style="margin-top: 0;">
+                <div class="list-item">
+                  Pick a bundled baseline such as <code>balanced</code>, <code>strict</code>, or <code>library</code>.
+                </div>
+                <div class="list-item">
+                  Clone it, edit the JSON, and save it as a custom GUI policy.
+                </div>
+                <div class="list-item">
+                  The saved custom policy appears immediately in the analysis selector on the <strong>Analyze</strong> tab.
+                </div>
+                <div class="list-item">
+                  CLI remains the right place for repository-wide policy files that should be versioned in Git.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="panel section-panel">
@@ -656,5 +774,315 @@
         </div>
       </section>
     </main>
+    <script id="policy-catalog-data" type="application/json"><%= default_policy_catalog_json %></script>
+    <script>
+      (function () {
+        var policyCatalog = JSON.parse(document.getElementById("policy-catalog-data").textContent || "[]");
+        var customPolicyStorageKey = "gitlab_ci_auditor.custom_policies.v1";
+        var workspaceTabs = Array.prototype.slice.call(document.querySelectorAll(".workspace-tab"));
+        var workspacePanels = Array.prototype.slice.call(document.querySelectorAll(".workspace-panel"));
+        var analysisForm = document.getElementById("analysis-form");
+        var analysisPolicyRef = document.getElementById("analysis-policy-ref");
+        var analysisPolicyJson = document.getElementById("analysis-policy-json");
+        var analysisPolicyNote = document.getElementById("analysis-policy-note");
+        var resetAnalysisButton = document.getElementById("reset-analysis-form");
+        var settingsPolicyRef = document.getElementById("settings-policy-ref");
+        var settingsPolicyName = document.getElementById("settings-policy-name");
+        var settingsPolicyLabel = document.getElementById("settings-policy-label");
+        var settingsPolicyJson = document.getElementById("settings-policy-json");
+        var policyStatus = document.getElementById("policy-status");
+        var policyNewButton = document.getElementById("policy-new-button");
+        var policyCloneButton = document.getElementById("policy-clone-button");
+        var policySaveButton = document.getElementById("policy-save-button");
+        var policyDeleteButton = document.getElementById("policy-delete-button");
+        var customPolicyLocked = <%= custom_policy_locked ? "true" : "false" %>;
+        var defaultPolicyRef = "<%= ERB::Util.html_escape(default_policy_ref) %>";
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function activateWorkspaceTab(name) {
+          workspaceTabs.forEach(function (button) {
+            button.classList.toggle("active", button.dataset.workspaceTab === name);
+          });
+
+          workspacePanels.forEach(function (panel) {
+            panel.hidden = panel.dataset.workspacePanel !== name;
+          });
+        }
+
+        workspaceTabs.forEach(function (button) {
+          button.addEventListener("click", function () {
+            activateWorkspaceTab(button.dataset.workspaceTab);
+          });
+        });
+
+        function loadCustomPolicies() {
+          try {
+            var parsed = JSON.parse(window.localStorage.getItem(customPolicyStorageKey) || "{}");
+            return parsed && typeof parsed === "object" ? parsed : {};
+          } catch (_error) {
+            return {};
+          }
+        }
+
+        function persistCustomPolicies(policies) {
+          window.localStorage.setItem(customPolicyStorageKey, JSON.stringify(policies));
+        }
+
+        function combinedPolicies() {
+          var customPolicies = loadCustomPolicies();
+          var entries = policyCatalog.slice();
+
+          Object.keys(customPolicies).sort().forEach(function (key) {
+            entries.push(customPolicies[key]);
+          });
+
+          return entries;
+        }
+
+        function findPolicyEntry(ref) {
+          return combinedPolicies().find(function (entry) { return entry.id === ref; }) || null;
+        }
+
+        function populatePolicySelect(selectElement, selectedRef) {
+          if (!selectElement) {
+            return;
+          }
+
+          var entries = combinedPolicies();
+          selectElement.innerHTML = entries.map(function (entry) {
+            var selected = entry.id === selectedRef ? ' selected' : "";
+            var suffix = entry.kind === "custom" ? "custom" : "bundled";
+            return '<option value="' + escapeHtml(entry.id) + '"' + selected + ">" +
+              escapeHtml(entry.label + " (" + suffix + ")") +
+              "</option>";
+          }).join("");
+        }
+
+        function updateAnalysisPolicyState() {
+          if (!analysisPolicyRef) {
+            return;
+          }
+
+          var entry = findPolicyEntry(analysisPolicyRef.value);
+          if (entry && analysisPolicyNote) {
+            analysisPolicyNote.textContent = entry.description || (entry.kind === "custom" ? "Custom GUI policy stored in this browser." : "Bundled baseline policy.");
+          }
+        }
+
+        function applyPolicyToSettings(ref, options) {
+          var entry = findPolicyEntry(ref) || findPolicyEntry(defaultPolicyRef);
+          if (!entry) {
+            return;
+          }
+
+          var preserveName = options && options.preserveName;
+          settingsPolicyRef.value = entry.id;
+          settingsPolicyJson.value = entry.json;
+
+          if (!preserveName) {
+            settingsPolicyName.value = entry.kind === "custom" ? entry.name : (entry.name + "_custom");
+            settingsPolicyLabel.value = entry.kind === "custom" ? entry.label : (entry.label + " Custom");
+          }
+        }
+
+        function setPolicyStatus(message, kind) {
+          if (!policyStatus) {
+            return;
+          }
+
+          policyStatus.hidden = false;
+          policyStatus.className = "settings-status" + (kind ? " " + kind : "");
+          policyStatus.textContent = message;
+        }
+
+        function clearPolicyStatus() {
+          if (!policyStatus) {
+            return;
+          }
+
+          policyStatus.hidden = true;
+          policyStatus.className = "settings-status";
+          policyStatus.textContent = "";
+        }
+
+        function newDraftPolicy() {
+          var baseEntry = findPolicyEntry(defaultPolicyRef) || combinedPolicies()[0];
+          if (!baseEntry) {
+            return;
+          }
+
+          try {
+            var draft = JSON.parse(baseEntry.json);
+            draft.meta = draft.meta || {};
+            draft.meta.name = "custom_policy";
+            draft.meta.label = "Custom Policy";
+            draft.meta.source = "gui_policy";
+            settingsPolicyRef.value = baseEntry.id;
+            settingsPolicyName.value = "custom_policy";
+            settingsPolicyLabel.value = "Custom Policy";
+            settingsPolicyJson.value = JSON.stringify(draft, null, 2);
+            clearPolicyStatus();
+          } catch (_error) {
+            setPolicyStatus("Could not initialize a new policy draft from the default baseline.", "error");
+          }
+        }
+
+        function saveCurrentPolicy() {
+          clearPolicyStatus();
+
+          var payload = new URLSearchParams();
+          payload.set("policy_name", settingsPolicyName.value);
+          payload.set("policy_label", settingsPolicyLabel.value);
+          payload.set("policy_json", settingsPolicyJson.value);
+
+          fetch("/validate-policy", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            body: payload.toString()
+          }).then(function (response) {
+            return response.json().then(function (data) {
+              return { ok: response.ok, data: data };
+            });
+          }).then(function (result) {
+            if (!result.ok || result.data.status !== "ok") {
+              throw new Error(result.data.error || "Policy validation failed.");
+            }
+
+            var ref = "custom:" + result.data.policy_name;
+            var customPolicies = loadCustomPolicies();
+            customPolicies[ref] = {
+              id: ref,
+              kind: "custom",
+              name: result.data.policy_name,
+              label: result.data.policy_label,
+              description: "Saved from GUI settings",
+              source: "gui_policy",
+              json: result.data.pretty_json
+            };
+            persistCustomPolicies(customPolicies);
+
+            settingsPolicyJson.value = result.data.pretty_json;
+            settingsPolicyRef.value = ref;
+            settingsPolicyName.value = result.data.policy_name;
+            settingsPolicyLabel.value = result.data.policy_label;
+
+            populatePolicySelect(settingsPolicyRef, ref);
+            populatePolicySelect(analysisPolicyRef, ref);
+            if (analysisPolicyRef) {
+              analysisPolicyRef.value = ref;
+            }
+            updateAnalysisPolicyState();
+            setPolicyStatus("Custom policy saved and added to the analysis selector.", "success");
+          }).catch(function (error) {
+            setPolicyStatus(error.message, "error");
+          });
+        }
+
+        function deleteCurrentPolicy() {
+          clearPolicyStatus();
+
+          var ref = settingsPolicyRef ? settingsPolicyRef.value : "";
+          if (!ref || ref.indexOf("custom:") !== 0) {
+            setPolicyStatus("Select a custom policy before deleting it.", "error");
+            return;
+          }
+
+          var customPolicies = loadCustomPolicies();
+          delete customPolicies[ref];
+          persistCustomPolicies(customPolicies);
+
+          populatePolicySelect(settingsPolicyRef, defaultPolicyRef);
+          populatePolicySelect(analysisPolicyRef, defaultPolicyRef);
+          if (analysisPolicyRef) {
+            analysisPolicyRef.value = defaultPolicyRef;
+          }
+          applyPolicyToSettings(defaultPolicyRef);
+          updateAnalysisPolicyState();
+          setPolicyStatus("Custom policy deleted from browser storage.", "success");
+        }
+
+        if (settingsPolicyRef) {
+          settingsPolicyRef.addEventListener("change", function () {
+            applyPolicyToSettings(settingsPolicyRef.value);
+            clearPolicyStatus();
+          });
+        }
+
+        if (analysisPolicyRef) {
+          analysisPolicyRef.addEventListener("change", updateAnalysisPolicyState);
+        }
+
+        if (policyNewButton) {
+          policyNewButton.addEventListener("click", newDraftPolicy);
+        }
+
+        if (policyCloneButton) {
+          policyCloneButton.addEventListener("click", function () {
+            applyPolicyToSettings(settingsPolicyRef.value || defaultPolicyRef);
+            clearPolicyStatus();
+          });
+        }
+
+        if (policySaveButton) {
+          policySaveButton.addEventListener("click", saveCurrentPolicy);
+        }
+
+        if (policyDeleteButton) {
+          policyDeleteButton.addEventListener("click", deleteCurrentPolicy);
+        }
+
+        if (resetAnalysisButton) {
+          resetAnalysisButton.addEventListener("click", function () {
+            analysisForm.reset();
+            if (analysisPolicyRef) {
+              analysisPolicyRef.value = defaultPolicyRef;
+            }
+            if (analysisPolicyJson) {
+              analysisPolicyJson.value = "";
+            }
+            updateAnalysisPolicyState();
+          });
+        }
+
+        if (analysisForm) {
+          analysisForm.addEventListener("submit", function () {
+            if (!analysisPolicyRef || !analysisPolicyJson) {
+              return;
+            }
+
+            var entry = findPolicyEntry(analysisPolicyRef.value);
+            if (entry && entry.kind === "custom") {
+              analysisPolicyJson.value = entry.json;
+            } else {
+              analysisPolicyJson.value = "";
+            }
+          });
+        }
+
+        populatePolicySelect(settingsPolicyRef, defaultPolicyRef);
+        populatePolicySelect(analysisPolicyRef, defaultPolicyRef);
+        applyPolicyToSettings(defaultPolicyRef);
+        if (analysisPolicyRef) {
+          analysisPolicyRef.value = defaultPolicyRef;
+        }
+        updateAnalysisPolicyState();
+
+        if (customPolicyLocked && analysisPolicyRef) {
+          analysisPolicyRef.value = defaultPolicyRef;
+        }
+
+        activateWorkspaceTab("analyze");
+      })();
+    </script>
   </body>
 </html>

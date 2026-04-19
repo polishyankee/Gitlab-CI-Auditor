@@ -9,9 +9,10 @@ require "tmpdir"
 require "csv"
 require "shellwords"
 require "fileutils"
+require "base64"
 
 module GitlabCiAuditor
-  VERSION = "0.3.0".freeze
+  VERSION = "0.5.0".freeze
 
   RESERVED_KEYS = %w[
     after_script
@@ -44,6 +45,20 @@ module GitlabCiAuditor
       value.each_with_object({}) { |(key, item), copy| copy[key] = deep_copy(item) }
     when Array
       value.map { |item| deep_copy(item) }
+    else
+      value
+    end
+  end
+
+  def self.deep_symbolize_keys(value)
+    case value
+    when Hash
+      value.each_with_object({}) do |(key, item), result|
+        symbol_key = key.is_a?(String) ? key.to_sym : key
+        result[symbol_key] = deep_symbolize_keys(item)
+      end
+    when Array
+      value.map { |item| deep_symbolize_keys(item) }
     else
       value
     end

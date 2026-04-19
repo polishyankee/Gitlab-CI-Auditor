@@ -42,8 +42,10 @@ class RepositoryAssetsTest < Minitest::Test
     assert_includes readme, "docs/assets/readme-preview.svg"
     assert_includes readme, "docker build --pull -t gitlab-ci-ssdlc-auditor ."
     assert_includes readme, "ghcr.io/polishyankee/gitlab-ci-auditor:latest"
-    assert_includes readme, "./scripts/prepare_release.sh v0.3.0"
+    assert_includes readme, "./scripts/prepare_release.sh v0.5.0"
     assert_includes readme, "./scripts/flatten_pipeline.sh .gitlab-ci.yml --output flat.gitlab-ci.yml"
+    assert_includes readme, "## GitHub Pages Demo"
+    assert_includes readme, "`Settings` tab"
     assert_includes readme, "--format sarif"
     assert_includes readme, "--format junit"
   end
@@ -53,7 +55,7 @@ class RepositoryAssetsTest < Minitest::Test
     prepare_script = File.read(File.join(GitlabCiAuditor.root_dir, "scripts", "prepare_release.sh"))
 
     assert_includes release_guide, "## Release Checklist"
-    assert_includes release_guide, "git push origin v0.3.0"
+    assert_includes release_guide, "git push origin v0.5.0"
     assert_includes prepare_script, "docker build --pull"
     assert_includes prepare_script, "docker run --rm"
   end
@@ -80,8 +82,8 @@ class RepositoryAssetsTest < Minitest::Test
   def test_changelog_includes_current_release_target
     changelog = File.read(File.join(GitlabCiAuditor.root_dir, "CHANGELOG.md"))
 
-    assert_includes changelog, "## v0.3.0"
-    assert_includes changelog, "SARIF"
-    assert_includes changelog, "JUnit"
+    assert_includes changelog, "## v0.5.0"
+    assert_includes changelog, "Settings"
+    assert_includes changelog, "flattened YAML"
   end
 end
